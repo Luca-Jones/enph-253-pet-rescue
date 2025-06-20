@@ -1,0 +1,75 @@
+import time
+import numpy
+import vl53l5cx_ctypes as vl53l5cx
+from vl53l5cx_ctypes import STATUS_RANGE_VALID, STATUS_RANGE_VALID_LARGE_PULSE
+
+print("Uploading, please wait...")
+vl53 = vl53l5cx.VL53L5CX()
+vl53.set_resolution(8 * 8)
+vl53.set_ranging_frequency_hz(8)
+print("Done!")
+
+prev_distance = None
+prev_reflectance = None
+stable_distant_count = 0
+stable_reflectance_count = 0
+
+vl53.start_ranging()
+
+while True:
+    if vl53.data_ready():
+        data = vl53.get_data()
+
+        # 2d array of distance
+        distance = numpy.flipud(numpy.array(data.distance_mm).reshape((8, 8)))
+        center_dist = distance[2:6, 2:6]  # Center grid
+        mean_distance = numpy.mean(center_dist)
+
+        # 2d array of reflectance
+        reflectance = numpy.flipud(numpy.array(data.reflectance).reshape((8, 8)))
+        center_refl = reflectance[2:6, 2:6]
+        mean_reflectance = numpy.mean(center_refl)
+
+        if 0 <= mean_reflectance <= 20 and 90 <= mean_distance <= 200:
+             
+            if prev_reflectance is not None:
+                diff_refl = numpy.abs(mean_reflectance - prev_reflectance)
+                frame_var2 = numpy.mean(diff_refl)
+
+                if frame_var2 < 10: 
+                    stable_reflectance_count += 1
+                    print(f"Stable frame {stable_reflectance_count} | delta: {frame_var2:.2f}")
+                    print("Reflectance: \n", reflectance)
+                else:
+                    stable_reflectance_count = 0
+            prev_reflectance = mean_reflectance.copy()
+            
+        else:
+            stable_reflectance_count = 0
+            prev_reflectance = None
+
+        if 170 <= mean_distance <= 240 and 30 <= mean_reflectance: # Detects when object is 17-24cm away
+            if prev_distance is not None:
+                diff_dist = numpy.abs(center_dist - prev_distance)
+                frame_var1 = numpy.mean(diff_dist)
+
+                if frame_var1 < 50: 
+                    stable_distant_count += 1
+                    print(f"Stable frame {stable_distant_count} | delta: {frame_var1:.2f}")
+                    print("Distance: \n", distance)
+                else:
+                    stable_distant_count = 0
+            prev_distance = center_dist.copy()
+
+        else:
+            stable_distant_count = 0
+            prev_distance = None
+
+        
+
+        #if stable_count >= 7:
+                #print("Object stable in center — STOP the car!")
+                # Add stop command here (GPIO, serial, etc.)
+                #break
+        #print("Distance: \n", mean_center, "\n Reflectance: \n", reflectance)
+    
