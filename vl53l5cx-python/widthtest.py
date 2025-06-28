@@ -27,11 +27,8 @@ def detect_Pet_Ground(distance: numpy.ndarray) -> bool:
     sideR = numpy.mean(distance[3:7, 5])
     mean_side = numpy.mean([sideR, sideL])
 
-    most_SideL = numpy.mean(distance[3:7, 1])
-    most_SideR = numpy.mean(distance[3:7, 6])
-    mean_mostSide = numpy.mean([most_SideR, most_SideL])
-
-    if mean_side - mean_middle <= 20 and mean_mostSide - mean_side <= 20 and diff_middle <= 10:
+    print("helo")
+    if numpy.abs(mean_side - mean_middle) <= 20  and diff_middle <= 10:
         return True
             
     else:
@@ -45,20 +42,16 @@ def detect_Pet_Debris(distance: numpy.ndarray, mean_distance: float) -> bool:
 
     if mean_debris_dist <= 185 and 200 <= mean_Pet_Dist <= 250:
 
-        middleL = numpy.mean(distance[6:7, 3])
-        middleR = numpy.mean(distance[6:7, 4])
+        middleL = numpy.mean(distance[3:5, 3])
+        middleR = numpy.mean(distance[3:5, 4])
         diff_middle = numpy.abs(middleL - middleR)
         mean_middle = numpy.mean([middleL, middleR])
 
-        sideL = numpy.mean(distance[6:7, 2])
-        sideR = numpy.mean(distance[6:7, 5])
+        sideL = numpy.mean(distance[3:5, 2])
+        sideR = numpy.mean(distance[3:5, 5])
         mean_side = numpy.mean([sideR, sideL])
 
-        most_SideL = numpy.mean(distance[6:7, 1])
-        most_SideR = numpy.mean(distance[6:7, 6])
-        mean_mostSide = numpy.mean([most_SideR, most_SideL])
-
-        if mean_side - mean_middle <= 20 and mean_mostSide - mean_side <= 20 and diff_middle <= 10:
+        if numpy.abs(mean_side - mean_middle) <= 20 and diff_middle <= 10:
             return True
         else:
             return False
@@ -69,7 +62,7 @@ def detect_Pet_Debris(distance: numpy.ndarray, mean_distance: float) -> bool:
 def detect_Pet_Pillar(distance: numpy.ndarray, center_dist: numpy.ndarray, mean_reflectance: float) -> bool:
     global prev_distance, stable_distant_count
 
-    if mean_reflectance <= 30:
+    if mean_reflectance <= 20:
         if prev_distance is not None:
             diff_dist = numpy.abs(center_dist - prev_distance)
             frame_var1 = numpy.mean(diff_dist)
@@ -117,4 +110,4 @@ while True:
             elif(detect_Pet_Ground(distance)):
                 print("There's pet on the ground \n", distance)
 
-    time.sleep(0.1)
+    time.sleep(0.2)
