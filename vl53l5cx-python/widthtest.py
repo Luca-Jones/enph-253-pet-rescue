@@ -31,7 +31,7 @@ def detect_Pet_Ground(distance: numpy.ndarray) -> bool:
     most_SideR = numpy.mean(distance[3:7, 6])
     mean_mostSide = numpy.mean([most_SideR, most_SideL])
 
-    if mean_side - mean_middle >= 20 and mean_mostSide - mean_side >= 20 and diff_middle <= 20:
+    if mean_side - mean_middle <= 20 and mean_mostSide - mean_side <= 20 and diff_middle <= 10:
         return True
             
     else:
@@ -43,13 +43,30 @@ def detect_Pet_Debris(distance: numpy.ndarray, mean_distance: float) -> bool:
     mean_debris_dist = float(numpy.mean(distance[6:7, 2:6]))
     mean_Pet_Dist = float(numpy.mean(distance[3:5, 2:6]))
 
-    if mean_debris_dist <= 190 and 200 <= mean_Pet_Dist <= 250:
-        return True
+    if mean_debris_dist <= 185 and 200 <= mean_Pet_Dist <= 250:
+
+        middleL = numpy.mean(distance[6:7, 3])
+        middleR = numpy.mean(distance[6:7, 4])
+        diff_middle = numpy.abs(middleL - middleR)
+        mean_middle = numpy.mean([middleL, middleR])
+
+        sideL = numpy.mean(distance[6:7, 2])
+        sideR = numpy.mean(distance[6:7, 5])
+        mean_side = numpy.mean([sideR, sideL])
+
+        most_SideL = numpy.mean(distance[6:7, 1])
+        most_SideR = numpy.mean(distance[6:7, 6])
+        mean_mostSide = numpy.mean([most_SideR, most_SideL])
+
+        if mean_side - mean_middle <= 20 and mean_mostSide - mean_side <= 20 and diff_middle <= 10:
+            return True
+        else:
+            return False
     else:
         return False
 
 
-def detect_Pet_Pillar(distance: numpy.ndarray, center_dist: numpy.ndarray, mean_distance: float, mean_reflectance: float) -> bool:
+def detect_Pet_Pillar(distance: numpy.ndarray, center_dist: numpy.ndarray, mean_reflectance: float) -> bool:
     global prev_distance, stable_distant_count
 
     if mean_reflectance <= 30:
@@ -65,7 +82,7 @@ def detect_Pet_Pillar(distance: numpy.ndarray, center_dist: numpy.ndarray, mean_
         prev_distance = center_dist.copy()
 
         if stable_distant_count == 3:
-            print("[PILLAR DETECTED]")
+            print("Pillar")
             print(f"Mean Reflectance: {mean_reflectance:.2f}")
             print("Distance Map:\n", distance)
             stable_distant_count = 0
@@ -92,7 +109,7 @@ while True:
             reflectance = numpy.flipud(numpy.array(data.reflectance).reshape((8, 8)))
             mean_reflectance = float(numpy.mean(reflectance[3:7, 2:6]))
 
-            detect_Pet_Pillar(distance, center_dist, mean_distance, mean_reflectance)
+            detect_Pet_Pillar(distance, center_dist, mean_reflectance)
 
             if detect_Pet_Debris(distance, mean_distance):
                  print("There's pet behind debris \n", distance)
