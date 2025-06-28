@@ -49,26 +49,32 @@ def detect_Pet_Debris(distance: numpy.ndarray, mean_distance: float) -> bool:
         return False
 
 
-def detect_Pet_Pillar(distance: numpy.ndarray, center_dist: numpy.ndarray, mean_distance: float, mean_reflectance: float ) -> bool:
+def detect_Pet_Pillar(distance: numpy.ndarray, center_dist: numpy.ndarray, mean_distance: float, mean_reflectance: float) -> bool:
     global prev_distance, stable_distant_count
 
-    if 30 <= mean_reflectance:
-            if prev_distance is not None:
-                diff_dist = numpy.abs(center_dist - prev_distance)
-                frame_var1 = numpy.mean(diff_dist)
+    if mean_reflectance <= 30:
+        if prev_distance is not None:
+            diff_dist = numpy.abs(center_dist - prev_distance)
+            frame_var1 = numpy.mean(diff_dist)
 
-                if frame_var1 < 50:
-                    stable_distant_count += 1
-                    print(f"Stable frame {stable_distant_count} | delta: {frame_var1:.2f}")
-                    print("Distance: \n", distance)
-                else:
-                    stable_distant_count = 0
-            prev_distance = center_dist.copy()
-    else:
+            if frame_var1 < 50:
+                stable_distant_count += 1
+            else:
+                stable_distant_count = 0
+
+        prev_distance = center_dist.copy()
+
+        if stable_distant_count == 3:
+            print("[PILLAR DETECTED]")
+            print(f"Mean Reflectance: {mean_reflectance:.2f}")
+            print("Distance Map:\n", distance)
             stable_distant_count = 0
-            prev_distance = None
+            return True
+    else:
+        stable_distant_count = 0
+        prev_distance = None
 
-    return True
+    return False
 
 
 while True:
@@ -94,4 +100,4 @@ while True:
             elif(detect_Pet_Ground(distance)):
                 print("There's pet on the ground \n", distance)
 
-    time.sleep(0.2)
+    time.sleep(0.1)
