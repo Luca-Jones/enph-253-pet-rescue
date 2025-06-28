@@ -6,7 +6,7 @@ from vl53l5cx_ctypes import STATUS_RANGE_VALID, STATUS_RANGE_VALID_LARGE_PULSE
 print("Uploading, please wait...")
 vl53 = vl53l5cx.VL53L5CX()
 vl53.set_resolution(8 * 8)
-vl53.set_ranging_frequency_hz(8)  
+vl53.set_ranging_frequency_hz(12)  
 print("Done!")
 
 prev_distance = None
@@ -32,7 +32,6 @@ def detect_Pet_Ground(distance: numpy.ndarray) -> bool:
     mean_mostSide = numpy.mean([most_SideR, most_SideL])
 
     if mean_side - mean_middle >= 20 and mean_mostSide - mean_side >= 20 and diff_middle <= 20:
-        print(distance)
         return True
             
     else:
@@ -45,7 +44,6 @@ def detect_Pet_Debris(distance: numpy.ndarray, mean_distance: float) -> bool:
     mean_Pet_Dist = float(numpy.mean(distance[3:5, 2:6]))
 
     if mean_debris_dist <= 190 and 200 <= mean_Pet_Dist <= 250:
-        print("Debris: \n", distance)
         return True
     else:
         return False
@@ -93,7 +91,7 @@ while True:
             if detect_Pet_Debris(distance, mean_distance):
                  print("There's pet behind debris \n", distance)
 
-            else:
-                detect_Pet_Ground(distance)
+            elif(detect_Pet_Ground(distance)):
+                print("There's pet on the ground \n", distance)
 
     time.sleep(0.2)
