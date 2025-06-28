@@ -27,9 +27,10 @@ while True:
         # 2d array of distance
         distance = numpy.flipud(numpy.array(data.distance_mm).reshape((8, 8)))
         # 2d array of reflectance
-        reflectance = numpy.flipud(numpy.array(data.reflectance).reshape((8, 8)))
+        #reflectance = numpy.flipud(numpy.array(data.reflectance).reshape((8, 8)))
         # 2d array of good ranging data
         #status = numpy.isin(numpy.flipud(numpy.array(data.target_status).reshape((8, 8))), (STATUS_RANGE_VALID, STATUS_RANGE_VALID_LARGE_PULSE))
         #print(motion, distance, reflectance, status)
-        print("Distance: \n", distance, "\n Reflectance: \n", reflectance)
+        #print("Distance: \n", distance, "\n Reflectance: \n", reflectance)
+        print(distance, "\n")
     time.sleep(1)
