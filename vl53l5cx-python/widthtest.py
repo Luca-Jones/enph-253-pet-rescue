@@ -51,7 +51,7 @@ def detect_Pet_Ground(distance: numpy.ndarray) -> bool:
 def detect_Pet_Pillar(distance: numpy.ndarray, center_dist: numpy.ndarray, mean_reflectance: float) -> bool:
     global prev_distance, stable_distant_count
 
-    if mean_reflectance <= 20:
+    if mean_reflectance <= 30:
         if prev_distance is not None:
             diff_dist = numpy.abs(center_dist - prev_distance)
             frame_var1 = numpy.mean(diff_dist)
@@ -81,13 +81,13 @@ while True:
         data = vl53.get_data()
 
         distance = numpy.flipud(numpy.array(data.distance_mm).reshape((8, 8)))
-        center_dist = distance[3:7, 2:6]
+        center_dist = distance[4:7, 3:5]
         mean_distance = float(numpy.mean(center_dist))
         
-        if 170 <= mean_distance <= 240:
+        if 100 <= mean_distance <= 240:
 
             reflectance = numpy.flipud(numpy.array(data.reflectance).reshape((8, 8)))
-            mean_reflectance = float(numpy.mean(reflectance[3:7, 2:6]))
+            mean_reflectance = float(numpy.mean(reflectance[5:7, 2:6]))
 
             detect_Pet_Pillar(distance, center_dist, mean_reflectance)
 
@@ -98,16 +98,6 @@ while True:
             else:
                 print("Not in the middle")
                 #Write code to send signal to esp32 for slowing down or adjusting chassiss's position
-            
-
-            """
-            if detect_Pet_Debris(distance, mean_distance):
-                 print("There's pet behind debris \n", distance)
-
-            elif(detect_Pet_Ground(distance)):
-                print("There's pet on the ground \n", distance)
-            """
-
 
     time.sleep(0.2)
 
