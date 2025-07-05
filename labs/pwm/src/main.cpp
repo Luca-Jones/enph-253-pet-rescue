@@ -24,11 +24,12 @@ void setup() {
     ledcAttachPin(PWM_2_PIN, PWM_2_CHANNEL);
 
     ledcWrite(PWM_2_CHANNEL, MAX_DUTY_CYCLE / 2); // 50% duty cycle
+
 }
 
 void loop() {
     pot_read = adc1_get_raw(ADC1_CHANNEL_0); // reads the analog value of ADC1_CHANNEL_0 (pin 36)
-    ledcWrite(PWM_1_CHANNEL, pot_read); // writes a dutycycle to the specified pwmchannel (which in this case was linked to pin 4)
+    ledcWrite(PWM_1_CHANNEL, pot_read); // writes a dutycycle to the specified pwmchannel
     // ledcWrite(PWM_2_CHANNEL, MAX_DUTY_CYCLE / 2);
     delay(10); // brief delay of 10ms
 }
