@@ -29,7 +29,7 @@ void Servo::attach(int pin, int channel, int min_us, int max_us) {
         return;
     }
 
-    if (ledcSetup(channel, SERVO_DEFAULT_FREQUENCY, SERVO_DEFUALT_BIT_RESOLUTION) == 0) {
+    if (ledcSetup(channel, 1e6 / SERVO_PWM_PERIOD_US, SERVO_BIT_RESOLUTION) == 0) {
         return;
     }
 
@@ -43,8 +43,8 @@ void Servo::write(int angle) {
     else if (angle > servo_max_angle)
         angle = servo_max_angle;
     float m = (float) (max_us - min_us) / servo_max_angle;
-    int duty = min_us + m * angle;
-    writeMicroseconds(duty);
+    int duty_us = min_us + m * angle;
+    writeMicroseconds(duty_us);
 }
 
 void Servo::writeMicroseconds(int duty_cycle_us) {
@@ -57,14 +57,24 @@ void Servo::writeMicroseconds(int duty_cycle_us) {
         duty_us = max_us;
 
     // converts from us to bits
-    int pwm_period = 1e6 / SERVO_DEFAULT_FREQUENCY;
-    int duty = (float) duty_us / pwm_period * (SERVO_PWM_WIDTH); // do not remove brackets
+    int duty_bits = (float) duty_us / SERVO_PWM_PERIOD_US * (SERVO_PWM_WIDTH); // do not remove brackets
 
-    ledcWrite(this->channel, duty);
+    ledcWrite(this->channel, duty_bits);
 }
 
 int Servo::read() {
-    return ledcRead(channel);
+    // bits to us
+    int duty_bits = ledcRead(channel);
+    int duty_us = duty_bits * SERVO_PWM_PERIOD_US / SERVO_PWM_WIDTH ;
+
+    if (duty_us < min_us) 
+        duty_us = min_us;
+    else if (duty_us > max_us)
+        duty_us = max_us;
+    
+    // us to angle
+    float slope = (float) servo_max_angle / (max_us - min_us);
+    return slope * (duty_us - min_us);
 }
 
 bool Servo::attached() {

@@ -1,0 +1,234 @@
+(footprint "JST_B3B-XH-A"
+	(version 20241229)
+	(generator "pcbnew")
+	(generator_version "9.0")
+	(layer "F.Cu")
+	(property "Reference" "REF**"
+		(at -4.7 -5.125 0)
+		(layer "F.SilkS")
+		(uuid "085f9dba-727d-4da1-be9d-e97dd5560f4f")
+		(effects
+			(font
+				(size 0.944882 0.944882)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Value" "JST_B3B-XH-A"
+		(at -0.5 3.875 0)
+		(layer "F.Fab")
+		(uuid "1c3aeea2-0f69-4b51-9dd1-8817c5b8df8a")
+		(effects
+			(font
+				(size 0.944882 0.944882)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at -2.5 -0.525 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "0e0b6cef-e339-4575-882b-565da5645456")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at -2.5 -0.525 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "7df33ea9-1a39-448c-a99f-150d73de4cb9")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr through_hole)
+	(fp_line
+		(start -7.45 -3.4)
+		(end 2.45 -3.4)
+		(stroke
+			(width 0.127)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "ae5a0b32-cfcc-4cf4-9563-7373ddcbbb67")
+	)
+	(fp_line
+		(start -7.45 2.35)
+		(end -7.45 -3.4)
+		(stroke
+			(width 0.127)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "122b2246-e198-46c3-9921-4ddd8adb1dd0")
+	)
+	(fp_line
+		(start 2.45 -3.4)
+		(end 2.45 2.35)
+		(stroke
+			(width 0.127)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "0ed132c4-c83f-4371-be0e-9c251f7551b8")
+	)
+	(fp_line
+		(start 2.45 2.35)
+		(end -7.45 2.35)
+		(stroke
+			(width 0.127)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "3456ac47-48ac-43a9-bb65-ac509facd5db")
+	)
+	(fp_circle
+		(center 3.25 0)
+		(end 3.35 0)
+		(stroke
+			(width 0.2)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.SilkS")
+		(uuid "df68ff29-de85-406e-a8ca-9af05030001c")
+	)
+	(fp_line
+		(start -7.7 -3.65)
+		(end 2.7 -3.65)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "99117d3f-afc4-4abb-9287-70423b312cf5")
+	)
+	(fp_line
+		(start -7.7 2.6)
+		(end -7.7 -3.65)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "388c4bbf-7768-416f-bf88-9b181a601e51")
+	)
+	(fp_line
+		(start 2.7 -3.65)
+		(end 2.7 2.6)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "e5943bc2-325d-4a59-b994-094cd5c3e233")
+	)
+	(fp_line
+		(start 2.7 2.6)
+		(end -7.7 2.6)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "46f76b6e-fb64-4ca0-9cf6-1abe6fcde4cf")
+	)
+	(fp_line
+		(start -7.45 -3.4)
+		(end 2.45 -3.4)
+		(stroke
+			(width 0.127)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "c2cacda6-0026-4633-9e59-f7ed35d9d689")
+	)
+	(fp_line
+		(start -7.45 2.35)
+		(end -7.45 -3.4)
+		(stroke
+			(width 0.127)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "5ac19183-f2e2-4dd6-b305-044d52a508e1")
+	)
+	(fp_line
+		(start 2.45 -3.4)
+		(end 2.45 2.35)
+		(stroke
+			(width 0.127)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "7bdb680a-98f5-4421-ae96-c464704cf1f1")
+	)
+	(fp_line
+		(start 2.45 2.35)
+		(end -7.45 2.35)
+		(stroke
+			(width 0.127)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "00137fe6-c549-485d-9261-a44359dea99e")
+	)
+	(fp_circle
+		(center 3.25 0)
+		(end 3.35 0)
+		(stroke
+			(width 0.2)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.Fab")
+		(uuid "7357eb9f-cbb8-494b-8985-5d934308e4cf")
+	)
+	(pad "1" thru_hole rect
+		(at 0 0)
+		(size 1.508 1.508)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(solder_mask_margin 0.102)
+		(uuid "9c8c399d-d752-43eb-b199-6415a1e90410")
+	)
+	(pad "2" thru_hole circle
+		(at -2.5 0)
+		(size 1.508 1.508)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(solder_mask_margin 0.102)
+		(uuid "27fea330-3f26-436c-8024-baacbbcebbad")
+	)
+	(pad "3" thru_hole circle
+		(at -5 0)
+		(size 1.508 1.508)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(solder_mask_margin 0.102)
+		(uuid "b003b68e-0487-455d-96b4-abda597d942d")
+	)
+	(embedded_fonts no)
+	(model "C:/Users/Luca/Downloads/B3B_XH_A (3)/B3B-XH-A.step"
+		(offset
+			(xyz -2.5 0.525 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz -90 -0 -0)
+		)
+	)
+)

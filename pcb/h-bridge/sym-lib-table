@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "h-bridge-library")(type "KiCad")(uri "${KIPRJMOD}/h-bridge-library.kicad_sym")(options "")(descr ""))
+)
