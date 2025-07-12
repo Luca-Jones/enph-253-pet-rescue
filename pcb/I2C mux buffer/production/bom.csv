@@ -1,0 +1,10 @@
+﻿Designator,Footprint,Quantity,Value,LCSC Part #
+"C1, C2, C3",C_Disc_D3.0mm_W1.6mm_P2.50mm,3,100nF,
+C4,C_Disc_D3.0mm_W1.6mm_P2.50mm,1,10uF,
+J1,JST_EH_B4B-EH-A_1x04_P2.50mm_Vertical,1,ToF Chassis,
+J2,JST_EH_B4B-EH-A_1x04_P2.50mm_Vertical,1,ToF Claw,
+J3,JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical,1,Raspberry Pi,
+"R1, R2, R3, R4, R5",R_Axial_DIN0309_L9.0mm_D3.2mm_P12.70mm_Horizontal,5,1k,
+R6,R_Axial_DIN0309_L9.0mm_D3.2mm_P12.70mm_Horizontal,1,10k,
+U1,TSSOP-24_4.4x7.8mm_P0.65mm,1,TCA9548APWR,
+U2,DGK0008A,1,TCA9617ADGKR,
