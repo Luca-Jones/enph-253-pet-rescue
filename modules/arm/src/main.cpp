@@ -31,59 +31,51 @@ void setup() {
     pinMode(BUTTON_PIN, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), switchPressedISR, CHANGE);
     Serial.begin(115200);
+    Serial.setTimeout(1000000);
     servo_1.attach(ARM_SERVO_1_PIN, ARM_SERVO_1_CHANNEL, 500, 2500);
     servo_2.attach(ARM_SERVO_2_PIN, ARM_SERVO_2_CHANNEL, 500, 2500);
     claw.attach(CLAW_PIN, 3, 500, 2500);
+
 }
 
 void log_pos() {
-    int x_2, y_2;
-    arm.get_pos(&x_2, &y_2);
-    Serial.printf("x = %d, y = %d\n", x_2, y_2);
-    Serial.printf("theta_1 = %d, theta_2 = %d\n\n", servo_1.read(), servo_2.read());
+    int theta_1; int theta_2; float phi_1; float phi_2; int x; int y;
+    arm.log_pos(&theta_1, &theta_2, &phi_1, &phi_2, &x, &y);
+    Serial.printf("x = %d, y = %d\nphi_1 = %f, phi_2 = %f\ntheta_1 = %d, theta_2 = %d\n\n\n", x, y, phi_1, phi_2, theta_1, theta_2);
 }
 
 void calibrate() {
-    /* Servo calibration with pots */
-    int pot_1 = analogRead(POT_PIN_1);
-    int pot_2 = analogRead(POT_PIN_2);
-    Serial.printf("servo 1: %d\n", pot_1);
-    Serial.printf("servo 2: %d\n", pot_2);
-    int angle_1 = (int) (pot_1 / (float) (1 << 12) * 270);
-    int angle_2 = (int) (pot_2 / (float) (1 << 12) * 270);
-
-    servo_1.write(angle_1);
-    servo_2.write(angle_2);
+    String input = Serial.readStringUntil('\n');
+    Serial.println(input);
+    servo_1.write(input.toInt());
 }
 
 void loop() {
 
     // calibrate();
-    // delay(1000);
     
-    // arm.move_to_angle(270-ARM_SERVO_1_ANGLE_OFFSET,270);
-    // log_pos();
-    // delay(500);
+    arm.move_to_pos(250,100);
+    delay(2000);
+    arm.lerp_to_pos(350, 50, 500);
+    delay(500);
+    claw.write(110);
+    delay(500);
+    arm.lerp_to_pos(250,240,500);
+    delay(1000);
+    claw.write(180);
+    delay(5000);
+    // arm.move_to_phi(90,150);
 
-    /* Tests */
-    arm.lerp_to_pos(200,100,500);
-    delay(500);
-    arm.lerp_to_pos(200,200,500);
-    delay(500);
-    arm.lerp_to_pos(300,200,500);
-    delay(500);
-    arm.lerp_to_pos(300,100,500);
-    delay(500);
+    // if (button_pressed) {
+    //     Serial.println(counter);
+    //     if (is_claw_closed) {
+    //         claw.write(110);
+    //         Serial.println("Claw CLOSED");
+    //     } else {
+    //         claw.write(180);
+    //         Serial.println("Claw OPEN");
+    //     }
+    // }
+    // button_pressed = false;
 
-    if (button_pressed) {
-        Serial.println(counter);
-        if (is_claw_closed) {
-            claw.write(110);
-            Serial.println("Claw CLOSED");
-        } else {
-            claw.write(180);
-            Serial.println("Claw OPEN");
-        }
-    }
-    button_pressed = false;
 }
