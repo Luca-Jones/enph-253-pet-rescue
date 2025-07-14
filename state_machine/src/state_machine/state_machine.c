@@ -56,7 +56,20 @@ struct state_transition {
 
 // consult the diagram to understand these transitions
 static const struct state_transition state_transitions[] = {
-    {STATE_WAIT,    STATE_EVENT_TAPE_DETECTED,   STATE_TAPE_FOLLOWING},
+    {   STATE_WAIT,             STATE_EVENT_TAPE_DETECTED,          STATE_TAPE_FOLLOWING    },
+    {   STATE_TAPE_FOLLOWING,   STATE_EVENT_PET_DETECTED,           STATE_REACH             },
+    {   STATE_TAPE_FOLLOWING,   STATE_EVENT_PILLAR_DETECTED,        STATE_RAISE_ARM         },
+    {   STATE_RAISE_ARM,        STATE_EVENT_PET_DETECTED,           STATE_REACH             },
+    {   STATE_REACH,            STATE_EVENT_NEAR_PET,               STATE_CLOSE_CLAW        },
+    {   STATE_CLOSE_CLAW,       STATE_EVENT_PET_GRASPED,            STATE_STORE             },
+    {   STATE_STORE,            STATE_EVENT_PET_STORED,             STATE_TAPE_FOLLOWING    },
+    {   STATE_TAPE_FOLLOWING,   STATE_EVENT_RAMP_DETECTED,          STATE_RAMP              },
+    {   STATE_RAMP,             STATE_EVENT_FLAT_GROUND_DETECTED,   STATE_TAPE_SWEEP        },
+    {   STATE_TAPE_FOLLOWING,   STATE_EVENT_DEBRIS_DETECTED,        STATE_DEBRIS            },
+    {   STATE_TAPE_SWEEP,       STATE_EVENT_TAPE_DETECTED,          STATE_TAPE_FOLLOWING    },
+    {   STATE_TAPE_FOLLOWING,   STATE_EVENT_EDGE_DETECTED,          STATE_EXTEND_CASCADE    },
+    {   STATE_EXTEND_CASCADE,   STATE_EVENT_CASCADE_EXTENDED,       STATE_REVERSE           },
+    // {   STATE_REVERSE,          STATE_EVENT_ZIP_LINE_DETECTED,      STATE_WAIT              }, // tbd
 };
 
 
