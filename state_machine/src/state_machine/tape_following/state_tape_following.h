@@ -1,11 +1,11 @@
 #ifndef STATE_TAPE_FOLLOWING_H
 #define STATE_TAPE_FOLLOWING_H
 
-// what does this state do?
+#include "../state_machine.h"
 
 struct state_tape_following_data {
-    // data for this state
-    const struct state_common_data *data;
+    const struct state_machine *state_machine;
+    // TODO: data for this state
 };
 
 void state_tape_following_init(struct state_tape_following_data *data);
