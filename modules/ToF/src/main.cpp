@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <Wire.h>
+#include "arm_movements.h"
 
 #define PIN_UART_RX 14
 #define PIN_UART_TX 12
@@ -17,8 +18,6 @@ struct tof_data_packet {
 
 void setup() {
 
-    delay(1000);
-
     /* Computer Serial */
     Serial.begin(115200);
 
@@ -31,7 +30,6 @@ void setup() {
 void loop() {
 
     struct tof_data_packet tof_data;
-    
     
     if (Serial2.available()) {
 
@@ -47,9 +45,14 @@ void loop() {
         case TOF_READING_PILLAR:
             Serial.println("Pillar detected!");
             break;
+        case TOF_READING_PET_OFFCENTER:
+            Serial.println("Pet offcenter!");
+            break;
         default:
             break;
         }
     }
+
+    delay(100);
 
 }
