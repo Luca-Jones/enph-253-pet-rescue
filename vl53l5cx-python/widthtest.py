@@ -8,7 +8,7 @@ from enum import Enum
 print("Uploading, please wait...")
 vl53 = vl53l5cx.VL53L5CX()
 vl53.set_resolution(8 * 8)
-vl53.set_ranging_frequency_hz(12)  
+vl53.set_ranging_frequency_hz(15)  
 print("Done!")
 
 prev_distance = None
@@ -43,7 +43,7 @@ def detect_Pet_Ground(distance: numpy.ndarray) -> bool:
     middle_Top = numpy.mean(distance[0:1, 3:4]) # To distinguish between zipline pole and pets
 
     
-    if  diff_side <= 10 and diff_middle <= 7 and middle_Top >= 260:
+    if  diff_side <= 25 and diff_middle <= 20 and middle_Top >= 260:
         return True
             
     else:
@@ -53,7 +53,7 @@ def detect_Pet_Ground(distance: numpy.ndarray) -> bool:
 def detect_Pet_Pillar(distance: numpy.ndarray, center_dist: numpy.ndarray, mean_reflectance: float) -> bool:
     global prev_distance, stable_distant_count
 
-    if mean_reflectance <= 30:
+    if mean_reflectance <= 15:
         if prev_distance is not None:
             diff_dist = numpy.abs(center_dist - prev_distance)
             frame_var1 = numpy.mean(diff_dist)
@@ -62,13 +62,13 @@ def detect_Pet_Pillar(distance: numpy.ndarray, center_dist: numpy.ndarray, mean_
                 stable_distant_count += 1
             else:
                 stable_distant_count = 0
-
+    
         prev_distance = center_dist.copy()
 
         if stable_distant_count == 3:
             print("Pillar")
             print(f"Mean Reflectance: {mean_reflectance:.2f}")
-            print("Distance Map:\n", distance)
+            #print("Distance Map:\n", distance)
             stable_distant_count = 0
             return True
     else:
@@ -87,7 +87,7 @@ class tof_reading_e(Enum):
     TOF_READING_PET_OFFCENTER   = 3
     
 ser = serial.Serial(port='/dev/ttyAMA0', baudrate=115200, timeout=1)
-time.sleep(1);
+time.sleep(1)
 
 while True:
     if vl53.data_ready():
@@ -104,17 +104,18 @@ while True:
 
             # figure out if there is a pillar   
             if detect_Pet_Pillar(distance, center_dist, mean_reflectance):
-                ser.write(tof_reading_e.TOF_READING_PILLAR)
+                ser.write(b'\x02')
             elif detect_Pet_Ground(distance):
-                print("There's pet on the ground \n", distance)
+                #print("There's pet on the ground \n", distance)
+                print("There's pet on the ground \n")
                 #Write codes to send signal to esp32 for extending the arm
-                ser.write(tof_reading_e.TOF_READING_PET)
+                ser.write(b'\x01')
             else:
                 print("Not in the middle")
                 #Write code to send signal to esp32 for slowing down or adjusting chassiss's position
-                ser.write(tof_reading_e.TOF_READING_PET_OFFCENTER)
+                ser.write(b'\x03')
         else:
-            ser.write(tof_reading_e.TOF_READING_NONE)
+            ser.write(b'\x00')
     
     time.sleep(0.2)
 
