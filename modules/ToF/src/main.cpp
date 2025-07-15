@@ -5,9 +5,10 @@
 #define PIN_UART_TX 12
 
 typedef enum tof_reading_e {
-    TOF_READING_NONE    = 0,
-    TOF_READING_PET     = 1,
-    TOF_READING_PILLAR  = 2,
+    TOF_READING_NONE            = 0,
+    TOF_READING_PET             = 1,
+    TOF_READING_PILLAR          = 2,
+    TOF_READING_PET_OFFCENTER   = 3,
 };
 
 struct tof_data_packet {

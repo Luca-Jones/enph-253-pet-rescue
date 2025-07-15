@@ -2,6 +2,8 @@ import time
 import numpy
 import vl53l5cx_ctypes as vl53l5cx
 from vl53l5cx_ctypes import STATUS_RANGE_VALID, STATUS_RANGE_VALID_LARGE_PULSE
+import serial
+from enum import Enum
 
 print("Uploading, please wait...")
 vl53 = vl53l5cx.VL53L5CX()
@@ -75,6 +77,17 @@ def detect_Pet_Pillar(distance: numpy.ndarray, center_dist: numpy.ndarray, mean_
 
     return False
 
+'''
+    This class stuff is for sending data to the esp32
+'''
+class tof_reading_e(Enum):
+    TOF_READING_NONE            = 0
+    TOF_READING_PET             = 1
+    TOF_READING_PILLAR          = 2
+    TOF_READING_PET_OFFCENTER   = 3
+    
+ser = serial.Serial(port='/dev/ttyAMA0', baudrate=115200, timeout=1)
+time.sleep(1);
 
 while True:
     if vl53.data_ready():
@@ -89,16 +102,20 @@ while True:
             reflectance = numpy.flipud(numpy.array(data.reflectance).reshape((8, 8)))
             mean_reflectance = float(numpy.mean(reflectance[5:7, 2:6]))
 
-            detect_Pet_Pillar(distance, center_dist, mean_reflectance)
-
-            if detect_Pet_Ground(distance):
+            # figure out if there is a pillar   
+            if detect_Pet_Pillar(distance, center_dist, mean_reflectance):
+                ser.write(tof_reading_e.TOF_READING_PILLAR)
+            elif detect_Pet_Ground(distance):
                 print("There's pet on the ground \n", distance)
                 #Write codes to send signal to esp32 for extending the arm
-
+                ser.write(tof_reading_e.TOF_READING_PET)
             else:
                 print("Not in the middle")
                 #Write code to send signal to esp32 for slowing down or adjusting chassiss's position
-
+                ser.write(tof_reading_e.TOF_READING_PET_OFFCENTER)
+        else:
+            ser.write(tof_reading_e.TOF_READING_NONE)
+    
     time.sleep(0.2)
 
 
