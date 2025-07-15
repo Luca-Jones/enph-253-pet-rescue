@@ -13,12 +13,12 @@
 #define ARM_SERVO_1_PIN 19
 #define ARM_SERVO_1_CHANNEL 1
 #define ARM_SERVO_1_ANGLE_MAX 270
-#define ARM_SERVO_1_ANGLE_OFFSET -96
+#define ARM_SERVO_1_ANGLE_OFFSET -90
 
 #define ARM_SERVO_2_PIN 25
 #define ARM_SERVO_2_CHANNEL 2
 #define ARM_SERVO_2_ANGLE_MAX 270
-#define ARM_SERVO_2_ANGLE_OFFSET 90
+#define ARM_SERVO_2_ANGLE_OFFSET 0
 
 
 bool is_valid_pos(int x, int y);
