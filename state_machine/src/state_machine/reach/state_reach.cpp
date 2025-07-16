@@ -14,10 +14,8 @@ void state_reach_enter(struct state_reach_data *data, state_e from, state_event_
             // do nothing
             break;
         default:
-            display_handler.clearDisplay();
-            display_handler.setCursor(0, 0);
-            display_handler.println("REACH");
-            display_handler.display();
+            print_event(event);
+            print_state(STATE_REACH);
             break;
     }
     state_reach_run(data);

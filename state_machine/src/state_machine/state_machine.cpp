@@ -263,3 +263,93 @@ static void state_exit(struct state_machine *state_machine, struct state_transit
     // doesn't cover all elements of the state_e enum
 
 }
+
+void print_state(state_e state) {
+    switch(state) {
+        case STATE_WAIT: 
+        display_handler.println("WAIT");
+        break;
+    case STATE_TAPE_FOLLOWING:
+        display_handler.println("TAPE FOLLOWING");
+        break;
+    case STATE_REACH:
+        display_handler.println("REACH");
+        break;
+    case STATE_RAISE_ARM:
+        display_handler.println("RAISE ARM");
+        break;
+    case STATE_CLOSE_CLAW:
+        display_handler.println("CLOSE ARM");
+        break;
+    case STATE_STORE:
+        display_handler.println("STORE");
+        break;
+    case STATE_RAMP:
+        display_handler.println("RAMP");
+        break;
+    case STATE_DEBRIS:
+        display_handler.println("DEBRIS");
+        break;
+    case STATE_TAPE_SWEEP:
+        display_handler.println("TAPE SWEEP");
+        break;
+    case STATE_EXTEND_CASCADE:
+        display_handler.println("CASCADE");
+        break;
+    case STATE_REVERSE:
+        display_handler.println("REVERSE");
+        break;
+    default:
+        break;
+    }
+    display_handler.display();
+}
+
+void print_event(state_event_e event) {
+    display_handler.clearDisplay();
+    display_handler.setCursor(0, 0);
+    switch (event) {
+    case STATE_EVENT_NONE:
+        display_handler.println("NONE");
+        break;
+    case STATE_EVENT_TAPE_DETECTED:
+        display_handler.println("TAPE DETECTED");
+        break;
+    case STATE_EVENT_PET_DETECTED:
+        display_handler.println("PET DETECTED");
+        break;
+    case STATE_EVENT_PILLAR_DETECTED:
+        display_handler.println("PILLAR DETECTED");
+        break;
+    case STATE_EVENT_NEAR_PET:
+        display_handler.println("NEAR PET");
+        break;
+    case STATE_EVENT_PET_GRASPED:
+        display_handler.println("PET GRASPED");
+        break;
+    case STATE_EVENT_PET_STORED:
+        display_handler.println("PET STORED");
+        break;
+    case STATE_EVENT_RAMP_DETECTED:
+        display_handler.println("RAMP DETECTED");
+        break;
+    case STATE_EVENT_DEBRIS_DETECTED:
+        display_handler.println("DEBRIS DETECTED");
+        break;
+    case STATE_EVENT_FLAT_GROUND_DETECTED:
+        display_handler.println("FLAT GROUND DETECTED");
+        break;
+    case STATE_EVENT_EDGE_DETECTED:
+        display_handler.println("EDGE DETECTED");
+        break;
+    case STATE_EVENT_CASCADE_EXTENDED:
+        display_handler.println("CASCADE EXTENDED");
+        break;
+    case STATE_EVENT_ZIP_LINE_DETECTED:
+        display_handler.println("ZIP LINE");
+        break;
+    default:
+        break;
+    }
+    display_handler.display();
+}

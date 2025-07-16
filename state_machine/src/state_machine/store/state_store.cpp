@@ -16,10 +16,8 @@ void state_store_enter(struct state_store_data *data, state_e from, state_event_
             // do nothing
             break;
         default:
-            display_handler.clearDisplay();
-            display_handler.setCursor(0, 0);
-            display_handler.println("STORE");
-            display_handler.display();
+            print_event(event);
+            print_state(STATE_STORE);
             break;
     }
     state_store_run(data);

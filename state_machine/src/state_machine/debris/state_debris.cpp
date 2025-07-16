@@ -14,10 +14,8 @@ void state_debris_enter(struct state_debris_data *data, state_e from, state_even
             // do nothing 
             break;
         default:
-            display_handler.clearDisplay();
-            display_handler.setCursor(0, 0);
-            display_handler.println("DEBRIS");
-            display_handler.display();
+            print_event(event);
+            print_state(STATE_DEBRIS);
             break;
     }
     state_debris_run(data);

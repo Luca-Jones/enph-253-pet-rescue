@@ -13,10 +13,8 @@ void state_tape_sweep_enter(struct state_tape_sweep_data *data, state_e from, st
         case STATE_TAPE_SWEEP:
             break;
         default:
-            display_handler.clearDisplay();
-            display_handler.setCursor(0, 0);
-            display_handler.println("TAPE SWEEP");
-            display_handler.display();
+            print_event(event);
+            print_state(STATE_TAPE_SWEEP);
             break;
     }
     state_tape_sweep_run(data);

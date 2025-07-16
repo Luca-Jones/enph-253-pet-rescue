@@ -14,10 +14,8 @@ void state_close_claw_enter(struct state_close_claw_data *data, state_e from, st
             // do nothing
             break;
         default:
-            display_handler.clearDisplay();
-            display_handler.setCursor(0, 0);
-            display_handler.println("CLOSE CLAW");
-            display_handler.display();
+            print_event(event);
+            print_state(STATE_CLOSE_CLAW);
             break;
     }
     state_close_claw_run(data);

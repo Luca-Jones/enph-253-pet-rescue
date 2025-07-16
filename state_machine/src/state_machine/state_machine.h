@@ -56,6 +56,8 @@ typedef enum {
 } state_event_e;
 
 void state_machine_run(void);
+void print_state(state_e state);
+void print_event(state_event_e event);
 
 /*
     Each state must implement the following functions:

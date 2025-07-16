@@ -15,10 +15,8 @@ void state_wait_enter(struct state_wait_data *data, state_e from, state_event_e 
             // do nothing
             break;
         default:
-            display_handler.clearDisplay();
-            display_handler.setCursor(0, 0);
-            display_handler.println("WAIT");
-            display_handler.display();
+            print_event(event);
+            print_state(STATE_WAIT);
             break;
     }
     state_wait_run(data);

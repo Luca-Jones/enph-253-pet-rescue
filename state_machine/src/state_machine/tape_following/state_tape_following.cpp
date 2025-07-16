@@ -21,10 +21,8 @@ void state_tape_following_enter(struct state_tape_following_data *data, state_e 
     case STATE_STORE:
     case STATE_TAPE_SWEEP:
     default:
-        display_handler.clearDisplay();
-        display_handler.setCursor(0, 0);
-        display_handler.println("TAPE FOLLOWING");
-        display_handler.display();
+        print_event(event);
+        print_state(STATE_TAPE_FOLLOWING);
         break;
     }
     state_tape_following_run(data);

@@ -14,10 +14,8 @@ void state_raise_arm_enter(struct state_raise_arm_data *data, state_e from, stat
             // do nothing
             break;
         default:
-            display_handler.clearDisplay();
-            display_handler.setCursor(0, 0);
-            display_handler.println("RAISE ARM");
-            display_handler.display();
+            print_event(event);
+            print_state(STATE_RAISE_ARM);
             break;
     }
     state_raise_arm_run(data);
