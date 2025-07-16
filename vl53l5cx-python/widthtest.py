@@ -87,7 +87,7 @@ class tof_reading_e(Enum):
     TOF_READING_PET_OFFCENTER   = 3
     
 ser = serial.Serial(port='/dev/ttyAMA0', baudrate=115200, timeout=1)
-time.sleep(1);
+time.sleep(1)
 
 while True:
     if vl53.data_ready():

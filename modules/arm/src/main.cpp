@@ -54,38 +54,37 @@ void loop() {
 
     // calibrate();
     
-    // claw.write(140);
-    // arm.lerp_to_pos(250,50,250);
-    // log_pos();
-    // delay(1000);
-    // arm.lerp_to_pos(250,200,250);
-    // delay(500);
-    // arm.lerp_to_pos(350,200,250);
-    // delay(500);
-    // claw.write(95);
-    // delay(500);
-    // arm.lerp_to_pos(220,210,250);
-    // delay(500);
-    // arm.lerp_to_pos(220,300,250);
-    // delay(500);
-    // claw.write(180);
-    // delay(5000);
-
-    claw.write(180);
+    claw.write(140);
     arm.lerp_to_pos(250,50,250);
-    delay(1500);
-    arm.lerp_to_pos(250,100,250);
+    delay(1000);
+    arm.lerp_to_pos(250,200,250);
     delay(500);
-    arm.lerp_to_pos(350,100,250);
+    arm.lerp_to_pos(350,200,250);                   
     delay(500);
-    claw.write(100);
+    claw.write(95);
     delay(500);
-    arm.lerp_to_pos(350,300,250);
+    arm.lerp_to_pos(220,210,250);
     delay(500);
-    arm.lerp_to_pos(180,300,250);
+    arm.lerp_to_pos(220,300,250);
     delay(500);
     claw.write(180);
     delay(5000);
+
+    // claw.write(180);
+    // arm.lerp_to_pos(250,50,250);
+    // delay(1500);
+    // arm.lerp_to_pos(250,100,250);
+    // delay(500);
+    // arm.lerp_to_pos(350,100,250);
+    // delay(500);
+    // claw.write(100);
+    // delay(500);
+    // arm.lerp_to_pos(350,300,250);
+    // delay(500);
+    // arm.lerp_to_pos(180,300,250);
+    // delay(500);
+    // claw.write(180);
+    // delay(5000);
     
 }
 

@@ -5,11 +5,11 @@
 #define PIN_UART_RX 14
 #define PIN_UART_TX 12
 
-typedef enum tof_reading_e {
-    TOF_READING_NONE            = 0,
-    TOF_READING_PET             = 1,
-    TOF_READING_PILLAR          = 2,
-    TOF_READING_PET_OFFCENTER   = 3,
+enum tof_reading_e {
+    TOF_READING_NONE            = 0x00,
+    TOF_READING_PET             = 0x01,
+    TOF_READING_PILLAR          = 0x02,
+    TOF_READING_PET_OFFCENTER   = 0x03,
 };
 
 struct tof_data_packet {
@@ -33,7 +33,9 @@ void loop() {
     
     if (Serial2.available()) {
 
-        Serial2.readBytes((char *) &tof_data, sizeof(tof_data_packet));
+        Serial2.readBytes((char *) &tof_data, 1);
+        Serial2.flush();
+        Serial.printf("reading = %d\n", tof_data.reading);
 
         switch (tof_data.reading){
         case TOF_READING_NONE:
@@ -49,6 +51,7 @@ void loop() {
             Serial.println("Pet offcenter!");
             break;
         default:
+            Serial.println("Incorrect Data Format!");
             break;
         }
     }
