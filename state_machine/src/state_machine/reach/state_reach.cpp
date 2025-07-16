@@ -10,13 +10,19 @@ void state_reach_init(struct state_reach_data *data) {
 
 void state_reach_enter(struct state_reach_data *data, state_e from, state_event_e event) {
     switch (from) {
-        case STATE_WAIT:
-            break;
-        case STATE_TAPE_FOLLOWING:
-            break;
         case STATE_REACH:
             // do nothing
             break;
+        default:
+            display_handler.clearDisplay();
+            display_handler.setCursor(0, 0);
+            display_handler.println("REACH");
+            display_handler.display();
+            break;
     }
     state_reach_run(data);
+}
+
+void state_reach_exit(struct state_reach_data *data, state_e to, state_event_e event) {
+    
 }

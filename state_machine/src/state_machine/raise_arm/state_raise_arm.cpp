@@ -10,15 +10,19 @@ void state_raise_arm_init(struct state_raise_arm_data *data) {
 
 void state_raise_arm_enter(struct state_raise_arm_data *data, state_e from, state_event_e event) {
     switch (from) {
-        case STATE_WAIT:
-            break;
-        case STATE_TAPE_FOLLOWING:
-            break;
-        case STATE_REACH:
-            break;
         case STATE_RAISE_ARM:
             // do nothing
             break;
+        default:
+            display_handler.clearDisplay();
+            display_handler.setCursor(0, 0);
+            display_handler.println("RAISE ARM");
+            display_handler.display();
+            break;
     }
     state_raise_arm_run(data);
+}
+
+void state_raise_arm_exit(struct state_raise_arm_data *data, state_e to, state_event_e event) {
+    
 }

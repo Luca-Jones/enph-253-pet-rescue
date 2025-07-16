@@ -10,12 +10,18 @@ void state_tape_sweep_init(struct state_tape_sweep_data *data) {
 
 void state_tape_sweep_enter(struct state_tape_sweep_data *data, state_e from, state_event_e event) {
     switch (from) {
-        case STATE_WAIT:
+        case STATE_TAPE_SWEEP:
             break;
-        case STATE_TAPE_FOLLOWING:
-            break;
-        case STATE_REACH:
+        default:
+            display_handler.clearDisplay();
+            display_handler.setCursor(0, 0);
+            display_handler.println("TAPE SWEEP");
+            display_handler.display();
             break;
     }
     state_tape_sweep_run(data);
+}
+
+void state_tape_sweep_exit(struct state_tape_sweep_data *data, state_e to, state_event_e event) {
+
 }

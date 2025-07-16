@@ -41,10 +41,17 @@ It would be cleaner imo though.
 struct state_machine {
     state_e state;
     state_event_e internal_event;
-    struct state_wait_data wait_data;
-    struct state_tape_following_data tape_following_data;
-    struct state_reach_data reach_data;
-    // data for other states...
+    struct state_wait_data              wait_data;
+    struct state_tape_following_data    tape_following_data;
+    struct state_reach_data             reach_data;
+    struct state_raise_arm_data         raise_arm_data;
+    struct state_close_claw_data        close_claw_data;
+    struct state_store_data             store_data;
+    struct state_ramp_data              ramp_data;
+    struct state_debris_data            debris_data;
+    struct state_tape_sweep_data        tape_sweep_data;
+    struct state_extend_cascade_data    extend_cascade_data;
+    struct state_reverse_data           reverse_data;
 };
 
 struct state_transition {
@@ -106,7 +113,41 @@ static void state_machine_init(struct state_machine *sm) {
     sm->tape_following_data.state_machine = sm;
     state_tape_following_init(&sm->tape_following_data);
 
-    // other states...
+    // reach state
+    sm->reach_data.state_machine = sm;
+    state_reach_init(&sm->reach_data);
+
+    // raise state
+    sm->raise_arm_data.state_machine = sm;
+    state_raise_arm_init(&sm->raise_arm_data);
+
+    // close claw state
+    sm->close_claw_data.state_machine = sm;
+    state_close_claw_init(&sm->close_claw_data);
+
+    // store state
+    sm->store_data.state_machine = sm;
+    state_store_init(&sm->store_data);
+
+    // ramp state
+    sm->ramp_data.state_machine = sm;
+    state_ramp_init(&sm->ramp_data);
+
+    // debris state
+    sm->debris_data.state_machine = sm;
+    state_debris_init(&sm->debris_data);
+
+    // tape sweep state
+    sm->tape_sweep_data.state_machine = sm;
+    state_tape_sweep_init(&sm->tape_sweep_data);
+
+    // extend cascade state
+    sm->extend_cascade_data.state_machine = sm;
+    state_extend_cascade_init(&sm->extend_cascade_data);
+
+    // reverse state
+    sm->reach_data.state_machine = sm;
+    state_reverse_init(&sm->reverse_data);
 
 }
 
@@ -124,6 +165,7 @@ static state_event_e process_input(struct state_machine *data) {
 }
 
 static void process_event(struct state_machine *state_machine, state_event_e next_event) {
+    // TODO: deal with STATE_EVENT_NONE
     for (int i = 0 ; i < ARRAY_SIZE(state_transitions); i ++) {
         if(state_machine->state == state_transitions[i].previous_state && next_event == state_transitions[i].event) {
             state_exit(state_machine, state_transitions[i]);
@@ -131,26 +173,50 @@ static void process_event(struct state_machine *state_machine, state_event_e nex
             return;
         }
     }
-    // TODO: deal with STATE_EVENT_NONE
     assert(0); // throw an error
 }
 
-static void state_enter(struct state_machine *state_machine, struct state_transition state_transition) {
+static void state_enter(struct state_machine *state_machine, struct state_transition transition) {
     
-    if (state_transition.previous_state != state_transition.next_state) {
+    if (transition.previous_state != transition.next_state) {
         // clear any timers
-        state_machine->state = state_transition.next_state;
-        // log the state
+        state_machine->state = transition.next_state;
     }
 
-    switch (state_transition.next_state) {
+    switch (transition.next_state) {
     case STATE_WAIT:
-        state_wait_enter(&state_machine->wait_data, state_transition.previous_state, state_transition.event);
+        state_wait_enter(&state_machine->wait_data, transition.previous_state, transition.event);
         break;
     case STATE_TAPE_FOLLOWING:
-        state_tape_following_enter(&state_machine->tape_following_data, state_transition.previous_state, state_transition.event);
+        state_tape_following_enter(&state_machine->tape_following_data, transition.previous_state, transition.event);
         break;
-    // other states...
+    case STATE_REACH:
+        state_reach_enter(&state_machine->reach_data, transition.previous_state, transition.event);
+        break;
+    case STATE_RAISE_ARM:
+        state_raise_arm_enter(&state_machine->raise_arm_data, transition.previous_state, transition.event);
+        break;
+    case STATE_CLOSE_CLAW:
+        state_close_claw_enter(&state_machine->close_claw_data, transition.previous_state, transition.event);
+        break;
+    case STATE_STORE:
+        state_store_enter(&state_machine->store_data, transition.previous_state, transition.event);
+        break;
+    case STATE_RAMP:
+        state_ramp_enter(&state_machine->ramp_data, transition.previous_state, transition.event);
+        break;
+    case STATE_DEBRIS:
+        state_debris_enter(&state_machine->debris_data, transition.previous_state, transition.event);
+        break;
+    case STATE_TAPE_SWEEP:
+        state_tape_sweep_enter(&state_machine->tape_sweep_data, transition.previous_state, transition.event);
+        break;
+    case STATE_EXTEND_CASCADE:
+        state_extend_cascade_enter(&state_machine->extend_cascade_data, transition.previous_state, transition.event);
+        break;
+    case STATE_REVERSE:
+        state_reverse_enter(&state_machine->reverse_data, transition.previous_state, transition.event);
+        break;
     }
     // no default case means a compile error if this switch 
     // doesn't cover all elements of the state_e enum
@@ -158,15 +224,42 @@ static void state_enter(struct state_machine *state_machine, struct state_transi
 
 static void state_exit(struct state_machine *state_machine, struct state_transition transition) {
 
-    switch (transition.previous_state)
-    {
+    switch (transition.next_state) {
     case STATE_WAIT:
         state_wait_exit(&state_machine->wait_data, transition.next_state, transition.event);
         break;
     case STATE_TAPE_FOLLOWING:
         state_tape_following_exit(&state_machine->tape_following_data, transition.next_state, transition.event);
-    default:
+        break;
+    case STATE_REACH:
+        state_reach_exit(&state_machine->reach_data, transition.next_state, transition.event);
+        break;
+    case STATE_RAISE_ARM:
+        state_raise_arm_exit(&state_machine->raise_arm_data, transition.next_state, transition.event);
+        break;
+    case STATE_CLOSE_CLAW:
+        state_close_claw_exit(&state_machine->close_claw_data, transition.next_state, transition.event);
+        break;
+    case STATE_STORE:
+        state_store_exit(&state_machine->store_data, transition.next_state, transition.event);
+        break;
+    case STATE_RAMP:
+        state_ramp_exit(&state_machine->ramp_data, transition.next_state, transition.event);
+        break;
+    case STATE_DEBRIS:
+        state_debris_exit(&state_machine->debris_data, transition.next_state, transition.event);
+        break;
+    case STATE_TAPE_SWEEP:
+        state_tape_sweep_exit(&state_machine->tape_sweep_data, transition.next_state, transition.event);
+        break;
+    case STATE_EXTEND_CASCADE:
+        state_extend_cascade_exit(&state_machine->extend_cascade_data, transition.next_state, transition.event);
+        break;
+    case STATE_REVERSE:
+        state_reverse_exit(&state_machine->reverse_data, transition.next_state, transition.event);
         break;
     }
+    // no default case means a compile error if this switch 
+    // doesn't cover all elements of the state_e enum
 
 }

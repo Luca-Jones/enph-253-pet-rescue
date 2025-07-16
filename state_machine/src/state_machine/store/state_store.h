@@ -10,5 +10,6 @@ struct state_store_data {
 
 void state_store_init(struct state_store_data *data);
 void state_store_enter(struct state_store_data *data, state_e from, state_event_e event);
+void state_store_exit(struct state_store_data *data, state_e to, state_event_e event);
 
 #endif

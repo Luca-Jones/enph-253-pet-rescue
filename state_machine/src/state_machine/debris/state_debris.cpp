@@ -10,12 +10,19 @@ void state_debris_init(struct state_debris_data *data) {
 
 void state_debris_enter(struct state_debris_data *data, state_e from, state_event_e event) {
     switch (from) {
-        case STATE_WAIT:
+        case STATE_DEBRIS:
+            // do nothing 
             break;
-        case STATE_TAPE_FOLLOWING:
-            break;
-        case STATE_REACH:
+        default:
+            display_handler.clearDisplay();
+            display_handler.setCursor(0, 0);
+            display_handler.println("DEBRIS");
+            display_handler.display();
             break;
     }
     state_debris_run(data);
+}
+
+void state_debris_exit(struct state_debris_data *data, state_e to, state_event_e event) {
+    
 }

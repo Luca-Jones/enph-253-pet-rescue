@@ -11,6 +11,6 @@ struct state_raise_arm_data {
 
 void state_raise_arm_init(struct state_raise_arm_data *data);
 void state_raise_arm_enter(struct state_raise_arm_data *data, state_e from, state_event_e event);
-void state_raise_arm_exit(struct state_raise_arm_data *data, state_e from, state_event_e event);
+void state_raise_arm_exit(struct state_raise_arm_data *data, state_e to, state_event_e event);
 
 #endif

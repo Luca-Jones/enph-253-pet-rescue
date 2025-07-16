@@ -10,5 +10,6 @@ struct state_extend_cascade_data {
 
 void state_extend_cascade_init(struct state_extend_cascade_data *data);
 void state_extend_cascade_enter(struct state_extend_cascade_data *data, state_e from, state_event_e event);
+void state_extend_cascade_exit(struct state_extend_cascade_data *data, state_e to, state_event_e event);
 
 #endif

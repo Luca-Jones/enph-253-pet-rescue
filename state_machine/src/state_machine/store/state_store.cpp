@@ -1,5 +1,7 @@
 #include "state_store.h"
 
+// single-iteration event
+
 static void state_store_run(struct state_store_data *data) {
     // TODO: implement functionality
 }
@@ -10,12 +12,19 @@ void state_store_init(struct state_store_data *data) {
 
 void state_store_enter(struct state_store_data *data, state_e from, state_event_e event) {
     switch (from) {
-        case STATE_WAIT:
+        case STATE_STORE:
+            // do nothing
             break;
-        case STATE_TAPE_FOLLOWING:
-            break;
-        case STATE_REACH:
+        default:
+            display_handler.clearDisplay();
+            display_handler.setCursor(0, 0);
+            display_handler.println("STORE");
+            display_handler.display();
             break;
     }
     state_store_run(data);
+}
+
+void state_store_exit(struct state_store_data *data, state_e to, state_event_e event) {
+
 }

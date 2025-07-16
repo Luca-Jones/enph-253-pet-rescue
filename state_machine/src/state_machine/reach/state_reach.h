@@ -10,5 +10,6 @@ struct state_reach_data {
 
 void state_reach_init(struct state_reach_data *data);
 void state_reach_enter(struct state_reach_data *data, state_e from, state_event_e event);
+void state_reach_exit(struct state_reach_data *data, state_e to, state_event_e event);
 
 #endif

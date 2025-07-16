@@ -10,5 +10,6 @@ struct state_close_claw_data {
 
 void state_close_claw_init(struct state_close_claw_data *data);
 void state_close_claw_enter(struct state_close_claw_data *data, state_e from, state_event_e event);
+void state_close_claw_exit(struct state_close_claw_data *data, state_e to, state_event_e event);
 
 #endif

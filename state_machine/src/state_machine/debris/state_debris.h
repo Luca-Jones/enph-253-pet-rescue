@@ -10,5 +10,6 @@ struct state_debris_data {
 
 void state_debris_init(struct state_debris_data *data);
 void state_debris_enter(struct state_debris_data *data, state_e from, state_event_e event);
+void state_debris_exit(struct state_debris_data *data, state_e to, state_event_e event);
 
 #endif
