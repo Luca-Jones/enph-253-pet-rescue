@@ -1,5 +1,5 @@
-#ifndef STATE_WAIT_H
-#define STATE_WAIT_H
+#ifndef STATE_TAPE_SWEEP_H
+#define STATE_TAPE_SWEEP_H
 
 #include "../state_machine.h"
 

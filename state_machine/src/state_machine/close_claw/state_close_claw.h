@@ -1,5 +1,5 @@
-#ifndef STATE_WAIT_H
-#define STATE_WAIT_H
+#ifndef STATE_CLOSE_CLAW_H
+#define STATE_CLOSE_CLAW_H
 
 #include "../state_machine.h"
 

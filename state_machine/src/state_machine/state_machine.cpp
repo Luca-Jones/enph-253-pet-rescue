@@ -1,8 +1,6 @@
 #include <Arduino.h>
 #include <assert.h>
 #include "state_machine.h"
-#include "wait/state_wait.h"
-#include "tape_following/state_tape_following.h"
 
 /*
 This is a state machine implemented with enums and functions
@@ -45,6 +43,7 @@ struct state_machine {
     state_event_e internal_event;
     struct state_wait_data wait_data;
     struct state_tape_following_data tape_following_data;
+    struct state_reach_data reach_data;
     // data for other states...
 };
 
@@ -69,7 +68,7 @@ static const struct state_transition state_transitions[] = {
     {   STATE_TAPE_SWEEP,       STATE_EVENT_TAPE_DETECTED,          STATE_TAPE_FOLLOWING    },
     {   STATE_TAPE_FOLLOWING,   STATE_EVENT_EDGE_DETECTED,          STATE_EXTEND_CASCADE    },
     {   STATE_EXTEND_CASCADE,   STATE_EVENT_CASCADE_EXTENDED,       STATE_REVERSE           },
-    // {   STATE_REVERSE,          STATE_EVENT_ZIP_LINE_DETECTED,      STATE_WAIT              }, // tbd
+    {   STATE_REVERSE,          STATE_EVENT_ZIP_LINE_DETECTED,      STATE_WAIT              }, // tbd
 };
 
 
@@ -77,8 +76,8 @@ static const struct state_transition state_transitions[] = {
 static void          state_machine_init  (struct state_machine *data);
 static state_event_e process_input       (struct state_machine *data);
 static void          process_event       (struct state_machine *data, state_event_e next_event);
-static void          state_enter         (struct state_machine *state_machine, struct state_transition state_transition);
-
+static void          state_enter         (struct state_machine *state_machine, struct state_transition transition);
+static void          state_exit          (struct state_machine *state_machine, struct state_transition transition);
 
 void state_machine_run(void) {
 
@@ -101,9 +100,11 @@ static void state_machine_init(struct state_machine *sm) {
     
     // wait state
     sm->wait_data.state_machine = sm;
+    state_wait_init(&sm->wait_data);
 
     // tape following state
     sm->tape_following_data.state_machine = sm;
+    state_tape_following_init(&sm->tape_following_data);
 
     // other states...
 
@@ -112,6 +113,10 @@ static void state_machine_init(struct state_machine *sm) {
 static state_event_e process_input(struct state_machine *data) {
     
     // TODO: poll input from each sensor
+    // - ToF sensors (x2)
+    // - sonar sensors (x2)
+    // - rotary encoder?
+    // - megnetic encoder?
 
     // TODO: update data from globals modified from interrupts
 
@@ -121,6 +126,7 @@ static state_event_e process_input(struct state_machine *data) {
 static void process_event(struct state_machine *state_machine, state_event_e next_event) {
     for (int i = 0 ; i < ARRAY_SIZE(state_transitions); i ++) {
         if(state_machine->state == state_transitions[i].previous_state && next_event == state_transitions[i].event) {
+            state_exit(state_machine, state_transitions[i]);
             state_enter(state_machine, state_transitions[i]);
             return;
         }
@@ -148,4 +154,19 @@ static void state_enter(struct state_machine *state_machine, struct state_transi
     }
     // no default case means a compile error if this switch 
     // doesn't cover all elements of the state_e enum
+}
+
+static void state_exit(struct state_machine *state_machine, struct state_transition transition) {
+
+    switch (transition.previous_state)
+    {
+    case STATE_WAIT:
+        state_wait_exit(&state_machine->wait_data, transition.next_state, transition.event);
+        break;
+    case STATE_TAPE_FOLLOWING:
+        state_tape_following_exit(&state_machine->tape_following_data, transition.next_state, transition.event);
+    default:
+        break;
+    }
+
 }

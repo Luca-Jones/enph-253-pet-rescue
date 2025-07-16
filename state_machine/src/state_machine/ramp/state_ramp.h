@@ -1,5 +1,5 @@
-#ifndef STATE_WAIT_H
-#define STATE_WAIT_H
+#ifndef STATE_RAMP_H
+#define STATE_RAMP_H
 
 #include "../state_machine.h"
 
