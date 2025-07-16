@@ -99,7 +99,7 @@ int example1(void)
 	/* Fill the platform structure with customer's implementation. For this
 	* example, only the I2C address is used.
 	*/
-	Dev.platform.address = VL53L5CX_DEFAULT_I2C_ADDRESS;
+	Dev.platform.address = vl53l5cx_set_i2c_address(&Dev, 0x29);
 
 	/* (Optional) Reset sensor toggling PINs (see platform, not in API) */
 	//Reset_Sensor(&(Dev.platform));

@@ -8,7 +8,7 @@ from enum import Enum
 print("Uploading, please wait...")
 vl53 = vl53l5cx.VL53L5CX()
 vl53.set_resolution(8 * 8)
-vl53.set_ranging_frequency_hz(15)  
+vl53.set_ranging_frequency_hz(12)  
 print("Done!")
 
 prev_distance = None
@@ -88,6 +88,7 @@ class tof_reading_e(Enum):
     
 ser = serial.Serial(port='/dev/ttyAMA0', baudrate=115200, timeout=1)
 time.sleep(1)
+
 
 while True:
     if vl53.data_ready():
