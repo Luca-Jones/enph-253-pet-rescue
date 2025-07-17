@@ -1,26 +1,21 @@
 #include "state_close_claw.h"
 
-static void state_close_claw_run(struct state_close_claw_data *data) {
-    // TODO: implement functionality
+static void state_close_claw_run(struct state_machine *state_machine) {
+    claw.close();
+    // data->state_machine->internal_event = STATE_EVENT_PET_GRASPED;
 }
 
-void state_close_claw_init(struct state_close_claw_data *data) {
-    // TODO: intialize data
-}
-
-void state_close_claw_enter(struct state_close_claw_data *data, state_e from, state_event_e event) {
+void state_close_claw_enter(struct state_machine *state_machine, state_e from) {
     switch (from) {
         case STATE_CLOSE_CLAW:
             // do nothing
             break;
         default:
-            print_event(event);
-            print_state(STATE_CLOSE_CLAW);
             break;
     }
-    state_close_claw_run(data);
+    state_close_claw_run(state_machine);
 }
 
-void state_close_claw_exit(struct state_close_claw_data *data, state_e to, state_event_e event) {
-    
+void state_close_claw_exit(struct state_machine *state_machine) {
+    // reset pet check
 }

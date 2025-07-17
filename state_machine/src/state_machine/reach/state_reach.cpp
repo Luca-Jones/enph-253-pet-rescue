@@ -1,26 +1,22 @@
 #include "state_reach.h"
 
-static void state_reach_run(struct state_reach_data *data) {
-    // TODO: implement reaching functionality
+#define REACH_STEP 10
+
+static void state_reach_run(struct state_machine *state_machine) {
+    // arm.move_to_pos(data->x + REACH_STEP, data->y);
 }
 
-void state_reach_init(struct state_reach_data *data) {
-    // TODO: intialize reach data
-}
-
-void state_reach_enter(struct state_reach_data *data, state_e from, state_event_e event) {
+void state_reach_enter(struct state_machine *state_machine, state_e from) {
     switch (from) {
         case STATE_REACH:
             // do nothing
             break;
         default:
-            print_event(event);
-            print_state(STATE_REACH);
             break;
     }
-    state_reach_run(data);
+    state_reach_run(state_machine);
 }
 
-void state_reach_exit(struct state_reach_data *data, state_e to, state_event_e event) {
-    
+void state_reach_exit(struct state_machine *state_machine) {
+    // TODO: remove?
 }

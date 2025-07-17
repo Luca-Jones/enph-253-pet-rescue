@@ -27,8 +27,8 @@ void loop() {
     // int angle = (int) (pot_val / (float) (1 << 12) * 180);
     claw.write(180);
     delay(1000);
-    // claw.write(120);
-    // delay(4000);
+    claw.write(105);
+    delay(4000);
 
     // claw.write(0);
     // delay(1000);

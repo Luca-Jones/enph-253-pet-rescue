@@ -1,0 +1,18 @@
+#ifndef STATES_H
+#define STATES_H
+
+typedef enum {
+    STATE_WAIT,
+    STATE_TAPE_FOLLOWING,
+    STATE_REACH,
+    STATE_RAISE_ARM,
+    STATE_CLOSE_CLAW,
+    STATE_STORE,
+    STATE_RAMP,
+    STATE_DEBRIS,
+    STATE_TAPE_SWEEP,
+    STATE_EXTEND_CASCADE,
+    STATE_REVERSE,
+} state_e;
+
+#endif

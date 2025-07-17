@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <pin_out.h>
 #include "state_machine/state_machine.h"
 
 void OledSetup() {
@@ -13,7 +14,12 @@ void setup() {
     OledSetup();
     display_handler.println("Hello, World!");
     display_handler.display();
-    state_machine_run();
+
+    attachInterrupt(digitalPinToInterrupt(PIN_START_BUTTON), button_pressed_ISR, RISING);
+    
+    struct state_machine state_machine; // stack allocated data that gets passed around
+    state_machine_init(&state_machine);
+    state_machine_run(&state_machine);
 }
 
 void loop() {}
