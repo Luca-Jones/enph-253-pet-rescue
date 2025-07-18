@@ -26,8 +26,8 @@ float meanArray(const float *data, int len) {
 
 
 bool detectPetGround(const float d[8][8]) {
-  float middleL = (d[3][3] + d[4][3]) * 0.5f;
-  float middleR = (d[3][4] + d[4][4]) * 0.5f;
+  float middleL = (d[3][3] + d[4][3] + d[5][3]) / 3.0f;
+  float middleR = (d[3][4] + d[4][4] + d[5][3]) / 3.0f;
   float diffMiddle = fabs(middleL - middleR);
 
   float sideL = (d[3][2] + d[4][2]) * 0.5f;
@@ -36,12 +36,12 @@ bool detectPetGround(const float d[8][8]) {
 
   float topMid = d[0][3];
 
-  return (diffSide <= 25.0f && diffMiddle <= 20.0f && topMid >= 260.0f);
+  return (diffSide <= 25.0f && diffMiddle < diffSide && topMid >= 200.0f);
 }
 
 
 bool detectPetPillar(const float center[3][2], const float meanReflectance) {
-  if (meanReflectance <= 15.0f){
+  if (meanReflectance <= 10.0f){
     if (hasPrevCenter) {
       float diffs[6];
       int idx = 0;
@@ -57,6 +57,7 @@ bool detectPetPillar(const float center[3][2], const float meanReflectance) {
         stableDistCount = 0;
       }
     }
+
     memcpy(prevCenter, center, sizeof(prevCenter));
     hasPrevCenter = true;
 
@@ -74,7 +75,6 @@ bool detectPetPillar(const float center[3][2], const float meanReflectance) {
 void setup() {
 
   Serial.begin(115200);
-  while (!Serial) {}
 
   Wire.begin(SDA_PIN, SCL_PIN);
   Wire.setClock(400000);
@@ -82,11 +82,9 @@ void setup() {
   Serial.println("Initializing VL53L5CX...");
   if (!tof.begin()) {
     Serial.println("Sensor not found!");
-    while (1);
   }
 
   int deviceAddress = 0x29;
-
   tof.setAddress(deviceAddress);
     /*while (Serial.available() == false) //Clear incoming key presses
       ; //Do nothing
@@ -139,30 +137,18 @@ void loop() {
       if (meanDistance >= 100.0f && meanDistance <= 240.0f) {
 
         float refl[8][8];
-        for (int r = 0; r < 8; r++) {
-          for (int c = 0; c < 8; c++) {
-            int idx = r*8 + c;
-            refl[7-r][c] = result.reflectance[idx];
+        for (int row = 0; row < 8; row++) {
+          for (int col = 0; col < 8; col++) {
+            int index = row*8 + col;
+            refl[7-row][col] = result.reflectance[index];
           }
         }
 
-        /*
-        // Print reflectance array
-        for (int r = 0; r < 8; r++) {
-          for (int c = 0; c < 8; c++) {
-            Serial.print(refl[r][c]);
-            Serial.print('\t');
-          }
-          Serial.println();
-        }*/
-
-        float centerRefl[3][2];
         float flatRefl[6];
         int k = 0;
         for (int i = 0; i < 3; i++) {
           for (int j = 0; j < 2; j++) {
-            centerRefl[i][j] = refl[4+i][3+j];
-            flatRefl[k++] = centerRefl[i][j];
+            flatRefl[k++] = refl[4+i][3+j];
           }
         }
         float meanReflectance = meanArray(flatRefl, 6);
