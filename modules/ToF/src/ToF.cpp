@@ -13,6 +13,12 @@
 SparkFun_VL53L5CX tof;
 VL53L5CX_ResultsData result;
 
+const int MAP_SIZE = 8; // 8x8 grid
+const int MIDDLE_L_COL = 3;
+const int MIDDLE_R_COL = 4;
+const int SIDE_L_COL = 2;
+const int SIDE_R_COL = 5;
+
 float prevCenter[3][2];
 bool  hasPrevCenter    = false;
 int   stableDistCount  = 0;
@@ -25,22 +31,30 @@ float meanArray(const float *data, int len) {
 }
 
 
-bool detectPetGround(const float d[8][8]) {
-  float middleL = (d[3][3] + d[4][3] + d[5][3]) / 3.0f;
-  float middleR = (d[3][4] + d[4][4] + d[5][3]) / 3.0f;
-  float diffMiddle = fabs(middleL - middleR);
+bool detectPetGround(const float distance[MAP_SIZE][MAP_SIZE]) {
 
-  float sideL = (d[3][2] + d[4][2]) * 0.5f;
-  float sideR = (d[3][5] + d[4][5]) * 0.5f;
-  float diffSide = fabs(sideL - sideR);
+  //Checks the difference between the mean of two center columns
+  float meanCenterL = (distance[3][3] + distance[4][3] + distance[5][3]) / 3.0f;
+  float meanCenterR = (distance[3][4] + distance[4][4] + distance[5][4]) / 3.0f;
+  float meanCenter = (meanCenterL + meanCenterR) / 2.0f;
+  float diffMiddle = fabs(meanCenterL - meanCenterR);
 
-  float topMid = d[0][3];
+  //Checks the difference between the mean of two columns beside the center columns
+  float meanSideL = (distance[3][2] + distance[4][2] + distance[5][2]) / 3.0f;
+  float meanSideR = (distance[3][5] + distance[4][5] + distance[5][5]) / 3.0f;
+  float meanSide = (meanSideL + meanSideR) / 2.0f;
+  float diffSide = fabs(meanSideL - meanSideR);
 
-  return (diffSide <= 25.0f && diffMiddle < diffSide && topMid >= 200.0f);
+  // Checks if the top middle grids are more than threshold
+  // This is to ensure that it does not detect zipline poles
+  float meanCenterTop = (distance[0][3] + distance[0][4]) / 2.0f;
+
+  return (diffSide <= 25.0f && meanCenter < meanSide && meanCenterTop >= 260.0f);
 }
 
 
 bool detectPetPillar(const float center[3][2], const float meanReflectance) {
+
   if (meanReflectance <= 10.0f){
     if (hasPrevCenter) {
       float diffs[6];
@@ -114,11 +128,12 @@ void setup() {
 void loop() {
   if (tof.isDataReady()) {
     if (tof.getRangingData(&result)) {
-      float dist[8][8];
-      for (int r = 0; r < 8; r++) {
-        for (int c = 0; c < 8; c++) {
-          int idx = r*8 + c;
-          dist[7-r][c] = result.distance_mm[idx];
+
+      float dist[MAP_SIZE][MAP_SIZE];
+      for (int row = 0; row < MAP_SIZE; row++) {
+        for (int col = 0; col < MAP_SIZE; col++) {
+          int i = row*8 + col;
+          dist[7-row][col] = result.distance_mm[i];
         }
       }
 
@@ -132,26 +147,28 @@ void loop() {
           flatCenter[k++] = centerBlock[i][j];
         }
       }
+
       float meanDistance = meanArray(flatCenter, 6);
 
       if (meanDistance >= 100.0f && meanDistance <= 240.0f) {
 
-        float refl[8][8];
-        for (int row = 0; row < 8; row++) {
-          for (int col = 0; col < 8; col++) {
+        float refl[MAP_SIZE][MAP_SIZE];
+        for (int row = 0; row < MAP_SIZE; row++) {
+          for (int col = 0; col < MAP_SIZE; col++) {
             int index = row*8 + col;
             refl[7-row][col] = result.reflectance[index];
           }
         }
 
-        float flatRefl[6];
+        float middleRefl[6];
         int k = 0;
         for (int i = 0; i < 3; i++) {
           for (int j = 0; j < 2; j++) {
-            flatRefl[k++] = refl[4+i][3+j];
+            middleRefl[k++] = refl[4+i][3+j];
           }
         }
-        float meanReflectance = meanArray(flatRefl, 6);
+
+        float meanReflectance = meanArray(middleRefl, 6);
 
         if (detectPetPillar(centerBlock, meanReflectance)) {
           Serial.println("Pillar detected");
