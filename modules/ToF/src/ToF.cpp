@@ -41,6 +41,9 @@ float reflMap[SIZE][SIZE];
 int stablePillarCount = 0;
 int stablePetCount = 0;
 
+float getDistanceToObject(){
+  return (distMap[3][3] + distMap[3][4] + distMap[4][3] + distMap[4][4]) * 0.25f; // Center distance
+}
 
 void CreateDistanceMap(float distMap[SIZE][SIZE], const VL53L5CX_ResultsData& result) {
   for (int row = 0; row < SIZE; row++) {
@@ -67,7 +70,7 @@ float getMeanCenterDistance(const float distMap[SIZE][SIZE]) {
       sum += distMap[i][j];
     }
   }
-  return sum / 6.0f;
+  return sum * 0.17f;
 }
 
 float getMeanCenterReflectance(const float refl[SIZE][SIZE]) {
@@ -86,20 +89,20 @@ float getMeanCenterReflectance(const float refl[SIZE][SIZE]) {
 bool detectCylindricalObject(const float distance[SIZE][SIZE]) {
 
   //Checks the difference between the mean of two center columns
-  float meanCenterL = (distance[3][3] + distance[4][3] + distance[5][3]) / 3.0f;
-  float meanCenterR = (distance[3][4] + distance[4][4] + distance[5][4]) / 3.0f;
-  float meanCenter = (meanCenterL + meanCenterR) / 2.0f;
+  float meanCenterL = (distance[3][3] + distance[4][3] + distance[5][3]) * 0.33f;
+  float meanCenterR = (distance[3][4] + distance[4][4] + distance[5][4]) * 0.33f;
+  float meanCenter = (meanCenterL + meanCenterR) * 0.5f;
   float diffMiddle = fabs(meanCenterL - meanCenterR);
 
   //Checks the difference between the mean of two columns beside the center columns
-  float meanSideL = (distance[3][2] + distance[4][2] + distance[5][2]) / 3.0f;
-  float meanSideR = (distance[3][5] + distance[4][5] + distance[5][5]) / 3.0f;
-  float meanSide = (meanSideL + meanSideR) / 2.0f;
+  float meanSideL = (distance[3][2] + distance[4][2] + distance[5][2]) * 0.33f;
+  float meanSideR = (distance[3][5] + distance[4][5] + distance[5][5]) * 0.33f;
+  float meanSide = (meanSideL + meanSideR) * 0.5f;
   float diffSide = fabs(meanSideL - meanSideR);
 
   // Checks if the top middle grids are more than threshold
   // This is to ensure that it does not detect zipline poles as a pet
-  float meanCenterTop = (distance[0][3] + distance[0][4]) / 2.0f;
+  float meanCenterTop = (distance[0][3] + distance[0][4]) * 0.5f;
 
   return (diffSide <= 30.0f && meanCenter < meanSide && meanCenterTop >= 260.0f);
 }
