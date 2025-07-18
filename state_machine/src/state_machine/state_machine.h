@@ -1,8 +1,9 @@
 #ifndef STATE_MACHINE_H
 #define STATE_MACHINE_H
 
-#include <Arm.h>
-#include <Claw.h>
+#define DEBUG
+
+#ifdef DEBUG
 
 #include <Wire.h>
 #include <Adafruit_GFX.h>
@@ -11,9 +12,14 @@
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define OLED_RESET -1 // shared with the esp32 reset pin
-extern Adafruit_SSD1306 display_handler;
+extern Adafruit_SSD1306 display_handler;    
+
+#endif
 
 /* Actuators */
+#include <Arm.h>
+#include <Claw.h>
+
 extern Servo servo_1;
 extern Servo servo_2;
 extern Servo servo_3;
@@ -21,20 +27,20 @@ extern Arm arm;
 extern Claw claw;
 
 
+/* STATE MACHINE */
 #include "states.h"
 #include "events.h"
 
-#define DEBUG 1
-
-/* STATE MACHINE */
 struct state_machine {
     state_e state;
     state_event_e internal_event;
+    int pets;
 };
 
 /* FUNCTIONS */
 void state_machine_init(struct state_machine *state_machine);
-void state_machine_run(struct state_machine *state_machine);
+state_event_e process_input (struct state_machine *state_machine);
+void process_event (struct state_machine *state_machine, state_event_e next_event);
 void print_state(state_e state);
 void print_event(state_event_e event);
 void IRAM_ATTR button_pressed_ISR();

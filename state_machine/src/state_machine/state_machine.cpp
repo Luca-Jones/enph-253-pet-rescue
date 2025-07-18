@@ -55,74 +55,90 @@ struct state_transition {
 
 // consult the diagram to understand these transitions
 static const struct state_transition state_transitions[] = {
-    {   STATE_WAIT,             STATE_EVENT_PET_DETECTED,           STATE_REACH             },
-    {   STATE_REACH,            STATE_EVENT_NEAR_PET,               STATE_CLOSE_CLAW        },
-    {   STATE_CLOSE_CLAW,       STATE_EVENT_PET_GRASPED,            STATE_STORE             },
+    {STATE_WAIT, STATE_EVENT_BUTTON_PRESSED, STATE_STORE},
+    // {   STATE_WAIT,             STATE_EVENT_PET_DETECTED,           STATE_REACH             },
+    // {   STATE_REACH,            STATE_EVENT_NEAR_PET,               STATE_CLOSE_CLAW        },
+    // {   STATE_CLOSE_CLAW,       STATE_EVENT_PET_GRASPED,            STATE_STORE             },
     {   STATE_STORE,            STATE_EVENT_PET_STORED,             STATE_WAIT              },
 };
 
 
 /* FUNCTIONS */
-static state_event_e process_input       (struct state_machine *state_machine);
-static void          process_event       (struct state_machine *state_machine, state_event_e next_event);
+state_event_e        process_input       (struct state_machine *state_machine);
+void                 process_event       (struct state_machine *state_machine, state_event_e next_event);
 static void          state_enter         (struct state_machine *state_machine, state_e next_state);
 static void          state_exit          (struct state_machine *state_machine, state_e previous_state);
 
-void state_machine_init(struct state_machine *sm) {
+void state_machine_init(struct state_machine *state_machine) {
 
-    sm->state = STATE_WAIT;
-    sm->internal_event = STATE_EVENT_NONE;
+    #ifdef DEBUG
+    display_handler.begin(SSD1306_SWITCHCAPVCC, 0x3C); // 3.3V at the default i2c addr
+    display_handler.setTextSize(1);
+    display_handler.setTextColor(SSD1306_WHITE);
+    
+    print_event(state_machine->internal_event);
+    print_state(state_machine->state);
+    #endif
+
+    attachInterrupt(digitalPinToInterrupt(PIN_START_BUTTON), button_pressed_ISR, CHANGE);
+
+    state_machine->state = STATE_WAIT;
+    state_machine->internal_event = STATE_EVENT_NONE;
 
     // set up the servos
     servo_1.attach(PIN_ARM_SERVO_1, CHANNEL_ARM_SERVO_1, 500, 2500);
     servo_2.attach(PIN_ARM_SERVO_2, CHANNEL_ARM_SERVO_2, 500, 2500);
     servo_3.attach(PIN_CLAW, CHANNEL_CLAW, 500, 2500);
+
+    // TODO: set up the sensors
     
-    // wait state
-
-    // reach state
-
-    // raise state
-
-    // close claw state
-
     // store state
+    state_machine->pets = 0;
 
 }
 
-void state_machine_run(struct state_machine *state_machine) {
-
-    while(1) {
-        const state_event_e event = process_input(state_machine);
-        process_event(state_machine, event);
-    }
-
-}
-
-static state_event_e process_input(struct state_machine *state_machine) {
+state_event_e process_input(struct state_machine *state_machine) {
     
-    // TODO: poll input from each sensor
-    // - ToF sensors (x2)
-    // - sonar sensors (x2)
-    // - rotary encoder?
-    // - megnetic encoder?
-
-    // state_machine->reach_data.distance = 0; // update with the ToF average distance
-    // TODO: read ToF if there is a pet
-    if (0) {
-        return STATE_EVENT_PET_DETECTED;
+    // internal events take precedence
+    if (state_machine->internal_event != STATE_EVENT_NONE) {
+        state_event_e ie = state_machine->internal_event;
+        state_machine->internal_event = STATE_EVENT_NONE;
+        return ie;
     }
 
-    // update data from globals modified from interrupts
+    // interupt updates are next
     if (button_pressed) {
         button_pressed = false;
         return STATE_EVENT_BUTTON_PRESSED;
     }
 
+    // poll input from each sensor
+    // - ToF sensors (x2)
+    // - sonar sensors (x2)
+    // - rotary encoder?
+    // - megnetic encoder?
+
+
+    if (0) {
+        return STATE_EVENT_PILLAR_DETECTED;
+    }
+
+    if (0) {
+
+        // if dist < something
+        if (0) {
+            return STATE_EVENT_NEAR_PET;
+        } else {
+            return STATE_EVENT_PET_DETECTED;
+        }
+    }
+
+    
+
     return STATE_EVENT_NONE;
 }
 
-static void process_event(struct state_machine *state_machine, state_event_e next_event) {
+void process_event(struct state_machine *state_machine, state_event_e next_event) {
     
     if (next_event == STATE_EVENT_NONE) {
         state_enter(state_machine, state_machine->state); // stay in the same state
@@ -131,36 +147,39 @@ static void process_event(struct state_machine *state_machine, state_event_e nex
     for (int i = 0 ; i < ARRAY_SIZE(state_transitions); i ++) {
         if(state_machine->state == state_transitions[i].previous_state && next_event == state_transitions[i].event) {
             
-            if (DEBUG) {
-                print_event(next_event);
-                print_state(state_transitions[i].next_state);
-            }
+            #ifdef DEBUG
+            print_event(next_event);
+            print_state(state_transitions[i].next_state);
+            #endif
             
             state_exit(state_machine, state_transitions[i].previous_state);
             state_enter(state_machine, state_transitions[i].next_state);
             return;
         }
     }
-    assert(0); // throw an error
+    // assert(0); // throw an error
 }
 
 static void state_enter(struct state_machine *state_machine, state_e next_state) {
     
+    state_e previous_state = state_machine->state;
+    state_machine->state = next_state;
+
     switch (next_state) {
     case STATE_WAIT:
-        state_wait_enter(state_machine, state_machine->state);
+        state_wait_enter(state_machine, previous_state);
         break;
     case STATE_REACH:
-        state_reach_enter(state_machine, state_machine->state);
+        state_reach_enter(state_machine, previous_state);
         break;
     case STATE_RAISE_ARM:
-        state_raise_arm_enter(state_machine, state_machine->state);
+        state_raise_arm_enter(state_machine, previous_state);
         break;
     case STATE_CLOSE_CLAW:
-        state_close_claw_enter(state_machine, state_machine->state);
+        state_close_claw_enter(state_machine, previous_state);
         break;
     case STATE_STORE:
-        state_store_enter(state_machine, state_machine->state);
+        state_store_enter(state_machine, previous_state);
         break;
     default:
         break;
@@ -195,36 +214,47 @@ void print_state(state_e state) {
     switch(state) {
         case STATE_WAIT: 
         display_handler.println("WAIT");
+        Serial.println("WAIT");
         break;
     case STATE_TAPE_FOLLOWING:
         display_handler.println("TAPE FOLLOWING");
+        Serial.println("TAPE FOLLOWING");
         break;
     case STATE_REACH:
         display_handler.println("REACH");
+        Serial.println("REACH");
         break;
     case STATE_RAISE_ARM:
         display_handler.println("RAISE ARM");
+        Serial.println("RAISE ARM");
         break;
     case STATE_CLOSE_CLAW:
         display_handler.println("CLOSE ARM");
+        Serial.println("CLOSE ARM");
         break;
     case STATE_STORE:
         display_handler.println("STORE");
+        Serial.println("STORE");
         break;
     case STATE_RAMP:
         display_handler.println("RAMP");
+        Serial.println("RAMP");
         break;
     case STATE_DEBRIS:
         display_handler.println("DEBRIS");
+        Serial.println("DEBRIS");
         break;
     case STATE_TAPE_SWEEP:
         display_handler.println("TAPE SWEEP");
+        Serial.println("TAPE SWEEP");
         break;
     case STATE_EXTEND_CASCADE:
         display_handler.println("CASCADE");
+        Serial.println("CASCADE");
         break;
     case STATE_REVERSE:
         display_handler.println("REVERSE");
+        Serial.println("REVERSE");
         break;
     default:
         break;
@@ -238,42 +268,59 @@ void print_event(state_event_e event) {
     switch (event) {
     case STATE_EVENT_NONE:
         display_handler.println("NONE");
+        Serial.println("NONE");
+        break;
+    case STATE_EVENT_BUTTON_PRESSED:
+        display_handler.println("BUTTON PRESSED");
+        Serial.println("BUTTON PRESSED");
         break;
     case STATE_EVENT_TAPE_DETECTED:
         display_handler.println("TAPE DETECTED");
+        Serial.println("TAPE DETECTED");
         break;
     case STATE_EVENT_PET_DETECTED:
         display_handler.println("PET DETECTED");
+        Serial.println("PET DETECTED");
         break;
     case STATE_EVENT_PILLAR_DETECTED:
         display_handler.println("PILLAR DETECTED");
+        Serial.println("PILLAR DETECTED");
         break;
     case STATE_EVENT_NEAR_PET:
         display_handler.println("NEAR PET");
+        Serial.println("NEAR PET");
         break;
     case STATE_EVENT_PET_GRASPED:
         display_handler.println("PET GRASPED");
+        Serial.println("PET GRASPED");
         break;
     case STATE_EVENT_PET_STORED:
         display_handler.println("PET STORED");
+        Serial.println("PET STORED");
         break;
     case STATE_EVENT_RAMP_DETECTED:
         display_handler.println("RAMP DETECTED");
+        Serial.println("RAMP DETECTED");
         break;
     case STATE_EVENT_DEBRIS_DETECTED:
         display_handler.println("DEBRIS DETECTED");
+        Serial.println("DEBRIS DETECTED");
         break;
     case STATE_EVENT_FLAT_GROUND_DETECTED:
         display_handler.println("FLAT GROUND DETECTED");
+        Serial.println("FLAT GROUND DETECTED");
         break;
     case STATE_EVENT_EDGE_DETECTED:
         display_handler.println("EDGE DETECTED");
+        Serial.println("EDGE DETECTED");
         break;
     case STATE_EVENT_CASCADE_EXTENDED:
         display_handler.println("CASCADE EXTENDED");
+        Serial.println("CASCADE EXTENDED");
         break;
     case STATE_EVENT_ZIP_LINE_DETECTED:
         display_handler.println("ZIP LINE");
+        Serial.println("ZIP LINE");
         break;
     default:
         break;

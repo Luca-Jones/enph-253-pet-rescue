@@ -3,7 +3,9 @@
 #define REACH_STEP 10
 
 static void state_reach_run(struct state_machine *state_machine) {
-    // arm.move_to_pos(data->x + REACH_STEP, data->y);
+    int x,y;
+    arm.get_pos(&x, &y);
+    arm.move_to_pos(x + REACH_STEP, y);
 }
 
 void state_reach_enter(struct state_machine *state_machine, state_e from) {

@@ -2,7 +2,8 @@
 
 static void state_close_claw_run(struct state_machine *state_machine) {
     claw.close();
-    // data->state_machine->internal_event = STATE_EVENT_PET_GRASPED;
+    delay(500);
+    state_machine->internal_event = STATE_EVENT_PET_GRASPED;
 }
 
 void state_close_claw_enter(struct state_machine *state_machine, state_e from) {

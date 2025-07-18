@@ -1,7 +1,11 @@
 #include "state_raise_arm.h"
 
+#define RAISE_STEP 10
+
 static void state_raise_arm_run(struct state_machine *state_machine) {
-    // TODO: implement functionality
+    int x,y;
+    arm.get_pos(&x, &y);
+    arm.move_to_pos(x, y + RAISE_STEP);
 }
 
 void state_raise_arm_enter(struct state_machine *state_machine, state_e from) {
@@ -16,5 +20,5 @@ void state_raise_arm_enter(struct state_machine *state_machine, state_e from) {
 }
 
 void state_raise_arm_exit(struct state_machine *state_machine) {
-    
+    // TODO: remove?
 }

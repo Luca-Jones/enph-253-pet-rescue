@@ -2,24 +2,16 @@
 #include <pin_out.h>
 #include "state_machine/state_machine.h"
 
-void OledSetup() {
-    display_handler.begin(SSD1306_SWITCHCAPVCC, 0x3C); // 3.3V at the default i2c addr
-    display_handler.setTextSize(1);
-    display_handler.setTextColor(SSD1306_WHITE);
-    display_handler.clearDisplay();
-    display_handler.setCursor(0, 0);
-}
+static struct state_machine state_machine;
 
 void setup() {
-    OledSetup();
-    display_handler.println("Hello, World!");
-    display_handler.display();
-
-    attachInterrupt(digitalPinToInterrupt(PIN_START_BUTTON), button_pressed_ISR, RISING);
-    
-    struct state_machine state_machine; // stack allocated data that gets passed around
+    #ifdef DEBUG
+    Serial.begin(115200);
+    #endif
     state_machine_init(&state_machine);
-    state_machine_run(&state_machine);
 }
 
-void loop() {}
+void loop() {
+    state_event_e event = process_input(&state_machine);
+    process_event(&state_machine, event);
+}
