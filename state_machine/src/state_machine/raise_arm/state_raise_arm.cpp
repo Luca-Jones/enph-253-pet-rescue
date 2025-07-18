@@ -5,7 +5,9 @@
 static void state_raise_arm_run(struct state_machine *state_machine) {
     int x,y;
     arm.get_pos(&x, &y);
-    arm.move_to_pos(x, y + RAISE_STEP);
+    arm.lerp_to_pos(x, ARM_PILLAR_Y, 500);
+    
+    state_machine->internal_event = EVENT_ARM_RAISED;
 }
 
 void state_raise_arm_enter(struct state_machine *state_machine, state_e from) {

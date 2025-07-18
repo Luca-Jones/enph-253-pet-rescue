@@ -20,7 +20,7 @@ static void state_store_run(struct state_machine *state_machine) {
     delay(500);
 
     state_machine->pets++;
-    state_machine->internal_event = STATE_EVENT_PET_STORED;
+    state_machine->internal_event = EVENT_PET_STORED;
 }
 
 void state_store_enter(struct state_machine *state_machine, state_e from) {

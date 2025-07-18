@@ -57,11 +57,13 @@ struct state_transition {
 
 // consult the diagram to understand these transitions
 static const struct state_transition state_transitions[] = {
-    {STATE_WAIT, STATE_EVENT_BUTTON_PRESSED, STATE_STORE},
-    // {   STATE_WAIT,             STATE_EVENT_PET_DETECTED,           STATE_REACH             },
-    // {   STATE_REACH,            STATE_EVENT_NEAR_PET,               STATE_CLOSE_CLAW        },
-    // {   STATE_CLOSE_CLAW,       STATE_EVENT_PET_GRASPED,            STATE_STORE             },
-    {   STATE_STORE,            STATE_EVENT_PET_STORED,             STATE_WAIT              },
+    // {STATE_WAIT, STATE_EVENT_BUTTON_PRESSED, STATE_STORE},
+    // {   STATE_WAIT,             EVENT_PILLAR_DETECTED,        STATE_RAISE_ARM         },
+    // {   STATE_RAISE_ARM,        EVENT_ARM_RAISED,             STATE_REACH             },
+    {   STATE_WAIT,             EVENT_PET_DETECTED,           STATE_REACH             },
+    // {   STATE_REACH,            EVENT_NEAR_PET,               STATE_CLOSE_CLAW        },
+    // {   STATE_CLOSE_CLAW,       EVENT_PET_GRASPED,            STATE_STORE             },
+    // {   STATE_STORE,            EVENT_PET_STORED,             STATE_WAIT              },
 };
 
 
@@ -75,15 +77,18 @@ void state_machine_init(struct state_machine *state_machine) {
     display_handler.begin(SSD1306_SWITCHCAPVCC, 0x3C); // 3.3V at the default i2c addr
     display_handler.setTextSize(1);
     display_handler.setTextColor(SSD1306_WHITE);
-    
-    print_event(state_machine->internal_event);
-    print_state(state_machine->state);
+    display_handler.clearDisplay();
+    display_handler.setCursor(0, 0);
+    display_handler.println("Initializing State Machine...");
+    display_handler.display();
+    Serial.println("Initializing State Machine...");
     #endif
 
     attachInterrupt(digitalPinToInterrupt(PIN_START_BUTTON), button_pressed_ISR, CHANGE);
 
     state_machine->state = STATE_WAIT;
-    state_machine->internal_event = STATE_EVENT_NONE;
+    state_machine->internal_event = EVENT_NONE;
+    state_machine->pets = 0;
 
     // set up the servos
     servo_1.attach(PIN_ARM_SERVO_1, CHANNEL_ARM_SERVO_1, 500, 2500);
@@ -99,24 +104,26 @@ void state_machine_init(struct state_machine *state_machine) {
     tof.setRangingFrequency(TOF_RANGING_FREQUENCY);
     tof.startRanging();
     
-    // store state
-    state_machine->pets = 0;
+    #ifdef DEBUG
+    print_event(state_machine->internal_event);
+    print_state(state_machine->state);
+    #endif
 
 }
 
 state_event_e process_input(struct state_machine *state_machine) {
     
     // internal events take precedence
-    if (state_machine->internal_event != STATE_EVENT_NONE) {
+    if (state_machine->internal_event != EVENT_NONE) {
         state_event_e ie = state_machine->internal_event;
-        state_machine->internal_event = STATE_EVENT_NONE;
+        state_machine->internal_event = EVENT_NONE;
         return ie;
     }
 
     // interupt updates are next
     if (button_pressed) {
         button_pressed = false;
-        return STATE_EVENT_BUTTON_PRESSED;
+        return EVENT_BUTTON_PRESSED;
     }
 
     // poll input from each sensor
@@ -125,30 +132,34 @@ state_event_e process_input(struct state_machine *state_machine) {
     // - rotary encoder?
     // - megnetic encoder?
 
-    // TODO: tof
+    // if (tof.isDataReady()) // always seems to return false?  
 
-    tof.getRangingData(&state_machine->tof_data);
+    if (tof.getRangingData(&state_machine->tof_data)) {
 
-    if (tof_pillar_detected(&state_machine->tof_data)) {
-        return STATE_EVENT_PILLAR_DETECTED;
-    }
-
-    if (tof_pet_detected(&state_machine->tof_data)) {
-        if (tof_near_pet(&state_machine->tof_data)) {
-            return STATE_EVENT_NEAR_PET;
-        } else {
-            return STATE_EVENT_PET_DETECTED;
+        float center_dist = tof_get_center_dist(&state_machine->tof_data);
+        
+        if (center_dist >= 100.0f && center_dist <= 240.0f) {
+            
+            if (tof_pillar_detected(&state_machine->tof_data)) {
+                return EVENT_PILLAR_DETECTED;
+            }
+            
+            if (tof_pet_detected(&state_machine->tof_data)) {
+                return EVENT_PET_DETECTED;
+            }
+            
+        } else if (center_dist < 100.0f && tof_pet_detected(&state_machine->tof_data)) {
+            return EVENT_NEAR_PET;
         }
+
     }
 
-    
-
-    return STATE_EVENT_NONE;
+    return EVENT_NONE;
 }
 
 void process_event(struct state_machine *state_machine, state_event_e next_event) {
     
-    if (next_event == STATE_EVENT_NONE) {
+    if (next_event == EVENT_NONE) {
         state_enter(state_machine, state_machine->state); // stay in the same state
     }
 
@@ -281,59 +292,63 @@ void print_event(state_event_e event) {
     display_handler.clearDisplay();
     display_handler.setCursor(0, 0);
     switch (event) {
-    case STATE_EVENT_NONE:
+    case EVENT_NONE:
         display_handler.println("NONE");
         Serial.println("NONE");
         break;
-    case STATE_EVENT_BUTTON_PRESSED:
+    case EVENT_BUTTON_PRESSED:
         display_handler.println("BUTTON PRESSED");
         Serial.println("BUTTON PRESSED");
         break;
-    case STATE_EVENT_TAPE_DETECTED:
+    case EVENT_TAPE_DETECTED:
         display_handler.println("TAPE DETECTED");
         Serial.println("TAPE DETECTED");
         break;
-    case STATE_EVENT_PET_DETECTED:
+    case EVENT_PET_DETECTED:
         display_handler.println("PET DETECTED");
         Serial.println("PET DETECTED");
         break;
-    case STATE_EVENT_PILLAR_DETECTED:
+    case EVENT_PILLAR_DETECTED:
         display_handler.println("PILLAR DETECTED");
         Serial.println("PILLAR DETECTED");
         break;
-    case STATE_EVENT_NEAR_PET:
+    case EVENT_ARM_RAISED:
+        display_handler.println("ARM RAISED");
+        Serial.println("ARM RAISED");
+        break;
+   case EVENT_NEAR_PET:
         display_handler.println("NEAR PET");
         Serial.println("NEAR PET");
         break;
-    case STATE_EVENT_PET_GRASPED:
+    case EVENT_PET_GRASPED:
         display_handler.println("PET GRASPED");
         Serial.println("PET GRASPED");
         break;
-    case STATE_EVENT_PET_STORED:
+    case EVENT_PET_STORED:
         display_handler.println("PET STORED");
         Serial.println("PET STORED");
         break;
-    case STATE_EVENT_RAMP_DETECTED:
+    case EVENT_RAMP_DETECTED:
         display_handler.println("RAMP DETECTED");
         Serial.println("RAMP DETECTED");
         break;
-    case STATE_EVENT_DEBRIS_DETECTED:
+    case EVENT_DEBRIS_DETECTED:
         display_handler.println("DEBRIS DETECTED");
         Serial.println("DEBRIS DETECTED");
         break;
-    case STATE_EVENT_FLAT_GROUND_DETECTED:
+    case EVENT_FLAT_GROUND_DETECTED:
         display_handler.println("FLAT GROUND DETECTED");
         Serial.println("FLAT GROUND DETECTED");
         break;
-    case STATE_EVENT_EDGE_DETECTED:
+    case EVENT_EDGE_DETECTED:
         display_handler.println("EDGE DETECTED");
         Serial.println("EDGE DETECTED");
         break;
-    case STATE_EVENT_CASCADE_EXTENDED:
+    case EVENT_CASCADE_EXTENDED:
         display_handler.println("CASCADE EXTENDED");
         Serial.println("CASCADE EXTENDED");
         break;
-    case STATE_EVENT_ZIP_LINE_DETECTED:
+    case EVENT_ZIP_LINE_DETECTED:
         display_handler.println("ZIP LINE");
         Serial.println("ZIP LINE");
         break;

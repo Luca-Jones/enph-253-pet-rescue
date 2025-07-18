@@ -18,6 +18,7 @@
 
 #define ARM_HOME_X 250
 #define ARM_HOME_Y 50
+#define ARM_PILLAR_Y 300
 #define ARM_RAISED_X 200
 #define ARM_RAISED_Y 350
 

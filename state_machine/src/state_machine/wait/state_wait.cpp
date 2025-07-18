@@ -2,7 +2,7 @@
 #include "esp32-hal.h"
 
 static void state_wait_run(struct state_machine *state_machine) {
-    delay(500);
+    // delay(500);
 }
 
 void state_wait_enter(struct state_machine *state_machine, state_e from) {

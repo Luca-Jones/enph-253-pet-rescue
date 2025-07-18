@@ -27,7 +27,6 @@ extern Arm arm;
 extern Claw claw;
 
 /* Sensors */
-#include <SparkFun_VL53L5CX_Library.h>
 #include <tof.h>
 
 extern ToF tof;
