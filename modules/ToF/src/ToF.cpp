@@ -29,46 +29,48 @@
 SparkFun_VL53L5CX tof;
 VL53L5CX_ResultsData result;
 
-const int CLK_FREQUENCY = 400000; // 400 kHz I2C clock frequency
+const int CLK_FREQUENCY = 400000; // 100kHz~1MHz
 const int CLAW_TOF_I2C_ADDR = 0x29;
-const int MAP_SIZE = 8; // 8x8 matrix
-const int RANGING_FREQUENCY = 8;
+const int CHASSIS_TOF_I2C_ADDR = 0x2A;
+const int MAP_SIZE = 8; // 4*4 or 8*8 matrix
+const int RANGING_FREQUENCY = 8; // 1~15 Hz
 
-float distMap[MAP_SIZE][MAP_SIZE]; // 8x8 distance map
+float distMap[MAP_SIZE][MAP_SIZE];
 float reflMap[MAP_SIZE][MAP_SIZE];
 
 int stablePillarCount = 0;
 int stablePetCount = 0;
 
+
 void CreateDistanceMap(float distMap[MAP_SIZE][MAP_SIZE], const VL53L5CX_ResultsData& result) {
   for (int row = 0; row < MAP_SIZE; row++) {
     for (int col = 0; col < MAP_SIZE; col++) {
       int i = row * MAP_SIZE + col;
-      distMap[7 - row][col] = result.distance_mm[i]; // vertically flipped
+      distMap[row][col] = result.distance_mm[i]; // vertically flipped
     }
   }
-}
-
-float getCenterDistanceMean(const float distMap[MAP_SIZE][MAP_SIZE]) {
-  float sum = 0.0f;
-  for (int i = 0; i < 3; i++) {
-    for (int j = 0; j < 2; j++) {
-      sum += distMap[4 + i][3 + j];  // rows 4-6, cols 3-4
-    }
-  }
-  return sum / 6.0f;
 }
 
 void createReflectanceMap(float reflMap[MAP_SIZE][MAP_SIZE], const VL53L5CX_ResultsData& result) {
   for (int row = 0; row < MAP_SIZE; row++) {
     for (int col = 0; col < MAP_SIZE; col++) {
-      int index = row * MAP_SIZE + col;
-      reflMap[7 - row][col] = result.reflectance[index];  // vertically flipped
+      int i = row * MAP_SIZE + col;
+      reflMap[row][col] = result.reflectance[i];  // vertically flipped
     }
   }
 }
 
-float meanCenterReflectance(const float refl[MAP_SIZE][MAP_SIZE]) {
+float getMeanCenterDistance(const float distMap[MAP_SIZE][MAP_SIZE]) {
+  float sum = 0.0f;
+  for (int i = 4; i < 7; i++) {
+    for (int j = 3; j < 5; j++) {
+      sum += distMap[i][j];
+    }
+  }
+  return sum / 6.0f;
+}
+
+float getMeanCenterReflectance(const float refl[MAP_SIZE][MAP_SIZE]) {
   
   float sum = 0.0f;
   int count = 0;
@@ -80,7 +82,6 @@ float meanCenterReflectance(const float refl[MAP_SIZE][MAP_SIZE]) {
   }
   return sum / count;
 }
-
 
 bool detectCylindricalObject(const float distance[MAP_SIZE][MAP_SIZE]) {
 
@@ -103,12 +104,6 @@ bool detectCylindricalObject(const float distance[MAP_SIZE][MAP_SIZE]) {
   return (diffSide <= 30.0f && meanCenter < meanSide && meanCenterTop >= 260.0f);
 }
 
-
-/*bool detectPillar(const float refl[MAP_SIZE][MAP_SIZE]) {
-  
-  return meanCenterReflectance(refl) <= 10.0f;
-}
-*/
 
 void setup() {
 
@@ -133,14 +128,14 @@ void loop() {
     if (tof.getRangingData(&result)) {
 
       CreateDistanceMap(distMap, result);
-      float meanDistance = getCenterDistanceMean(distMap);
+      float meanDistance = getMeanCenterDistance(distMap);
 
       if (meanDistance >= 100.0f && meanDistance <= 240.0f) {
         if(detectCylindricalObject(distMap)) {
 
           createReflectanceMap(reflMap, result);
 
-          if (meanCenterReflectance(reflMap) <= 10.0f) {
+          if (getMeanCenterReflectance(reflMap) <= 10.0f) {
             stablePillarCount++;
             stablePetCount = 0;
             Serial.println("Pillar detected");
@@ -150,7 +145,8 @@ void loop() {
               // TODO: Handle confirmed pillar detection
               stablePillarCount = 0;
             }
-          } else {
+          } 
+          else {
             stablePetCount++;
             stablePillarCount = 0;
             Serial.println("Pet on ground");
