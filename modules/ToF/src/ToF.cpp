@@ -32,35 +32,35 @@ VL53L5CX_ResultsData result;
 const int CLK_FREQUENCY = 400000; // 100kHz~1MHz
 const int CLAW_TOF_I2C_ADDR = 0x29;
 const int CHASSIS_TOF_I2C_ADDR = 0x2A;
-const int MAP_SIZE = 8; // 4*4 or 8*8 matrix
+const int SIZE = 8; // 4*4 or 8*8 matrix
 const int RANGING_FREQUENCY = 8; // 1~15 Hz
 
-float distMap[MAP_SIZE][MAP_SIZE];
-float reflMap[MAP_SIZE][MAP_SIZE];
+float distMap[SIZE][SIZE];
+float reflMap[SIZE][SIZE];
 
 int stablePillarCount = 0;
 int stablePetCount = 0;
 
 
-void CreateDistanceMap(float distMap[MAP_SIZE][MAP_SIZE], const VL53L5CX_ResultsData& result) {
-  for (int row = 0; row < MAP_SIZE; row++) {
-    for (int col = 0; col < MAP_SIZE; col++) {
-      int i = row * MAP_SIZE + col;
-      distMap[row][col] = result.distance_mm[i]; // vertically flipped
+void CreateDistanceMap(float distMap[SIZE][SIZE], const VL53L5CX_ResultsData& result) {
+  for (int row = 0; row < SIZE; row++) {
+    for (int col = 0; col < SIZE; col++) {
+      int i = row * 8 + col;
+      distMap[7 - row][col] = result.distance_mm[i]; // vertically flipped
     }
   }
 }
 
-void createReflectanceMap(float reflMap[MAP_SIZE][MAP_SIZE], const VL53L5CX_ResultsData& result) {
-  for (int row = 0; row < MAP_SIZE; row++) {
-    for (int col = 0; col < MAP_SIZE; col++) {
-      int i = row * MAP_SIZE + col;
-      reflMap[row][col] = result.reflectance[i];  // vertically flipped
+void createReflectanceMap(float reflMap[SIZE][SIZE], const VL53L5CX_ResultsData& result) {
+  for (int row = 0; row < SIZE; row++) {
+    for (int col = 0; col < SIZE; col++) {
+      int i = row * 8 + col;
+      reflMap[7 - row][col] = result.reflectance[i];  // vertically flipped
     }
   }
 }
 
-float getMeanCenterDistance(const float distMap[MAP_SIZE][MAP_SIZE]) {
+float getMeanCenterDistance(const float distMap[SIZE][SIZE]) {
   float sum = 0.0f;
   for (int i = 4; i < 7; i++) {
     for (int j = 3; j < 5; j++) {
@@ -70,7 +70,7 @@ float getMeanCenterDistance(const float distMap[MAP_SIZE][MAP_SIZE]) {
   return sum / 6.0f;
 }
 
-float getMeanCenterReflectance(const float refl[MAP_SIZE][MAP_SIZE]) {
+float getMeanCenterReflectance(const float refl[SIZE][SIZE]) {
   
   float sum = 0.0f;
   int count = 0;
@@ -83,7 +83,7 @@ float getMeanCenterReflectance(const float refl[MAP_SIZE][MAP_SIZE]) {
   return sum / count;
 }
 
-bool detectCylindricalObject(const float distance[MAP_SIZE][MAP_SIZE]) {
+bool detectCylindricalObject(const float distance[SIZE][SIZE]) {
 
   //Checks the difference between the mean of two center columns
   float meanCenterL = (distance[3][3] + distance[4][3] + distance[5][3]) / 3.0f;
@@ -118,7 +118,7 @@ void setup() {
   }
 
   tof.setAddress(CLAW_TOF_I2C_ADDR);
-  tof.setResolution(MAP_SIZE*MAP_SIZE);
+  tof.setResolution(SIZE*SIZE);
   tof.setRangingFrequency(RANGING_FREQUENCY);
   tof.startRanging();
 }
