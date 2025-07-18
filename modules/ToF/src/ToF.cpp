@@ -26,10 +26,6 @@
 #define SDA_PIN 21
 #define SCL_PIN 22
 
-// UART2 pins for communication
-#define UART2_RX 16
-#define UART2_TX 17
-
 SparkFun_VL53L5CX tof;
 VL53L5CX_ResultsData result;
 
@@ -38,18 +34,38 @@ const int CLAW_TOF_I2C_ADDR = 0x29;
 const int MAP_SIZE = 8; // 8x8 matrix
 const int RANGING_FREQUENCY = 8;
 
+float distMap[MAP_SIZE][MAP_SIZE]; // 8x8 distance map
+float reflMap[MAP_SIZE][MAP_SIZE];
+
 int stablePillarCount = 0;
 int stablePetCount = 0;
 
-float prevCenter[3][2];
-bool  hasPrevCenter    = false;
-int   stableDistCount  = 0;
+void CreateDistanceMap(float distMap[MAP_SIZE][MAP_SIZE], const VL53L5CX_ResultsData& result) {
+  for (int row = 0; row < MAP_SIZE; row++) {
+    for (int col = 0; col < MAP_SIZE; col++) {
+      int i = row * MAP_SIZE + col;
+      distMap[7 - row][col] = result.distance_mm[i]; // vertically flipped
+    }
+  }
+}
 
+float getCenterDistanceMean(const float distMap[MAP_SIZE][MAP_SIZE]) {
+  float sum = 0.0f;
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 2; j++) {
+      sum += distMap[4 + i][3 + j];  // rows 4-6, cols 3-4
+    }
+  }
+  return sum / 6.0f;
+}
 
-float meanArray(const float *data, int len) {
-  float sum = 0;
-  for (int i = 0; i < len; i++) sum += data[i];
-  return sum / len;
+void createReflectanceMap(float reflMap[MAP_SIZE][MAP_SIZE], const VL53L5CX_ResultsData& result) {
+  for (int row = 0; row < MAP_SIZE; row++) {
+    for (int col = 0; col < MAP_SIZE; col++) {
+      int index = row * MAP_SIZE + col;
+      reflMap[7 - row][col] = result.reflectance[index];  // vertically flipped
+    }
+  }
 }
 
 float meanCenterReflectance(const float refl[MAP_SIZE][MAP_SIZE]) {
@@ -75,8 +91,8 @@ bool detectCylindricalObject(const float distance[MAP_SIZE][MAP_SIZE]) {
   float diffMiddle = fabs(meanCenterL - meanCenterR);
 
   //Checks the difference between the mean of two columns beside the center columns
-  float meanSideL = (distance[3][1] + distance[4][1] + distance[5][1]) / 3.0f;
-  float meanSideR = (distance[3][6] + distance[4][6] + distance[5][6]) / 3.0f;
+  float meanSideL = (distance[3][2] + distance[4][2] + distance[5][2]) / 3.0f;
+  float meanSideR = (distance[3][5] + distance[4][5] + distance[5][5]) / 3.0f;
   float meanSide = (meanSideL + meanSideR) / 2.0f;
   float diffSide = fabs(meanSideL - meanSideR);
 
@@ -88,10 +104,11 @@ bool detectCylindricalObject(const float distance[MAP_SIZE][MAP_SIZE]) {
 }
 
 
-bool detectPillar(const float refl[MAP_SIZE][MAP_SIZE]) {
-
+/*bool detectPillar(const float refl[MAP_SIZE][MAP_SIZE]) {
+  
   return meanCenterReflectance(refl) <= 10.0f;
 }
+*/
 
 void setup() {
 
@@ -115,56 +132,32 @@ void loop() {
   if (tof.isDataReady()) {
     if (tof.getRangingData(&result)) {
 
-      float distMap[MAP_SIZE][MAP_SIZE];
-      for (int row = 0; row < MAP_SIZE; row++) {
-        for (int col = 0; col < MAP_SIZE; col++) {
-          int i = row*8 + col;
-          distMap[7-row][col] = result.distance_mm[i];
-        }
-      }
-
-      // Extract center 3×2 block
-      float centerBlock[3][2];
-      float flatCenter[6];
-      int k = 0;
-      for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 2; j++) {
-          centerBlock[i][j] = distMap[4+i][3+j];
-          flatCenter[k++] = centerBlock[i][j];
-        }
-      }
-
-      float meanDistance = meanArray(flatCenter, 6);
+      CreateDistanceMap(distMap, result);
+      float meanDistance = getCenterDistanceMean(distMap);
 
       if (meanDistance >= 100.0f && meanDistance <= 240.0f) {
         if(detectCylindricalObject(distMap)) {
 
-          float reflMap[MAP_SIZE][MAP_SIZE];
-          for (int row = 0; row < MAP_SIZE; row++) {
-            for (int col = 0; col < MAP_SIZE; col++) {
-              int index = row * MAP_SIZE + col;
-              reflMap[7 - row][col] = result.reflectance[index];
-            }
-          }
+          createReflectanceMap(reflMap, result);
 
-          if (detectPillar(reflMap)) {
+          if (meanCenterReflectance(reflMap) <= 10.0f) {
             stablePillarCount++;
-            stablePetCount = 0;  // reset other counter
+            stablePetCount = 0;
             Serial.println("Pillar detected");
 
             if (stablePillarCount == 3) {
               Serial.println("*** Confirmed Pillar after 3 frames! ***");
-              // Special behavior for confirmed pillar
+              // TODO: Handle confirmed pillar detection
               stablePillarCount = 0;
             }
           } else {
             stablePetCount++;
-            stablePillarCount = 0;  // reset other counter
+            stablePillarCount = 0;
             Serial.println("Pet on ground");
 
             if (stablePetCount == 3) {
               Serial.println("*** Confirmed Pet after 3 frames! ***");
-              // Special behavior for confirmed pet
+              // TODO: Handle confirmed pet detection
               stablePetCount = 0;
             }
           }
@@ -173,13 +166,11 @@ void loop() {
           stablePetCount = 0;
           stablePillarCount = 0;
           Serial.println("Not centered");
-          // Serial2.write(0x03);
         }
       } else {
         // Out of desired range
         stablePetCount = 0;
         stablePillarCount = 0;
-        // Serial2.write(0x00);
       }
     }
   }
