@@ -35,5 +35,5 @@ void state_store_enter(struct state_machine *state_machine, state_e from) {
 }
 
 void state_store_exit(struct state_machine *state_machine) {
-    // TODO: remove
+    // TODO: remove?
 }

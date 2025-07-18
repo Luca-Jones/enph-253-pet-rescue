@@ -24,5 +24,8 @@
 #define PIN_CLAW 4
 #define CHANNEL_CLAW 3
 
+#define PIN_SDA 21
+#define PIN_SCL 22
+
 
 #endif

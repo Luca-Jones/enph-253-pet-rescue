@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <assert.h>
 #include <pin_out.h>
+
 #include "state_machine.h"
 #include "close_claw/state_close_claw.h"
 #include "raise_arm/state_raise_arm.h"
@@ -45,6 +46,7 @@ Servo servo_2(ARM_SERVO_2_ANGLE_MAX);
 Arm arm(&servo_1, &servo_2);
 Servo servo_3(CLAW_OPEN);
 Claw claw(&servo_3);
+ToF tof;
 
 /* STRUCTS */
 struct state_transition {
@@ -64,10 +66,8 @@ static const struct state_transition state_transitions[] = {
 
 
 /* FUNCTIONS */
-state_event_e        process_input       (struct state_machine *state_machine);
-void                 process_event       (struct state_machine *state_machine, state_event_e next_event);
-static void          state_enter         (struct state_machine *state_machine, state_e next_state);
-static void          state_exit          (struct state_machine *state_machine, state_e previous_state);
+static void state_enter (struct state_machine *state_machine, state_e next_state);
+static void state_exit  (struct state_machine *state_machine, state_e previous_state);
 
 void state_machine_init(struct state_machine *state_machine) {
 
@@ -90,7 +90,14 @@ void state_machine_init(struct state_machine *state_machine) {
     servo_2.attach(PIN_ARM_SERVO_2, CHANNEL_ARM_SERVO_2, 500, 2500);
     servo_3.attach(PIN_CLAW, CHANNEL_CLAW, 500, 2500);
 
-    // TODO: set up the sensors
+    // set up the sensors
+    Wire.begin(PIN_SDA, PIN_SCL);
+    Wire.setClock(TOF_CLOCK_FREQUENCY);
+    tof.begin();
+    tof.setAddress(TOF_I2C_ADDRESS);
+    tof.setResolution(TOF_RESOLUTION);
+    tof.setRangingFrequency(TOF_RANGING_FREQUENCY);
+    tof.startRanging();
     
     // store state
     state_machine->pets = 0;
@@ -118,15 +125,16 @@ state_event_e process_input(struct state_machine *state_machine) {
     // - rotary encoder?
     // - megnetic encoder?
 
+    // TODO: tof
 
-    if (0) {
+    tof.getRangingData(&state_machine->tof_data);
+
+    if (tof_pillar_detected(&state_machine->tof_data)) {
         return STATE_EVENT_PILLAR_DETECTED;
     }
 
-    if (0) {
-
-        // if dist < something
-        if (0) {
+    if (tof_pet_detected(&state_machine->tof_data)) {
+        if (tof_near_pet(&state_machine->tof_data)) {
             return STATE_EVENT_NEAR_PET;
         } else {
             return STATE_EVENT_PET_DETECTED;
@@ -209,6 +217,13 @@ static void state_exit(struct state_machine *state_machine, state_e previous_sta
     }
 
 }
+
+// IRAM safe code
+void IRAM_ATTR button_pressed_ISR() {
+    button_pressed = true;
+}
+
+#ifdef DEBUG
 
 void print_state(state_e state) {
     switch(state) {
@@ -328,7 +343,4 @@ void print_event(state_event_e event) {
     display_handler.display();
 }
 
-// IRAM safe code
-void IRAM_ATTR button_pressed_ISR() {
-    button_pressed = true;
-}
+#endif

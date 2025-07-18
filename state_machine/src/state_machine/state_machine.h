@@ -26,6 +26,12 @@ extern Servo servo_3;
 extern Arm arm;
 extern Claw claw;
 
+/* Sensors */
+#include <SparkFun_VL53L5CX_Library.h>
+#include <tof.h>
+
+extern ToF tof;
+
 
 /* STATE MACHINE */
 #include "states.h"
@@ -35,15 +41,18 @@ struct state_machine {
     state_e state;
     state_event_e internal_event;
     int pets;
+    ToF_data tof_data;
 };
 
 /* FUNCTIONS */
 void state_machine_init(struct state_machine *state_machine);
 state_event_e process_input (struct state_machine *state_machine);
 void process_event (struct state_machine *state_machine, state_event_e next_event);
+void IRAM_ATTR button_pressed_ISR();
+#ifdef DEBUG
 void print_state(state_e state);
 void print_event(state_event_e event);
-void IRAM_ATTR button_pressed_ISR();
+#endif
 
 /*
     Each state must implement the following functions:
