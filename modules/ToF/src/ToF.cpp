@@ -45,7 +45,7 @@ int stablePetCount = 0;
 void CreateDistanceMap(float distMap[SIZE][SIZE], const VL53L5CX_ResultsData& result) {
   for (int row = 0; row < SIZE; row++) {
     for (int col = 0; col < SIZE; col++) {
-      int i = row * 8 + col;
+      int i = row * SIZE + col;
       distMap[7 - row][col] = result.distance_mm[i]; // vertically flipped
     }
   }
@@ -54,7 +54,7 @@ void CreateDistanceMap(float distMap[SIZE][SIZE], const VL53L5CX_ResultsData& re
 void createReflectanceMap(float reflMap[SIZE][SIZE], const VL53L5CX_ResultsData& result) {
   for (int row = 0; row < SIZE; row++) {
     for (int col = 0; col < SIZE; col++) {
-      int i = row * 8 + col;
+      int i = row * SIZE + col;
       reflMap[7 - row][col] = result.reflectance[i];  // vertically flipped
     }
   }
@@ -158,7 +158,8 @@ void loop() {
             }
           }
 
-        } else {
+        } 
+        else {
           stablePetCount = 0;
           stablePillarCount = 0;
           Serial.println("Not centered");
@@ -170,5 +171,5 @@ void loop() {
       }
     }
   }
-  delay(0.2);
+  delay(0.5);
 }
