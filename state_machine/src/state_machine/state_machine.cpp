@@ -137,6 +137,7 @@ state_event_e process_input(struct state_machine *state_machine) {
     if (tof.getRangingData(&state_machine->tof_data)) {
 
         float center_dist = tof_get_center_dist(&state_machine->tof_data);
+        Serial.println(center_dist);
         
         if (center_dist >= 100.0f && center_dist <= 240.0f) {
             

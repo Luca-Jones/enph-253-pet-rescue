@@ -22,7 +22,7 @@ float tof_get_center_dist(const ToF_data *data) {
         data->distance_mm[8 * 3 + 4] + 
         data->distance_mm[8 * 4 + 4] + 
         data->distance_mm[8 * 5 + 4]
-    ) / 0.16f;
+    ) * 0.16f;
 }
 
 bool tof_pillar_detected(const ToF_data *data) {
@@ -77,5 +77,7 @@ bool tof_pet_detected(const ToF_data *data) {
 
     float top_center = data->distance_mm[8 * 0 + 3];
 
-    return (side_mean_diff <= TOF_MAX_SIDE_DIFF_MM && center_mean_diff < side_mean_diff && top_center >= TOF_MAX_TOP_MM);
+    Serial.printf("side = %.2f\t center = %.2f\t top = %.2f\n", side_mean_diff, center_mean_diff, top_center);
+
+    return (side_mean_diff <= TOF_MAX_SIDE_DIFF_MM && center_mean_diff < side_mean_diff );//&& top_center >= TOF_MAX_TOP_MM);
 }
