@@ -7,9 +7,9 @@
 /*
     Each state should implement the following functions:
     
-    <state>_enter(struct state_machine *sm, state_e from)    handles things when first entering the state from any other state (including itself).
-    <state>_exit(struct state_machine *sm)                   handles things when exiting a state into any other state
-    <state>_run(struct state_machine *sm)                    one iteration of the state's routine. Post any internal events from here.
+    <state>_enter(struct state_machine *sm, state_e from, state_event_e event)    handles things when first entering the state from any other state (including itself).
+    <state>_exit(struct state_machine *sm)                                        handles things when exiting a state
+    <state>_run(struct state_machine *sm)                                         one iteration of the state's routine. Post any internal events from here.
     
 */
 

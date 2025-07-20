@@ -24,17 +24,6 @@ static void state_store_run(struct state_machine *state_machine) {
     state_machine->internal_event = EVENT_PET_STORED;
 }
 
-void state_store_enter(struct state_machine *state_machine, state_e from) {
-    switch (from) {
-        case STATE_STORE:
-            // do nothing
-            break;
-        default:
-            break;
-    }
+void state_store_enter(struct state_machine *state_machine) {
     state_store_run(state_machine);
-}
-
-void state_store_exit(struct state_machine *state_machine) {
-    // TODO: remove?
 }

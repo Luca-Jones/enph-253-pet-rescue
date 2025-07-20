@@ -3,11 +3,9 @@
 
 #include <state_machine/state_machine.h>
 #include <state_machine/state_close_claw.h>
-#include <state_machine/state_raise_arm.h>
 #include <state_machine/state_reach.h>
 #include <state_machine/state_retreat.h>
 #include <state_machine/state_return_pets.h>
-#include <state_machine/state_rotate_arm_right.h>
 #include <state_machine/state_store.h>
 #include <state_machine/state_tape_following.h>
 #include <state_machine/state_wait.h>
@@ -54,7 +52,7 @@ static const struct state_transition state_transitions[] = {
 
 
 /* FUNCTIONS */
-static void state_enter (struct state_machine *state_machine, state_e next_state);
+static void state_enter (struct state_machine *state_machine, state_e next_state, state_event_e event);
 static void state_exit  (struct state_machine *state_machine, state_e previous_state);
 
 void state_machine_init(struct state_machine *state_machine) {
@@ -166,7 +164,7 @@ state_event_e process_input(struct state_machine *state_machine) {
 void process_event(struct state_machine *state_machine, state_event_e next_event) {
     
     if (next_event == EVENT_NONE) {
-        state_enter(state_machine, state_machine->state); // stay in the same state
+        state_enter(state_machine, state_machine->state, EVENT_NONE); // stay in the same state
     }
 
     for (int i = 0 ; i < ARRAY_SIZE(state_transitions); i ++) {
@@ -178,58 +176,65 @@ void process_event(struct state_machine *state_machine, state_event_e next_event
             #endif
             
             state_exit(state_machine, state_transitions[i].previous_state);
-            state_enter(state_machine, state_transitions[i].next_state);
+            state_enter(state_machine, state_transitions[i].next_state, next_event);
             return;
         }
     }
 }
 
-static void state_enter(struct state_machine *state_machine, state_e next_state) {
+static void state_enter(struct state_machine *state_machine, state_e next_state, state_event_e event) {
     
-    state_e previous_state = state_machine->state;
     state_machine->state = next_state;
 
     switch (next_state) {
-    case STATE_WAIT:
-        state_wait_enter(state_machine, previous_state);
-        break;
-    case STATE_REACH:
-        state_reach_enter(state_machine, previous_state);
-        break;
-    case STATE_RAISE_ARM:
-        state_raise_arm_enter(state_machine, previous_state);
-        break;
-    case STATE_CLOSE_CLAW:
-        state_close_claw_enter(state_machine, previous_state);
-        break;
-    case STATE_STORE:
-        state_store_enter(state_machine, previous_state);
-        break;
-    default:
-        break;
+        case STATE_WAIT:
+            state_wait_enter(state_machine);
+            break;
+        case STATE_TAPE_FOLLOWING:
+            state_tape_following_enter(state_machine, event);
+            break;
+        case STATE_REACH:
+            state_reach_enter(state_machine, event);
+            break;
+        case STATE_CLOSE_CLAW:
+            state_close_claw_enter(state_machine);
+            break;
+        case STATE_STORE:
+            state_store_enter(state_machine);
+            break;
+        case STATE_RETREAT:
+            state_retreat_enter(state_machine);
+            break;
+        case STATE_RETURN_PETS:
+            state_return_pets_enter(state_machine);
+            break;
+        default:
+            break;
     }
 }
 
 static void state_exit(struct state_machine *state_machine, state_e previous_state) {
 
     switch (previous_state) {
-    case STATE_WAIT:
-        state_wait_exit(state_machine);
-        break;
-    case STATE_REACH:
-        state_reach_exit(state_machine);
-        break;
-    case STATE_RAISE_ARM:
-        state_raise_arm_exit(state_machine);
-        break;
-    case STATE_CLOSE_CLAW:
-        state_close_claw_exit(state_machine);
-        break;
-    case STATE_STORE:
-        state_store_exit(state_machine);
-        break;
-    default:
-        break;
+        case STATE_WAIT:
+            break;
+        case STATE_TAPE_FOLLOWING:
+            state_tape_following_exit(state_machine);
+            break;
+        case STATE_REACH:
+            break;
+        case STATE_CLOSE_CLAW:
+            state_close_claw_exit(state_machine);
+            break;
+        case STATE_STORE:
+            break;
+        case STATE_RETREAT:
+            break;
+        case STATE_RETURN_PETS:
+            state_return_pets_exit(state_machine);
+            break;
+        default:
+            break;
     }
 
 }
@@ -251,43 +256,35 @@ void print_state(state_e state) {
     Serial.print("STATE: ");
     switch(state) {
         case STATE_WAIT: 
-        display_handler.println("WAIT");
-        Serial.println("WAIT");
-        break;
-    case STATE_TAPE_FOLLOWING:
-        display_handler.println("TAPE FOLLOWING");
-        Serial.println("TAPE FOLLOWING");
-        break;
-    case STATE_ROTATE_ARM_RIGHT:
-        display_handler.println("ROTATE ARM RIGHT");
-        Serial.println("ROTATE ARM RIGHT");
-        break;
-    case STATE_REACH:
-        display_handler.println("REACH");
-        Serial.println("REACH");
-        break;
-    case STATE_RAISE_ARM:
-        display_handler.println("RAISE ARM");
-        Serial.println("RAISE ARM");
-        break;
-    case STATE_CLOSE_CLAW:
-        display_handler.println("CLOSE ARM");
-        Serial.println("CLOSE ARM");
-        break;
-    case STATE_STORE:
-        display_handler.println("STORE");
-        Serial.println("STORE");
-        break;
-    case STATE_RETREAT:
-        display_handler.println("RETREAT");
-        Serial.println("RETREAT");
-        break;
-    case STATE_RETURN_PETS:
-        display_handler.println("RETURN PETS");
-        Serial.println("RETURN PETS");
-        break;
-    default:
-        break;
+            display_handler.println("WAIT");
+            Serial.println("WAIT");
+            break;
+        case STATE_TAPE_FOLLOWING:
+            display_handler.println("TAPE FOLLOWING");
+            Serial.println("TAPE FOLLOWING");
+            break;
+        case STATE_REACH:
+            display_handler.println("REACH");
+            Serial.println("REACH");
+            break;
+        case STATE_CLOSE_CLAW:
+            display_handler.println("CLOSE ARM");
+            Serial.println("CLOSE ARM");
+            break;
+        case STATE_STORE:
+            display_handler.println("STORE");
+            Serial.println("STORE");
+            break;
+        case STATE_RETREAT:
+            display_handler.println("RETREAT");
+            Serial.println("RETREAT");
+            break;
+        case STATE_RETURN_PETS:
+            display_handler.println("RETURN PETS");
+            Serial.println("RETURN PETS");
+            break;
+        default:
+            break;
     }
     display_handler.display();
 }
@@ -298,68 +295,68 @@ void print_event(state_event_e event) {
     display_handler.print("EVENT: ");
     Serial.print("EVENT: ");
     switch (event) {
-    case EVENT_NONE:
-        display_handler.println("NONE");
-        Serial.println("NONE");
-        break;
-    case EVENT_BUTTON_PRESSED:
-        display_handler.println("BUTTON PRESSED");
-        Serial.println("BUTTON PRESSED");
-        break;
-    case EVENT_PET_DETECTED_LEFT:
-        display_handler.println("PET DETECTED LEFT");
-        Serial.println("TAPE DETECTED");
-        break;
-    case EVENT_PET_DETECTED_RIGHT:
-        display_handler.println("PET DETECTED RIGHT");
-        Serial.println("PET DETECTED RIGHT");
-        break;
-    case EVENT_PILLAR_DETECTED:
-        display_handler.println("PILLAR DETECTED");
-        Serial.println("PILLAR DETECTED");
-        break;
-    case EVENT_ARM_ROTATED:
-        display_handler.println("ARM ROTATED");
-        Serial.println("ARM ROTATED");
-        break;
-    case EVENT_ARM_RAISED:
-        display_handler.println("ARM RAISED");
-        Serial.println("ARM RAISED");
-        break;
-   case EVENT_PET_NEAR:
-        display_handler.println("NEAR PET");
-        Serial.println("NEAR PET");
-        break;
-    case EVENT_PET_MISSED:
-        display_handler.println("PET MISSED");
-        Serial.println("PET MISSED");
-        break;
-    case EVENT_ARM_READY:
-        display_handler.println("ARM READY");
-        Serial.println("ARM READY");
-        break;
-    case EVENT_PET_FAILED:
-        display_handler.println("PET FAILED");
-        Serial.println("PET FAILED");
-        break;
-    case EVENT_PET_GRASPED:
-        display_handler.println("PET GRASPED");
-        Serial.println("PET GRASPED");
-        break;
-    case EVENT_PET_STORED:
-        display_handler.println("PET STORED");
-        Serial.println("PET STORED");
-        break;
-    case EVENT_EDGE_DETECTED:
-        display_handler.println("EDGE DETECTED");
-        Serial.println("EDGE DETECTED");
-        break;
-    case EVENT_PETS_RETURNED:
-        display_handler.println("PETS RETURNED");
-        Serial.println("PETS RETURNED");
-        break;
-    default:
-        break;
+        case EVENT_NONE:
+            display_handler.println("NONE");
+            Serial.println("NONE");
+            break;
+        case EVENT_BUTTON_PRESSED:
+            display_handler.println("BUTTON PRESSED");
+            Serial.println("BUTTON PRESSED");
+            break;
+        case EVENT_PET_DETECTED_LEFT:
+            display_handler.println("PET DETECTED LEFT");
+            Serial.println("TAPE DETECTED");
+            break;
+        case EVENT_PET_DETECTED_RIGHT:
+            display_handler.println("PET DETECTED RIGHT");
+            Serial.println("PET DETECTED RIGHT");
+            break;
+        case EVENT_PILLAR_DETECTED:
+            display_handler.println("PILLAR DETECTED");
+            Serial.println("PILLAR DETECTED");
+            break;
+        case EVENT_ARM_ROTATED:
+            display_handler.println("ARM ROTATED");
+            Serial.println("ARM ROTATED");
+            break;
+        case EVENT_ARM_RAISED:
+            display_handler.println("ARM RAISED");
+            Serial.println("ARM RAISED");
+            break;
+        case EVENT_PET_NEAR:
+            display_handler.println("NEAR PET");
+            Serial.println("NEAR PET");
+            break;
+        case EVENT_PET_MISSED:
+            display_handler.println("PET MISSED");
+            Serial.println("PET MISSED");
+            break;
+        case EVENT_ARM_READY:
+            display_handler.println("ARM READY");
+            Serial.println("ARM READY");
+            break;
+        case EVENT_PET_FAILED:
+            display_handler.println("PET FAILED");
+            Serial.println("PET FAILED");
+            break;
+        case EVENT_PET_GRASPED:
+            display_handler.println("PET GRASPED");
+            Serial.println("PET GRASPED");
+            break;
+        case EVENT_PET_STORED:
+            display_handler.println("PET STORED");
+            Serial.println("PET STORED");
+            break;
+        case EVENT_EDGE_DETECTED:
+            display_handler.println("EDGE DETECTED");
+            Serial.println("EDGE DETECTED");
+            break;
+        case EVENT_PETS_RETURNED:
+            display_handler.println("PETS RETURNED");
+            Serial.println("PETS RETURNED");
+            break;
+        default:
+            break;
     }
     display_handler.display();
 }
