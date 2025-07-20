@@ -44,10 +44,20 @@ struct state_transition {
     state_e next_state;
 };
 
-// TODO: update transitions
 // consult the diagram to understand these transitions
 static const struct state_transition state_transitions[] = {
-    
+    {   STATE_WAIT,             EVENT_BUTTON_PRESSED,       STATE_TAPE_FOLLOWING    },
+    {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_LEFT,    STATE_REACH             },
+    {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_RIGHT,   STATE_REACH             },
+    {   STATE_TAPE_FOLLOWING,   EVENT_PILLAR_DETECTED,      STATE_REACH             },
+    {   STATE_REACH,            EVENT_PET_NEAR,             STATE_CLOSE_CLAW        },
+    {   STATE_CLOSE_CLAW,       EVENT_PET_MISSED,           STATE_RETREAT           },
+    {   STATE_RETREAT,          EVENT_ARM_READY,            STATE_REACH             },
+    {   STATE_RETREAT,          EVENT_PET_FAILED,           STATE_TAPE_FOLLOWING    },
+    {   STATE_CLOSE_CLAW,       EVENT_PET_GRASPED,          STATE_STORE             },
+    {   STATE_STORE,            EVENT_PET_STORED,           STATE_TAPE_FOLLOWING    },
+    {   STATE_TAPE_FOLLOWING,   EVENT_EDGE_DETECTED,        STATE_RETURN_PETS       },
+    {   STATE_RETURN_PETS,      EVENT_PETS_RETURNED,        STATE_WAIT              },
 };
 
 
@@ -289,7 +299,7 @@ void print_state(state_e state) {
     display_handler.display();
 }
 
-void print_event(state_event_e event) {
+void print_event(state_event_e event) { 
     display_handler.clearDisplay();
     display_handler.setCursor(0, 0);
     display_handler.print("EVENT: ");
@@ -314,14 +324,6 @@ void print_event(state_event_e event) {
         case EVENT_PILLAR_DETECTED:
             display_handler.println("PILLAR DETECTED");
             Serial.println("PILLAR DETECTED");
-            break;
-        case EVENT_ARM_ROTATED:
-            display_handler.println("ARM ROTATED");
-            Serial.println("ARM ROTATED");
-            break;
-        case EVENT_ARM_RAISED:
-            display_handler.println("ARM RAISED");
-            Serial.println("ARM RAISED");
             break;
         case EVENT_PET_NEAR:
             display_handler.println("NEAR PET");
