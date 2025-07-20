@@ -22,9 +22,8 @@ extern Adafruit_SSD1306 display_handler;
 
 extern Servo servo_1;
 extern Servo servo_2;
-extern Servo servo_3;
 extern Arm arm;
-extern Claw claw;
+extern Servo claw;
 
 /* Sensors */
 #include <sensors/ToF.h>

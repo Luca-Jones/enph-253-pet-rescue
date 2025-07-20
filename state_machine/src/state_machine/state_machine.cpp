@@ -45,8 +45,7 @@ Adafruit_SSD1306 display_handler(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET)
 Servo servo_1(ARM_SERVO_1_ANGLE_MAX);
 Servo servo_2(ARM_SERVO_2_ANGLE_MAX);
 Arm arm(&servo_1, &servo_2);
-Servo servo_3(CLAW_OPEN);
-Claw claw(&servo_3);
+Servo claw(CLAW_OPEN);
 ToF tof;
 
 /* STRUCTS */
@@ -100,7 +99,7 @@ void state_machine_init(struct state_machine *state_machine) {
     // set up servos
     servo_1.attach(PIN_SERVO_1, PWM_CHANNEL_SERVO_1, 500, 2500);
     servo_2.attach(PIN_SERVO_2, PWM_CHANNEL_SERVO_2, 500, 2500);
-    servo_3.attach(PIN_SERVO_3, PWM_CHANNEL_SERVO_3, 500, 2500);
+    claw.attach(PIN_SERVO_3, PWM_CHANNEL_SERVO_3, 500, 2500);
 
     // set up I2C
     Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);

@@ -9,17 +9,11 @@
 #define PWM_CHANNEL_CASCADE         5
 #define PWM_CHANNEL_BASE_GEAR       6
 
-#define PWM_FRQ_HZ_SERVO_1          1000
-#define PWM_FRQ_HZ_SERVO_2          1000
-#define PWM_FRQ_HZ_SERVO_3          1000
 #define PWM_FRQ_HZ_MOTOR_LEFT       1000
 #define PWM_FRQ_HZ_MOTOR_RIGHT      1000
 #define PWM_FRQ_HZ_CASCADE          1000
 #define PWM_FRQ_HZ_BASE_GEAR        1000
 
-#define PWM_RESOLUTION_SERVO_1      12
-#define PWM_RESOLUTION_SERVO_2      12
-#define PWM_RESOLUTION_SERVO_3      12
 #define PWM_RESOLUTION_MOTOR_LEFT   12
 #define PWM_RESOLUTION_MOTOR_RIGHT  12
 #define PWM_RESOLUTION_CASCADE      12

@@ -1,6 +1,8 @@
 #ifndef MAGNETIC_ENCODER_H
 #define MAGNETIC_ENCODER_H
 
+#define MAG_I2C_ADDRESS 0x36
+
 #define MAG_STATUS_OK           0
 #define MAG_STATUS_TOO_CLOSE    1
 #define MAG_STATUS_TOO_FAR      2

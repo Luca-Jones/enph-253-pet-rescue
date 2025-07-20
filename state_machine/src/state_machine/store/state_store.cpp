@@ -11,7 +11,7 @@ static void state_store_run(struct state_machine *state_machine) {
     // TODO: turn the arm
 
     delay(1000);
-    claw.open();
+    claw.write(CLAW_OPEN);
     delay(500);
 
     // turn the arm back to home

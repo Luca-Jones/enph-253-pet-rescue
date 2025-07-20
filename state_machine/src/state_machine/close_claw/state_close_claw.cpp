@@ -1,7 +1,7 @@
 #include "state_close_claw.h"
 
 static void state_close_claw_run(struct state_machine *state_machine) {
-    claw.close();
+    claw.write(CLAW_CLOSED);
     delay(500);
     state_machine->internal_event = EVENT_PET_GRASPED;
 }

@@ -1,12 +1,9 @@
-#include <Servo.h>
+#include <actuators/Servo.h>
 #include <esp32-hal-ledc.h>
-#include <esp32-hal-log.h>
-
-bool pin_has_pwm(int pin);
-bool has_channel(int channel);
 
 Servo::Servo(int servo_max_angle) {
     this->servo_max_angle = servo_max_angle;
+    this->is_attached = false;
 }
 
 void Servo::attach(int pin, int channel) {
@@ -21,20 +18,8 @@ void Servo::attach(int pin, int channel, int min_us, int max_us) {
     this->pin = pin;
     this->channel = channel;
 
-    if (!pin_has_pwm(pin)) {
-        ESP_LOGE("ESP32Servo", "This pin can not be a servo: %d Servo available on: 2,4,5,12-19,21-23,25-27,32-33",pin);
-        return;
-    } else if (!has_channel(channel)) {
-        ESP_LOGE("ESP32Servo", "Channel %d does not exist. The available channels aare numbered 0 to 15 (includsive)",channel);
-        return;
-    }
-
-    if (ledcSetup(channel, 1e6 / SERVO_PWM_PERIOD_US, SERVO_BIT_RESOLUTION) == 0) {
-        return;
-    }
-
     ledcAttachPin(pin, channel);
-    is_attached = true;
+    this->is_attached = true;
 }
 
 void Servo::write(int angle) {
@@ -78,56 +63,10 @@ int Servo::read() {
 }
 
 bool Servo::attached() {
-    return is_attached;
+    return this->is_attached;
 }
 
 void Servo::detach() {
-    ledcDetachPin(pin);
-    is_attached = false;
+    ledcDetachPin(this->pin);
+    this->is_attached = false;
 }
-
-bool pin_has_pwm(int pin) {
-    return (
-        pin == 2 || pin == 4 || pin == 5 ||
-		(pin >= 12 && pin <= 19) ||
-		(pin >= 21 && pin <= 23) ||
-		(pin >= 25 && pin <= 27) ||
-		(pin == 32) || (pin == 33)
-    );
-}
-
-bool has_channel(int channel) {
-    return channel >= 0 && channel <= 15;
-}
-
-/*
-    Notes: 
-
-    What is a channel?
-    A channel is not a physical thing. Think of a channel as a PWM generator 
-    that needs to be "wired" to a pin to do anything.
-
-    From esp32-hal-ledc.h:
-
-    This group/channel/timmer mapping is for information only;
-    the details are handled by lower-level code
-
-    LEDC Chan to Group/Channel/Timer Mapping
-    ledc: 0  => Group: 0, Channel: 0, Timer: 0
-    ledc: 1  => Group: 0, Channel: 1, Timer: 0
-    ledc: 2  => Group: 0, Channel: 2, Timer: 1
-    ledc: 3  => Group: 0, Channel: 3, Timer: 1
-    ledc: 4  => Group: 0, Channel: 4, Timer: 2
-    ledc: 5  => Group: 0, Channel: 5, Timer: 2
-    ledc: 6  => Group: 0, Channel: 6, Timer: 3
-    ledc: 7  => Group: 0, Channel: 7, Timer: 3
-    ledc: 8  => Group: 1, Channel: 0, Timer: 0
-    ledc: 9  => Group: 1, Channel: 1, Timer: 0
-    ledc: 10 => Group: 1, Channel: 2, Timer: 1
-    ledc: 11 => Group: 1, Channel: 3, Timer: 1
-    ledc: 12 => Group: 1, Channel: 4, Timer: 2
-    ledc: 13 => Group: 1, Channel: 5, Timer: 2
-    ledc: 14 => Group: 1, Channel: 6, Timer: 3
-    ledc: 15 => Group: 1, Channel: 7, Timer: 3
-
-*/
