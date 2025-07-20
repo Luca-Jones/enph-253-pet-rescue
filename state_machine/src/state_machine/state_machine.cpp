@@ -5,9 +5,12 @@
 #include <state_machine/state_close_claw.h>
 #include <state_machine/state_raise_arm.h>
 #include <state_machine/state_reach.h>
+#include <state_machine/state_retreat.h>
+#include <state_machine/state_return_pets.h>
+#include <state_machine/state_rotate_arm_right.h>
 #include <state_machine/state_store.h>
+#include <state_machine/state_tape_following.h>
 #include <state_machine/state_wait.h>
-// TODO: make the rest of the states
 
 /*
     This is a state machine implemented with enums and functions.
@@ -43,15 +46,10 @@ struct state_transition {
     state_e next_state;
 };
 
+// TODO: update transitions
 // consult the diagram to understand these transitions
 static const struct state_transition state_transitions[] = {
-    // {STATE_WAIT, STATE_EVENT_BUTTON_PRESSED, STATE_STORE},
-    // {   STATE_WAIT,             EVENT_PILLAR_DETECTED,        STATE_RAISE_ARM         },
-    // {   STATE_RAISE_ARM,        EVENT_ARM_RAISED,             STATE_REACH             },
-    {   STATE_WAIT,             EVENT_PET_DETECTED,           STATE_REACH             },
-    // {   STATE_REACH,            EVENT_NEAR_PET,               STATE_CLOSE_CLAW        },
-    // {   STATE_CLOSE_CLAW,       EVENT_PET_GRASPED,            STATE_STORE             },
-    // {   STATE_STORE,            EVENT_PET_STORED,             STATE_WAIT              },
+    
 };
 
 
@@ -153,11 +151,11 @@ state_event_e process_input(struct state_machine *state_machine) {
             }
             
             if (tof_pet_detected(&state_machine->tof_data)) {
-                return EVENT_PET_DETECTED;
+                return EVENT_PET_DETECTED_LEFT;
             }
             
         } else if (center_dist < 100.0f && tof_pet_detected(&state_machine->tof_data)) {
-            return EVENT_NEAR_PET;
+            return EVENT_PET_NEAR;
         }
 
     }
@@ -249,6 +247,8 @@ void IRAM_ATTR limit_switch_ISR() {
 Adafruit_SSD1306 display_handler(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 void print_state(state_e state) {
+    display_handler.print("STATE: ");
+    Serial.print("STATE: ");
     switch(state) {
         case STATE_WAIT: 
         display_handler.println("WAIT");
@@ -257,6 +257,10 @@ void print_state(state_e state) {
     case STATE_TAPE_FOLLOWING:
         display_handler.println("TAPE FOLLOWING");
         Serial.println("TAPE FOLLOWING");
+        break;
+    case STATE_ROTATE_ARM_RIGHT:
+        display_handler.println("ROTATE ARM RIGHT");
+        Serial.println("ROTATE ARM RIGHT");
         break;
     case STATE_REACH:
         display_handler.println("REACH");
@@ -274,25 +278,13 @@ void print_state(state_e state) {
         display_handler.println("STORE");
         Serial.println("STORE");
         break;
-    case STATE_RAMP:
-        display_handler.println("RAMP");
-        Serial.println("RAMP");
+    case STATE_RETREAT:
+        display_handler.println("RETREAT");
+        Serial.println("RETREAT");
         break;
-    case STATE_DEBRIS:
-        display_handler.println("DEBRIS");
-        Serial.println("DEBRIS");
-        break;
-    case STATE_TAPE_SWEEP:
-        display_handler.println("TAPE SWEEP");
-        Serial.println("TAPE SWEEP");
-        break;
-    case STATE_EXTEND_CASCADE:
-        display_handler.println("CASCADE");
-        Serial.println("CASCADE");
-        break;
-    case STATE_REVERSE:
-        display_handler.println("REVERSE");
-        Serial.println("REVERSE");
+    case STATE_RETURN_PETS:
+        display_handler.println("RETURN PETS");
+        Serial.println("RETURN PETS");
         break;
     default:
         break;
@@ -303,6 +295,8 @@ void print_state(state_e state) {
 void print_event(state_event_e event) {
     display_handler.clearDisplay();
     display_handler.setCursor(0, 0);
+    display_handler.print("EVENT: ");
+    Serial.print("EVENT: ");
     switch (event) {
     case EVENT_NONE:
         display_handler.println("NONE");
@@ -312,25 +306,41 @@ void print_event(state_event_e event) {
         display_handler.println("BUTTON PRESSED");
         Serial.println("BUTTON PRESSED");
         break;
-    case EVENT_TAPE_DETECTED:
-        display_handler.println("TAPE DETECTED");
+    case EVENT_PET_DETECTED_LEFT:
+        display_handler.println("PET DETECTED LEFT");
         Serial.println("TAPE DETECTED");
         break;
-    case EVENT_PET_DETECTED:
-        display_handler.println("PET DETECTED");
-        Serial.println("PET DETECTED");
+    case EVENT_PET_DETECTED_RIGHT:
+        display_handler.println("PET DETECTED RIGHT");
+        Serial.println("PET DETECTED RIGHT");
         break;
     case EVENT_PILLAR_DETECTED:
         display_handler.println("PILLAR DETECTED");
         Serial.println("PILLAR DETECTED");
         break;
+    case EVENT_ARM_ROTATED:
+        display_handler.println("ARM ROTATED");
+        Serial.println("ARM ROTATED");
+        break;
     case EVENT_ARM_RAISED:
         display_handler.println("ARM RAISED");
         Serial.println("ARM RAISED");
         break;
-   case EVENT_NEAR_PET:
+   case EVENT_PET_NEAR:
         display_handler.println("NEAR PET");
         Serial.println("NEAR PET");
+        break;
+    case EVENT_PET_MISSED:
+        display_handler.println("PET MISSED");
+        Serial.println("PET MISSED");
+        break;
+    case EVENT_ARM_READY:
+        display_handler.println("ARM READY");
+        Serial.println("ARM READY");
+        break;
+    case EVENT_PET_FAILED:
+        display_handler.println("PET FAILED");
+        Serial.println("PET FAILED");
         break;
     case EVENT_PET_GRASPED:
         display_handler.println("PET GRASPED");
@@ -340,29 +350,13 @@ void print_event(state_event_e event) {
         display_handler.println("PET STORED");
         Serial.println("PET STORED");
         break;
-    case EVENT_RAMP_DETECTED:
-        display_handler.println("RAMP DETECTED");
-        Serial.println("RAMP DETECTED");
-        break;
-    case EVENT_DEBRIS_DETECTED:
-        display_handler.println("DEBRIS DETECTED");
-        Serial.println("DEBRIS DETECTED");
-        break;
-    case EVENT_FLAT_GROUND_DETECTED:
-        display_handler.println("FLAT GROUND DETECTED");
-        Serial.println("FLAT GROUND DETECTED");
-        break;
     case EVENT_EDGE_DETECTED:
         display_handler.println("EDGE DETECTED");
         Serial.println("EDGE DETECTED");
         break;
-    case EVENT_CASCADE_EXTENDED:
-        display_handler.println("CASCADE EXTENDED");
-        Serial.println("CASCADE EXTENDED");
-        break;
-    case EVENT_ZIP_LINE_DETECTED:
-        display_handler.println("ZIP LINE");
-        Serial.println("ZIP LINE");
+    case EVENT_PETS_RETURNED:
+        display_handler.println("PETS RETURNED");
+        Serial.println("PETS RETURNED");
         break;
     default:
         break;
