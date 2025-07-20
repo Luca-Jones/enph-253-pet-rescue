@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <assert.h>
 #include <pin_out.h>
+#include <pwm_config.h>
 
 #include "state_machine.h"
 #include "close_claw/state_close_claw.h"
@@ -10,30 +11,30 @@
 #include "wait/state_wait.h"
 
 /*
-This is a state machine implemented with enums and functions.
-The robot moves between states through Transitions, which are triggered by Events.
-Events are determined by the sensors.
-This approach has been taken from Artful Bytes' youtube video.
-video:  https://www.youtube.com/watch?v=NTEHRjiAY2I&t=1498s&ab_channel=ArtfulBytes
-github: https://github.com/artfulbytes/nsumo_video
+    This is a state machine implemented with enums and functions.
+    The robot moves between states through Transitions, which are triggered by Events.
+    The event that ocurred is determined by the sensors.
+    This approach has been taken from Artful Bytes' youtube video.
+    video:  https://www.youtube.com/watch?v=NTEHRjiAY2I&t=1498s&ab_channel=ArtfulBytes
+    github: https://github.com/artfulbytes/nsumo_video
 
-1. Process the sensor input and return the appropriate event
-2. Process the event and change the state accordingly
-3. Run a step of that state's routine
-4. Repeat
+    1. Process the sensor input and return the appropriate event
+    2. Process the event and change the state accordingly
+    3. Run a step of that state's routine
+    4. Repeat
 
-There exists a "nothing happened" event to keep the state the same.
-Input is polling, and the data structure to store the state machine's 
-information is stack-allocated (local variable) and passed around as a pointer for now.
-I think we can have interrupts if we want, but then we need some global 
-data storage (memory management issues?) and have interrupts store it in there.
-If we want to keep a history of any data, we may need to implement a ring buffer.
+    There exists a "nothing happened" event to keep the state the same.
+    Input is polling, and the data structure to store the state machine's 
+    information is stack-allocated (local variable) and passed around as a pointer for now.
+    I think we can have interrupts if we want, but then we need some global 
+    data storage (memory management issues?) and have interrupts store it in there.
+    If we want to keep a history of any data, we may need to implement a ring buffer.
 
-Alternative implementation:
-Instead of writing new functions and updating this file whenever 
-we add a new state, we can take advantage of c++ classes, inheritance, and polymorphism.
-The downside is that this could be more confuing and more difficult to debug.
-It would be cleaner imo though.
+    Alternative implementation:
+    Instead of writing new functions and updating this file whenever 
+    we add a new state, we can take advantage of c++ classes, inheritance, and polymorphism.
+    The downside is that this could be more confuing and more difficult to debug.
+    It would be cleaner imo though.
 */
 
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
@@ -72,8 +73,14 @@ static void state_enter (struct state_machine *state_machine, state_e next_state
 static void state_exit  (struct state_machine *state_machine, state_e previous_state);
 
 void state_machine_init(struct state_machine *state_machine) {
+    
+    // set up state machine data
+    state_machine->state = STATE_WAIT;
+    state_machine->internal_event = EVENT_NONE;
+    state_machine->pets = 0;
 
     #ifdef DEBUG
+    // set up display for debugging
     display_handler.begin(SSD1306_SWITCHCAPVCC, 0x3C); // 3.3V at the default i2c addr
     display_handler.setTextSize(1);
     display_handler.setTextColor(SSD1306_WHITE);
@@ -84,24 +91,26 @@ void state_machine_init(struct state_machine *state_machine) {
     Serial.println("Initializing State Machine...");
     #endif
 
+    // set up start button
     attachInterrupt(digitalPinToInterrupt(PIN_START_BUTTON), button_pressed_ISR, CHANGE);
 
-    state_machine->state = STATE_WAIT;
-    state_machine->internal_event = EVENT_NONE;
-    state_machine->pets = 0;
+    // set up claw switch
 
-    // set up the servos
-    servo_1.attach(PIN_ARM_SERVO_1, CHANNEL_ARM_SERVO_1, 500, 2500);
-    servo_2.attach(PIN_ARM_SERVO_2, CHANNEL_ARM_SERVO_2, 500, 2500);
-    servo_3.attach(PIN_CLAW, CHANNEL_CLAW, 500, 2500);
 
-    // set up the sensors
-    Wire.begin(PIN_SDA, PIN_SCL);
-    Wire.setClock(TOF_CLOCK_FREQUENCY);
+    // set up servos
+    servo_1.attach(PIN_SERVO_1, PWM_CHANNEL_SERVO_1, 500, 2500);
+    servo_2.attach(PIN_SERVO_2, PWM_CHANNEL_SERVO_2, 500, 2500);
+    servo_3.attach(PIN_SERVO_3, PWM_CHANNEL_SERVO_3, 500, 2500);
+
+    // set up I2C
+    Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);
+    Wire.setClock(I2C_FRQ_HZ);
+
+    // set up ToF
     tof.begin();
     tof.setAddress(TOF_I2C_ADDRESS);
     tof.setResolution(TOF_RESOLUTION);
-    tof.setRangingFrequency(TOF_RANGING_FREQUENCY);
+    tof.setRangingFrequency(TOF_RANGING_FREQUENCY_HZ);
     tof.startRanging();
     
     #ifdef DEBUG

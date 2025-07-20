@@ -1,7 +1,7 @@
 #ifndef CLAW_H
 #define CLAW_H
 
-#include <Servo.h>
+#include <actuators/Servo.h>
 #include <esp32-hal.h>
 
 #define CLAW_OPEN 180

@@ -1,4 +1,4 @@
-#include <tof.h>
+#include <sensors/ToF.h>
 #include <math.h>
 
 float tof_get_center_dist(const ToF_data *data) {

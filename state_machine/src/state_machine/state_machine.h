@@ -17,8 +17,8 @@ extern Adafruit_SSD1306 display_handler;
 #endif
 
 /* Actuators */
-#include <Arm.h>
-#include <Claw.h>
+#include <actuators/Arm.h>
+#include <actuators/Claw.h>
 
 extern Servo servo_1;
 extern Servo servo_2;
@@ -27,7 +27,7 @@ extern Arm arm;
 extern Claw claw;
 
 /* Sensors */
-#include <tof.h>
+#include <sensors/ToF.h>
 
 extern ToF tof;
 

@@ -1,7 +1,7 @@
 #ifndef ARM_H
 #define ARM_H
 
-#include <Servo.h>
+#include <actuators/Servo.h>
 #include <esp32-hal.h>
 
 /* All angles are CW positive! */
