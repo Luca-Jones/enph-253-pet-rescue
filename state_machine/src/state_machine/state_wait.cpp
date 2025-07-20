@@ -1,4 +1,4 @@
-#include "state_wait.h"
+#include <state_machine/state_wait.h>
 #include "esp32-hal.h"
 
 static void state_wait_run(struct state_machine *state_machine) {

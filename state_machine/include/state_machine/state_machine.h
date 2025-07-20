@@ -1,8 +1,8 @@
 #ifndef STATE_MACHINE_H
 #define STATE_MACHINE_H
 
-#include <pin_out.h>
-#include <pwm_config.h>
+#include <config/pin_out.h>
+#include <config/pwm_config.h>
 
 /*
     Each state should implement the following functions:
@@ -20,18 +20,20 @@
 #include <actuators/Servo.h>
 #include <actuators/Arm.h>
 #include <actuators/Claw.h>
+#include <actuators/BaseGear.h>
 
 extern Servo servo_1;
 extern Servo servo_2;
 extern Arm arm;
 extern Servo claw;
+extern BaseGear base_gear;
 
 
 /* Sensors */
-#include <sensors/ToF.h>
 #include <sensors/MagneticEncoder.h>
 #include <sensors/RotaryEncoder.h>
 #include <sensors/Sonar.h>
+#include <sensors/ToF.h>
 
 extern ToF tof;
 

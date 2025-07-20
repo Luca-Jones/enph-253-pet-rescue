@@ -1,4 +1,5 @@
-#include "state_raise_arm.h"
+#include <state_machine/state_raise_arm.h>
+#include <actuators/Arm.h>
 
 #define RAISE_STEP 10
 

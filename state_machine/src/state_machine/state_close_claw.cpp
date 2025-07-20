@@ -1,4 +1,5 @@
-#include "state_close_claw.h"
+#include <state_machine/state_close_claw.h>
+#include <actuators/Claw.h>
 
 static void state_close_claw_run(struct state_machine *state_machine) {
     claw.write(CLAW_CLOSED);

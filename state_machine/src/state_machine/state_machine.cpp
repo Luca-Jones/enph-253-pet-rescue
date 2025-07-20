@@ -1,12 +1,12 @@
 #include <Arduino.h>
 #include <assert.h>
 
-#include "state_machine.h"
-#include "close_claw/state_close_claw.h"
-#include "raise_arm/state_raise_arm.h"
-#include "reach/state_reach.h"
-#include "store/state_store.h"
-#include "wait/state_wait.h"
+#include <state_machine/state_machine.h>
+#include <state_machine/state_close_claw.h>
+#include <state_machine/state_raise_arm.h>
+#include <state_machine/state_reach.h>
+#include <state_machine/state_store.h>
+#include <state_machine/state_wait.h>
 // TODO: make the rest of the states
 
 /*

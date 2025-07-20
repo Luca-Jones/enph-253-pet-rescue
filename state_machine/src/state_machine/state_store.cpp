@@ -1,4 +1,5 @@
-#include "state_store.h"
+#include <state_machine/state_store.h>
+#include <actuators/Arm.h>
 
 static void state_store_run(struct state_machine *state_machine) {
     // moves to put the pet into the bucket; run once
