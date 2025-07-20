@@ -1,6 +1,8 @@
 #include <sensors/ToF.h>
 #include <math.h>
 
+// TODO: fix this ToF implementation
+
 float tof_get_center_dist(const ToF_data *data) {
 
      /**

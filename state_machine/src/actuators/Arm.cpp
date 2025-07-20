@@ -2,8 +2,6 @@
 #include <esp32-hal.h>
 #include <math.h>
 
-
-
 /*  
     x and y denote the tip of the claw.    
     The angles denoted theta are the angles of each servo.
@@ -119,7 +117,7 @@ void theta_to_phi(int theta_1, int theta_2, float *phi_1, float *phi_2) {
 
 
 
-
+// TODO: remove
 /* FOR TESTING */
 void Arm::move_to_angle(int theta_1, int theta_2) {
     servo_1->write(theta_1);

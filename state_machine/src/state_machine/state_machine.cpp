@@ -1,7 +1,5 @@
 #include <Arduino.h>
 #include <assert.h>
-#include <pin_out.h>
-#include <pwm_config.h>
 
 #include "state_machine.h"
 #include "close_claw/state_close_claw.h"
@@ -9,46 +7,36 @@
 #include "reach/state_reach.h"
 #include "store/state_store.h"
 #include "wait/state_wait.h"
+// TODO: make the rest of the states
 
 /*
     This is a state machine implemented with enums and functions.
     The robot moves between states through Transitions, which are triggered by Events.
     The event that ocurred is determined by the sensors.
-    This approach has been taken from Artful Bytes' youtube video.
-    video:  https://www.youtube.com/watch?v=NTEHRjiAY2I&t=1498s&ab_channel=ArtfulBytes
-    github: https://github.com/artfulbytes/nsumo_video
+    
 
     1. Process the sensor input and return the appropriate event
     2. Process the event and change the state accordingly
     3. Run a step of that state's routine
     4. Repeat
 
-    There exists a "nothing happened" event to keep the state the same.
-    Input is polling, and the data structure to store the state machine's 
-    information is stack-allocated (local variable) and passed around as a pointer for now.
-    I think we can have interrupts if we want, but then we need some global 
-    data storage (memory management issues?) and have interrupts store it in there.
-    If we want to keep a history of any data, we may need to implement a ring buffer.
-
-    Alternative implementation:
-    Instead of writing new functions and updating this file whenever 
-    we add a new state, we can take advantage of c++ classes, inheritance, and polymorphism.
-    The downside is that this could be more confuing and more difficult to debug.
-    It would be cleaner imo though.
 */
 
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
 
-volatile bool button_pressed = false;
-
-Adafruit_SSD1306 display_handler(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+/* Actuators */
 Servo servo_1(ARM_SERVO_1_ANGLE_MAX);
 Servo servo_2(ARM_SERVO_2_ANGLE_MAX);
 Arm arm(&servo_1, &servo_2);
 Servo claw(CLAW_OPEN);
-ToF tof;
 
-/* STRUCTS */
+/* Sensors */
+ToF tof;
+volatile bool button_pressed = false;
+volatile bool switch_triggered = false;
+
+/* STATE MACHINE */
+
 struct state_transition {
     state_e previous_state;
     state_event_e event;
@@ -90,16 +78,18 @@ void state_machine_init(struct state_machine *state_machine) {
     Serial.println("Initializing State Machine...");
     #endif
 
-    // set up start button
-    attachInterrupt(digitalPinToInterrupt(PIN_START_BUTTON), button_pressed_ISR, CHANGE);
-
-    // set up claw switch
-
-
     // set up servos
     servo_1.attach(PIN_SERVO_1, PWM_CHANNEL_SERVO_1, 500, 2500);
     servo_2.attach(PIN_SERVO_2, PWM_CHANNEL_SERVO_2, 500, 2500);
     claw.attach(PIN_SERVO_3, PWM_CHANNEL_SERVO_3, 500, 2500);
+
+    // TODO: set up motors
+
+    // set up start button
+    attachInterrupt(digitalPinToInterrupt(PIN_START_BUTTON), button_pressed_ISR, CHANGE);
+    
+    // set up claw switch
+    attachInterrupt(digitalPinToInterrupt(PIN_LIMIT_SWITCH), limit_switch_ISR, CHANGE);
 
     // set up I2C
     Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);
@@ -116,6 +106,10 @@ void state_machine_init(struct state_machine *state_machine) {
     print_event(state_machine->internal_event);
     print_state(state_machine->state);
     #endif
+
+    // TODO: set up magnetic encoder
+    // TODO: set up rotary encoder
+    // TODO: set up Sonar
 
 }
 
@@ -134,11 +128,16 @@ state_event_e process_input(struct state_machine *state_machine) {
         return EVENT_BUTTON_PRESSED;
     }
 
-    // poll input from each sensor
+    if (switch_triggered) {
+        switch_triggered = false;
+        return EVENT_PET_GRASPED;
+    }
+
+    // TODO: poll input from each sensor
     // - ToF sensors (x2)
-    // - sonar sensors (x2)
-    // - rotary encoder?
-    // - megnetic encoder?
+    // - sonar sensor
+    // - rotary encoder
+    // - megnetic encoder
 
     // if (tof.isDataReady()) // always seems to return false?  
 
@@ -185,7 +184,6 @@ void process_event(struct state_machine *state_machine, state_event_e next_event
             return;
         }
     }
-    // assert(0); // throw an error
 }
 
 static void state_enter(struct state_machine *state_machine, state_e next_state) {
@@ -238,12 +236,17 @@ static void state_exit(struct state_machine *state_machine, state_e previous_sta
 
 }
 
-// IRAM safe code
 void IRAM_ATTR button_pressed_ISR() {
     button_pressed = true;
 }
 
+void IRAM_ATTR limit_switch_ISR() {
+    switch_triggered = gpio_get_level((gpio_num_t) PIN_LIMIT_SWITCH);
+}
+
 #ifdef DEBUG
+
+Adafruit_SSD1306 display_handler(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 void print_state(state_e state) {
     switch(state) {

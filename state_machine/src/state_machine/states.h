@@ -1,6 +1,8 @@
 #ifndef STATES_H
 #define STATES_H
 
+// TODO: update states to match current state machine
+
 typedef enum {
     STATE_WAIT,
     STATE_TAPE_FOLLOWING,

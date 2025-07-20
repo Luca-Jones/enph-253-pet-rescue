@@ -1,6 +1,8 @@
 #ifndef EVENTS_H
 #define EVENTS_H
 
+// TODO: update events to match current state machine
+
 typedef enum {
     EVENT_NONE,
     EVENT_BUTTON_PRESSED,

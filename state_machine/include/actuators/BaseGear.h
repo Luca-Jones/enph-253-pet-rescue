@@ -5,6 +5,7 @@ class BaseGear
 {
     public:
         BaseGear();
+        ~BaseGear();
         void write(int angle);
     private:
 };

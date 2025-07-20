@@ -1,22 +1,23 @@
 #ifndef STATE_MACHINE_H
 #define STATE_MACHINE_H
 
-#define DEBUG
+#include <pin_out.h>
+#include <pwm_config.h>
 
-#ifdef DEBUG
+/*
+    Each state should implement the following functions:
+    
+    <state>_enter(struct state_machine *sm, state_e from)    handles things when first entering the state from any other state (including itself).
+    <state>_exit(struct state_machine *sm)                   handles things when exiting a state into any other state
+    <state>_run(struct state_machine *sm)                    one iteration of the state's routine. Post any internal events from here.
+    
+*/
 
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+#define DEBUG // comment out this line to remove logging through Serial and the OLED display
 
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-#define OLED_RESET -1 // shared with the esp32 reset pin
-extern Adafruit_SSD1306 display_handler;    
-
-#endif
 
 /* Actuators */
+#include <actuators/Servo.h>
 #include <actuators/Arm.h>
 #include <actuators/Claw.h>
 
@@ -25,8 +26,12 @@ extern Servo servo_2;
 extern Arm arm;
 extern Servo claw;
 
+
 /* Sensors */
 #include <sensors/ToF.h>
+#include <sensors/MagneticEncoder.h>
+#include <sensors/RotaryEncoder.h>
+#include <sensors/Sonar.h>
 
 extern ToF tof;
 
@@ -42,23 +47,30 @@ struct state_machine {
     ToF_data tof_data;
 };
 
+
 /* FUNCTIONS */
-void state_machine_init(struct state_machine *state_machine);
-state_event_e process_input (struct state_machine *state_machine);
-void process_event (struct state_machine *state_machine, state_event_e next_event);
-void IRAM_ATTR button_pressed_ISR();
+void            state_machine_init  (struct state_machine *state_machine);
+state_event_e   process_input       (struct state_machine *state_machine);
+void            process_event       (struct state_machine *state_machine, state_event_e next_event);
+void IRAM_ATTR  button_pressed_ISR  ();
+void IRAM_ATTR  limit_switch_ISR    ();
+
+
 #ifdef DEBUG
+
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET -1 // shared with the esp32 reset pin
+extern Adafruit_SSD1306 display_handler;    
+
 void print_state(state_e state);
 void print_event(state_event_e event);
+
 #endif
 
-/*
-    Each state must implement the following functions:
-    
-    <state>_enter(struct state_machine *sm, state_e from)    handles things when first entering the state from any other state (including itself).
-    <state>_exit(struct state_machine *sm)                   handles things when exiting a state into any other state
-    <state>_run(struct state_machine *sm)                    one iteration of the state's routine. Post any internal events here.
-    
-*/
 
 #endif
