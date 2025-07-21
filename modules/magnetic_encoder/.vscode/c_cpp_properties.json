@@ -10,6 +10,7 @@
             "includePath": [
                 "C:/Users/Luca/source/enph-253-pet-rescue/modules/magnetic_encoder/include",
                 "C:/Users/Luca/source/enph-253-pet-rescue/modules/magnetic_encoder/src",
+                "C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
                 "C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/newlib/platform_include",
                 "C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/freertos/include",
                 "C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/freertos/include/esp_additions/freertos",
@@ -238,7 +239,6 @@
                 "C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
                 "C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
                 "C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/libraries/WiFiProv/src",
-                "C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
                 ""
             ],
             "browse": {
@@ -246,6 +246,7 @@
                 "path": [
                     "C:/Users/Luca/source/enph-253-pet-rescue/modules/magnetic_encoder/include",
                     "C:/Users/Luca/source/enph-253-pet-rescue/modules/magnetic_encoder/src",
+                    "C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
                     "C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/newlib/platform_include",
                     "C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/freertos/include",
                     "C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/freertos/include/esp_additions/freertos",
@@ -474,7 +475,6 @@
                     "C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
                     "C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
                     "C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/libraries/WiFiProv/src",
-                    "C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
                     ""
                 ]
             },
