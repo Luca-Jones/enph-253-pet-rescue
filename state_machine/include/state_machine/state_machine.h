@@ -35,7 +35,8 @@ extern BaseGear base_gear;
 #include <sensors/Sonar.h>
 #include <sensors/ToF.h>
 
-extern ToF tof;
+extern ToF tof_claw;
+extern ToF tof_chassis;
 
 
 /* STATE MACHINE */
@@ -46,7 +47,8 @@ struct state_machine {
     state_e state;
     state_event_e internal_event;
     int pets;
-    ToF_data tof_data;
+    ToF_data tof_data_claw;
+    ToF_data tof_data_chassis;
 };
 
 

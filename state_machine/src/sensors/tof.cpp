@@ -3,6 +3,14 @@
 
 // TODO: fix this ToF implementation
 
+void tof_setup(ToF *tof, uint8_t i2c_addr) {
+    tof->begin();
+    tof->setAddress(i2c_addr);
+    tof->setResolution(TOF_RESOLUTION);
+    tof->setRangingFrequency(TOF_RANGING_FREQUENCY_HZ);
+    tof->startRanging();
+}
+
 float tof_get_center_dist(const ToF_data *data) {
 
      /**

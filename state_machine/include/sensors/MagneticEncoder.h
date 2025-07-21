@@ -13,6 +13,9 @@
 int mag_get_status();
 
 
+void mag_setup();
+
+
 /**
  * @returns an angle from 0 to 360 degrees
  */

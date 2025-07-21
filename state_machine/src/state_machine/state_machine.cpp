@@ -32,7 +32,8 @@ Arm arm(&servo_1, &servo_2);
 Servo claw(CLAW_OPEN);
 
 /* Sensors */
-ToF tof;
+ToF tof_claw;
+ToF tof_chassis;
 volatile bool button_pressed = false;
 volatile bool switch_triggered = false;
 
@@ -89,7 +90,25 @@ void state_machine_init(struct state_machine *state_machine) {
     servo_2.attach(PIN_SERVO_2, PWM_CHANNEL_SERVO_2, 500, 2500);
     claw.attach(PIN_SERVO_3, PWM_CHANNEL_SERVO_3, 500, 2500);
 
-    // TODO: set up motors
+    // set up left motor
+    pinMode(PIN_MOTOR_LEFT_DIR, OUTPUT);
+    ledcSetup(PWM_CHANNEL_MOTOR_LEFT, PWM_FRQ_HZ_MOTOR_LEFT, PWM_RESOLUTION_MOTOR_LEFT);
+    ledcAttachPin(PIN_MOTOR_LEFT_PWM, PWM_CHANNEL_MOTOR_LEFT);
+    
+    // set up right motor
+    pinMode(PIN_MOTOR_RIGHT_DIR, OUTPUT);
+    ledcSetup(PWM_CHANNEL_MOTOR_RIGHT, PWM_FRQ_HZ_MOTOR_RIGHT, PWM_RESOLUTION_MOTOR_RIGHT);
+    ledcAttachPin(PIN_MOTOR_RIGHT_PWM, PWM_CHANNEL_MOTOR_RIGHT);
+    
+    // set up cascade motor
+    pinMode(PIN_CASCADE_DIR, OUTPUT);
+    ledcSetup(PWM_CHANNEL_CASCADE, PWM_FRQ_HZ_CASCADE, PWM_RESOLUTION_CASCADE);
+    ledcAttachPin(PIN_CASCADE_PWM, PWM_CHANNEL_CASCADE);
+    
+    // set up base gear motor
+    pinMode(PIN_BASE_GEAR_DIR, OUTPUT);
+    ledcSetup(PWM_CHANNEL_BASE_GEAR, PWM_FRQ_HZ_BASE_GEAR, PWM_RESOLUTION_BASE_GEAR);
+    ledcAttachPin(PIN_BASE_GEAR_PWM, PWM_CHANNEL_BASE_GEAR);
 
     // set up start button
     attachInterrupt(digitalPinToInterrupt(PIN_START_BUTTON), button_pressed_ISR, CHANGE);
@@ -102,20 +121,22 @@ void state_machine_init(struct state_machine *state_machine) {
     Wire.setClock(I2C_FRQ_HZ);
 
     // set up ToF
-    tof.begin();
-    tof.setAddress(TOF_I2C_ADDRESS);
-    tof.setResolution(TOF_RESOLUTION);
-    tof.setRangingFrequency(TOF_RANGING_FREQUENCY_HZ);
-    tof.startRanging();
+    tof_setup(&tof_claw, TOF_I2C_ADDRESS_CLAW);
+    tof_setup(&tof_chassis, TOF_I2C_ADDRESS_CHASSIS);
     
     #ifdef DEBUG
     print_event(state_machine->internal_event);
     print_state(state_machine->state);
     #endif
 
-    // TODO: set up magnetic encoder
-    // TODO: set up rotary encoder
-    // TODO: set up Sonar
+    // set up the magnetic encoder
+    mag_setup();
+
+    // set up the rotary encoder
+    rot_setup();
+
+    // set up sonar
+    sonar_setup();
 
 }
 
@@ -138,34 +159,40 @@ state_event_e process_input(struct state_machine *state_machine) {
         switch_triggered = false;
         return EVENT_PET_GRASPED;
     }
+    
+    // TODO: fully integrate ToF
+    float mean_center_dist;
 
-    // TODO: poll input from each sensor
-    // - ToF sensors (x2)
-    // - sonar sensor
-    // - rotary encoder
-    // - megnetic encoder
+    if (tof_claw.isDataReady() && tof_claw.getRangingData(&state_machine->tof_data_claw)) {
 
-    // if (tof.isDataReady()) // always seems to return false?  
-
-    if (tof.getRangingData(&state_machine->tof_data)) {
-
-        float center_dist = tof_get_center_dist(&state_machine->tof_data);
-        Serial.println(center_dist);
+        mean_center_dist = tof_get_center_dist(&state_machine->tof_data_claw);
         
-        if (center_dist >= 100.0f && center_dist <= 240.0f) {
+        if (mean_center_dist >= TOF_CENTER_DIST_LOWER_BOUND_MM && mean_center_dist <= TOF_CENTER_DIST_UPPER_BOUND_MM) {
             
-            if (tof_pillar_detected(&state_machine->tof_data)) {
+            if (tof_pillar_detected(&state_machine->tof_data_claw)) {
                 return EVENT_PILLAR_DETECTED;
             }
             
-            if (tof_pet_detected(&state_machine->tof_data)) {
+            if (tof_pet_detected(&state_machine->tof_data_claw)) {
                 return EVENT_PET_DETECTED_LEFT;
             }
             
-        } else if (center_dist < 100.0f && tof_pet_detected(&state_machine->tof_data)) {
+        } else if (mean_center_dist < TOF_CENTER_DIST_LOWER_BOUND_MM && tof_pet_detected(&state_machine->tof_data_claw)) {
             return EVENT_PET_NEAR;
         }
+    }
 
+    if (tof_chassis.isDataReady() && tof_chassis.getRangingData(&state_machine->tof_data_chassis)) {
+
+        mean_center_dist = tof_get_center_dist(&state_machine->tof_data_chassis);
+        
+        if (mean_center_dist >= TOF_CENTER_DIST_LOWER_BOUND_MM && mean_center_dist <= TOF_CENTER_DIST_UPPER_BOUND_MM && tof_pet_detected(&state_machine->tof_data_chassis)) {
+            return EVENT_PET_DETECTED_RIGHT;
+        }
+    }
+
+    if (sonar_get_distance_mm() > 500) {
+        return EVENT_EDGE_DETECTED;
     }
 
     return EVENT_NONE;
