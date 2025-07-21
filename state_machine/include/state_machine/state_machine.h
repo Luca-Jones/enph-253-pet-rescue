@@ -56,6 +56,12 @@ struct state_machine {
     bool claw_closed;
     int claw_open_angle; // either CLAW_OPEN or CLAW_SEMI_OPEN
     int attempts;
+
+    // tape following data
+    float last_error;
+    unsigned long last_pid_time; // set to zero when leaving the state
+    bool last_ir_ll, last_ir_l, last_ir_c, last_ir_r, last_ir_rr;
+
 };
 
 

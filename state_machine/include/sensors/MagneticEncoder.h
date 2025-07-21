@@ -3,9 +3,9 @@
 
 #define MAG_I2C_ADDRESS 0x36
 #define MAG_REGISTER_STATUS 0x0B
-#define MAG_MD_BIT 1 << 5
-#define MAG_ML_BIT 1 << 4
-#define MAG_MH_BIT 1 << 3
+#define MAG_MD_BIT 5
+#define MAG_ML_BIT 4
+#define MAG_MH_BIT 3
 #define MAG_REGISTER_RAW_ANGLE_LOW  0x0D
 #define MAG_REGISTER_RAW_ANGLE_HIGH 0x0C
 

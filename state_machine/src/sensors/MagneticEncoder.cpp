@@ -10,11 +10,11 @@ int mag_get_status() {
     while (Wire.available() == 0);
 
     int mag_status = Wire.read();
-    if (mag_status & MAG_MD_BIT) {
+    if (mag_status >> MAG_MD_BIT & 0x01) {
         return MAG_STATUS_OK;
-    } else if (mag_status & MAG_ML_BIT) {
+    } else if (mag_status >> MAG_ML_BIT & 0x01) {
         return MAG_STATUS_TOO_FAR;
-    } else if (mag_status & MAG_MH_BIT) {
+    } else if (mag_status >> MAG_MH_BIT & 0x01) {
         return MAG_STATUS_TOO_CLOSE;
     }
 

@@ -79,6 +79,14 @@ void state_machine_init(struct state_machine *state_machine) {
     state_machine->claw_closed = false;
     state_machine->claw_open_angle = CLAW_OPEN;
     state_machine->attempts = 0;
+    state_machine->current_ir_pos = 0;
+    state_machine->last_error = 0;
+    state_machine->last_pid_time = 0;
+    state_machine->last_ir_ll = false;
+    state_machine->last_ir_l = false;
+    state_machine->last_ir_c = false;
+    state_machine->last_ir_r = false;
+    state_machine->last_ir_rr = false;
 
     #ifdef DEBUG
     // set up display for debugging
@@ -300,13 +308,11 @@ static void state_enter(struct state_machine *state_machine, state_e next_state,
 static void state_exit(struct state_machine *state_machine, state_e previous_state) {
 
     switch (previous_state) {
-        case STATE_WAIT:
-            break;
         case STATE_TAPE_FOLLOWING:
             state_tape_following_exit(state_machine);
             break;
+        case STATE_WAIT:
         case STATE_REACH:
-            break;
         case STATE_CLOSE_CLAW:
         case STATE_STORE:
         case STATE_RETREAT:

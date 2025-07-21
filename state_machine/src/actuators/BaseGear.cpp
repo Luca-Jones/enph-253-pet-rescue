@@ -6,7 +6,6 @@
 #include <esp32-hal-ledc.h>
 #include <esp32-hal.h>
 
-// TODO: test and tune
 #define BASE_GEAR_KP 1
 #define BASE_GEAR_KI 1
 #define BASE_GEAR_KD 1
@@ -34,7 +33,7 @@ void BaseGear::write(int angle) {
         output = fmin(fmax(output, BASE_GEAR_MIN_OUTPUT), BASE_GEAR_MAX_OUTPUT);
         ledcWrite(PWM_CHANNEL_BASE_GEAR, 0);
         delayMicroseconds(100);
-        digitalWrite(PIN_BASE_GEAR_DIR, output > 0 ? HIGH : LOW); // TODO: associate the direction with the correct sign
+        digitalWrite(PIN_BASE_GEAR_DIR, output > 0 ? HIGH : LOW);
         ledcWrite(PWM_CHANNEL_BASE_GEAR, fabs(output));
         delay(BASE_GEAR_TURNING_TIME_MS / BASE_GEAR_PID_ITERATIONS);
     }

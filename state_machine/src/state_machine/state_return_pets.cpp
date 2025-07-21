@@ -4,19 +4,19 @@
 #include <config/pwm_config.h>
 #include <config/pin_out.h>
 
-#define CASCADE_RAISED_ANGLE 360 * 20 // TODO: determine the angle to raise
+#define CASCADE_RAISED_ANGLE 360 * 20 // determine the angle to raise
 #define REVERSE_DRIVING_TIME_MS 2000
 
 void state_return_pets_run(struct state_machine *state_machine) {
     
     // raise the cascade
-    digitalWrite(PIN_CASCADE_DIR, HIGH); // TODO: associate HIGH to the correct direction
+    digitalWrite(PIN_CASCADE_DIR, HIGH); // associate HIGH to the correct direction
     ledcWrite(PWM_CHANNEL_CASCADE, PWM_MAX_DUTY_CASCADE);
 
     while (rot_get_angle() < CASCADE_RAISED_ANGLE);
 
     // drive backwards for some time, then stop
-    digitalWrite(PIN_MOTOR_LEFT_DIR, LOW);  // TODO: associate with the correct direction
+    digitalWrite(PIN_MOTOR_LEFT_DIR, LOW);  // associate with the correct direction
     digitalWrite(PIN_MOTOR_RIGHT_DIR, LOW);
     ledcWrite(PWM_CHANNEL_MOTOR_LEFT, PWM_MAX_DUTY_MOTOR_LEFT);
     ledcWrite(PWM_CHANNEL_MOTOR_RIGHT, PWM_MAX_DUTY_MOTOR_RIGHT);
