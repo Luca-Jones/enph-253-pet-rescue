@@ -53,6 +53,9 @@ struct state_machine {
     int stable_pet_count;
     int stable_pillar_count;
     bool arm_in_start_pos;
+    bool claw_closed;
+    int claw_open_angle; // either CLAW_OPEN or CLAW_SEMI_OPEN
+    int attempts;
 };
 
 

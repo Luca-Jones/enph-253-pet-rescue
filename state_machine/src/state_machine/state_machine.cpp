@@ -76,6 +76,9 @@ void state_machine_init(struct state_machine *state_machine) {
     state_machine->stable_pet_count = 0;
     state_machine->stable_pillar_count = 0;
     state_machine->arm_in_start_pos = true;
+    state_machine->claw_closed = false;
+    state_machine->claw_open_angle = CLAW_OPEN;
+    state_machine->attempts = 0;
 
     #ifdef DEBUG
     // set up display for debugging
@@ -224,9 +227,13 @@ state_event_e process_input(struct state_machine *state_machine) {
     }
 
     // claw limit switch
-    if (switch_triggered) {
-        switch_triggered = false;
-        return EVENT_PET_GRASPED;
+    if (state_machine->claw_closed) {   
+        if (switch_triggered) {
+            switch_triggered = false;
+            return EVENT_PET_GRASPED;
+        } else {
+            return EVENT_PET_MISSED;
+        }
     }
     
     // platform edge detection
@@ -301,8 +308,6 @@ static void state_exit(struct state_machine *state_machine, state_e previous_sta
         case STATE_REACH:
             break;
         case STATE_CLOSE_CLAW:
-            state_close_claw_exit(state_machine);
-            break;
         case STATE_STORE:
         case STATE_RETREAT:
         case STATE_RETURN_PETS:

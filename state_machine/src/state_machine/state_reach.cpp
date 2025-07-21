@@ -14,9 +14,11 @@ void state_reach_enter(struct state_machine *state_machine, state_event_e event)
         case EVENT_NONE:
         case EVENT_PET_DETECTED_LEFT:
             // reach
+            state_machine->claw_open_angle = CLAW_OPEN;
             break;
         case EVENT_PET_DETECTED_RIGHT:
-            // turn right
+            // turn right    
+            state_machine->claw_open_angle = CLAW_OPEN;
             if (state_machine->arm_in_start_pos) {
                 arm.lerp_to_pos(ARM_RAISED_X, ARM_RAISED_Y, 500);
                 state_machine->arm_in_start_pos = false;
@@ -26,6 +28,7 @@ void state_reach_enter(struct state_machine *state_machine, state_event_e event)
             break;
         case EVENT_PILLAR_DETECTED:
             // raise
+            state_machine->claw_open_angle = CLAW_SEMI_OPEN;
             arm.lerp_to_pos(ARM_HOME_X, ARM_PILLAR_Y, 500);
             break;
         default:
