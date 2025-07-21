@@ -54,28 +54,49 @@ void loop() {
 
     // calibrate();
     
-    arm.move_to_pos(250,100);
-    delay(2000);
-    arm.lerp_to_pos(350, 50, 500);
+    // claw.write(140);
+    // arm.lerp_to_pos(250,50,250);
+    // log_pos();
+    // delay(1000);
+    // arm.lerp_to_pos(250,200,250);
+    // delay(500);
+    // arm.lerp_to_pos(350,200,250);
+    // delay(500);
+    // claw.write(95);
+    // delay(500);
+    // arm.lerp_to_pos(220,210,250);
+    // delay(500);
+    // arm.lerp_to_pos(220,300,250);
+    // delay(500);
+    // claw.write(180);
+    // delay(5000);
+
+    claw.write(180);
+    arm.lerp_to_pos(250,50,250);
+    delay(1500);
+    arm.lerp_to_pos(250,100,250);
     delay(500);
-    claw.write(110);
+    arm.lerp_to_pos(350,100,250);
     delay(500);
-    arm.lerp_to_pos(250,240,500);
-    delay(1000);
+    claw.write(100);
+    delay(500);
+    arm.lerp_to_pos(350,300,250);
+    delay(500);
+    arm.lerp_to_pos(180,300,250);
+    delay(500);
     claw.write(180);
     delay(5000);
-    // arm.move_to_phi(90,150);
-
-    // if (button_pressed) {
-    //     Serial.println(counter);
-    //     if (is_claw_closed) {
-    //         claw.write(110);
-    //         Serial.println("Claw CLOSED");
-    //     } else {
-    //         claw.write(180);
-    //         Serial.println("Claw OPEN");
-    //     }
-    // }
-    // button_pressed = false;
-
+    
 }
+
+// if (button_pressed) {
+//     Serial.println(counter);
+//     if (is_claw_closed) {
+//         claw.write(110);
+//         Serial.println("Claw CLOSED");
+//     } else {
+//         claw.write(180);
+//         Serial.println("Claw OPEN");
+//     }
+// }
+// button_pressed = false;
