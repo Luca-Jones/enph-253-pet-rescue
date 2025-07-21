@@ -215,19 +215,20 @@ state_event_e process_input(struct state_machine *state_machine) {
         return ie;
     }
 
-    // interupt updates are next
+    // start button
     if (button_pressed) {
         button_pressed = false;
         return EVENT_BUTTON_PRESSED;
     }
 
+    // claw limit switch
     if (switch_triggered) {
         switch_triggered = false;
         return EVENT_PET_GRASPED;
     }
     
     // platform edge detection
-    if (sonar_get_distance_mm() > 500) {
+    if (sonar_get_distance_mm() > SONAR_EDGE_DISTANCE_CM) {
         return EVENT_EDGE_DETECTED;
     }
 
