@@ -75,6 +75,7 @@ void state_machine_init(struct state_machine *state_machine) {
     state_machine->pets = 0;
     state_machine->stable_pet_count = 0;
     state_machine->stable_pillar_count = 0;
+    state_machine->arm_in_start_pos = true;
 
     #ifdef DEBUG
     // set up display for debugging
@@ -303,12 +304,8 @@ static void state_exit(struct state_machine *state_machine, state_e previous_sta
             state_close_claw_exit(state_machine);
             break;
         case STATE_STORE:
-            break;
         case STATE_RETREAT:
-            break;
         case STATE_RETURN_PETS:
-            state_return_pets_exit(state_machine);
-            break;
         default:
             break;
     }

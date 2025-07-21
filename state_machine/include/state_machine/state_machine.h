@@ -52,6 +52,7 @@ struct state_machine {
     ToF_data tof_data_chassis;
     int stable_pet_count;
     int stable_pillar_count;
+    bool arm_in_start_pos;
 };
 
 
