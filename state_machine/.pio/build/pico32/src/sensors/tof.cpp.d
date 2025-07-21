@@ -1,5 +1,5 @@
-.pio/build/pico32/src/sensors/tof.cpp.o: src/sensors/tof.cpp \
- include/tof.h \
+.pio/build/pico32/src/sensors/ToF.cpp.o: src/sensors/ToF.cpp \
+ include/sensors/ToF.h \
  .pio/libdeps/pico32/SparkFun\ VL53L5CX\ Arduino\ Library/src/SparkFun_VL53L5CX_Library.h \
  C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
  C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp_arduino_version.h \

@@ -30,6 +30,7 @@ Servo servo_1(ARM_SERVO_1_ANGLE_MAX);
 Servo servo_2(ARM_SERVO_2_ANGLE_MAX);
 Arm arm(&servo_1, &servo_2);
 Servo claw(CLAW_OPEN);
+BaseGear base_gear = BaseGear();
 
 /* Sensors */
 ToF tof_claw;

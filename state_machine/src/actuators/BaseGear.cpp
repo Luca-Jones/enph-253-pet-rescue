@@ -1,9 +1,38 @@
 #include <actuators/BaseGear.h>
 #include <sensors/MagneticEncoder.h>
+#include <config/pwm_config.h>
+#include <math.h>
+#include <esp32-hal-ledc.h>
+#include <esp32-hal.h>
+
+// TODO: test and tune
+#define BASE_GEAR_KP 1
+#define BASE_GEAR_KI 1
+#define BASE_GEAR_KD 1
+
+#define BASE_GEAR_MAX_OUTPUT 1 << PWM_RESOLUTION_BASE_GEAR
+#define BASE_GEAR_MIN_OUTPUT -(1 << PWM_RESOLUTION_BASE_GEAR)
+#define BASE_GEAR_INTEGRAL_DECAY 0.95
+#define BASE_GEAR_PID_ITERATIONS 10
 
 BaseGear::BaseGear() {}
 BaseGear::~BaseGear() {}
 
 void BaseGear::write(int angle) {
-    // TODO: implement feedback loop with magnetic encoder
+    
+    int error = 0, last_error = 0, proportional = 0, integral = 0, derivative = 0, output = 0;
+
+    for (int i = 0; i < BASE_GEAR_PID_ITERATIONS; i ++) {
+        error = angle - mag_get_angle();
+        proportional = error;
+        integral = integral * BASE_GEAR_INTEGRAL_DECAY + error;
+        integral = fmin(fmax(integral, BASE_GEAR_MIN_OUTPUT), BASE_GEAR_MAX_OUTPUT);
+        derivative = error - last_error; // idc about the time step
+        last_error = error;
+        output = BASE_GEAR_KP * proportional + BASE_GEAR_KI * integral + BASE_GEAR_KD * derivative;
+        output = fmin(fmax(output, BASE_GEAR_MIN_OUTPUT), BASE_GEAR_MAX_OUTPUT);
+        ledcWrite(PWM_CHANNEL_BASE_GEAR, output);
+        delay(BASE_GEAR_TURNING_TIME_MS / BASE_GEAR_PID_ITERATIONS);
+    }
+
 }
