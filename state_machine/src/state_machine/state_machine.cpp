@@ -79,7 +79,6 @@ void state_machine_init(struct state_machine *state_machine) {
     state_machine->claw_closed = false;
     state_machine->claw_open_angle = CLAW_OPEN;
     state_machine->attempts = 0;
-    state_machine->current_ir_pos = 0;
     state_machine->last_error = 0;
     state_machine->last_pid_time = 0;
     state_machine->last_ir_ll = false;
