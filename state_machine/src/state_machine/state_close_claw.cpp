@@ -14,5 +14,5 @@ void state_close_claw_enter(struct state_machine *state_machine) {
 }
 
 void state_close_claw_exit(struct state_machine *state_machine) {
-    // reset pet check
+    
 }
