@@ -3,7 +3,7 @@
 
 #define REACH_STEP 10
 
-// TOOD: implement this state
+// TODO: implement this state
 
 static void state_reach_run(struct state_machine *state_machine) {
     int x,y;

@@ -1,6 +1,7 @@
 #include <actuators/BaseGear.h>
 #include <sensors/MagneticEncoder.h>
 #include <config/pwm_config.h>
+#include <config/pin_out.h>
 #include <math.h>
 #include <esp32-hal-ledc.h>
 #include <esp32-hal.h>
@@ -10,8 +11,8 @@
 #define BASE_GEAR_KI 1
 #define BASE_GEAR_KD 1
 
-#define BASE_GEAR_MAX_OUTPUT 1 << PWM_RESOLUTION_BASE_GEAR
-#define BASE_GEAR_MIN_OUTPUT -(1 << PWM_RESOLUTION_BASE_GEAR)
+#define BASE_GEAR_MAX_OUTPUT PWM_MAX_DUTY_BASE_GEAR
+#define BASE_GEAR_MIN_OUTPUT -PWM_MAX_DUTY_BASE_GEAR
 #define BASE_GEAR_INTEGRAL_DECAY 0.95
 #define BASE_GEAR_PID_ITERATIONS 10
 
@@ -31,7 +32,10 @@ void BaseGear::write(int angle) {
         last_error = error;
         output = BASE_GEAR_KP * proportional + BASE_GEAR_KI * integral + BASE_GEAR_KD * derivative;
         output = fmin(fmax(output, BASE_GEAR_MIN_OUTPUT), BASE_GEAR_MAX_OUTPUT);
-        ledcWrite(PWM_CHANNEL_BASE_GEAR, output);
+        ledcWrite(PWM_CHANNEL_BASE_GEAR, 0);
+        delayMicroseconds(100);
+        digitalWrite(PIN_BASE_GEAR_DIR, output > 0 ? HIGH : LOW); // TODO: associate the direction with the correct sign
+        ledcWrite(PWM_CHANNEL_BASE_GEAR, fabs(output));
         delay(BASE_GEAR_TURNING_TIME_MS / BASE_GEAR_PID_ITERATIONS);
     }
 
