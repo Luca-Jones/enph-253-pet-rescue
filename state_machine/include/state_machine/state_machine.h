@@ -43,12 +43,15 @@ extern ToF tof_chassis;
 #include "states.h"
 #include "events.h"
 
+// TODD: decide what should be included in the state machine struct
 struct state_machine {
     state_e state;
     state_event_e internal_event;
     int pets;
     ToF_data tof_data_claw;
     ToF_data tof_data_chassis;
+    int stable_pet_count;
+    int stable_pillar_count;
 };
 
 

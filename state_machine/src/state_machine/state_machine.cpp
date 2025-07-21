@@ -72,6 +72,8 @@ void state_machine_init(struct state_machine *state_machine) {
     state_machine->state = STATE_WAIT;
     state_machine->internal_event = EVENT_NONE;
     state_machine->pets = 0;
+    state_machine->stable_pet_count = 0;
+    state_machine->stable_pillar_count = 0;
 
     #ifdef DEBUG
     // set up display for debugging
@@ -140,6 +142,70 @@ void state_machine_init(struct state_machine *state_machine) {
 
 }
 
+state_event_e process_tof_inputs(struct state_machine *state_machine) {
+    
+    float mean_center_dist;
+
+    if (tof_claw.isDataReady() && tof_claw.getRangingData(&state_machine->tof_data_claw)) {
+
+        mean_center_dist = tof_get_center_dist(&state_machine->tof_data_claw);
+        
+        if (
+            mean_center_dist >= TOF_CENTER_DIST_LOWER_THRESHOLD_MM && 
+            mean_center_dist <= TOF_CENTER_DIST_UPPER_THRESHOLD_MM &&
+            tof_cylindrical_object_detected(&state_machine->tof_data_claw)
+        ) {
+            
+            // checks if the object is a pillar
+            if (tof_get_center_reflectance(&state_machine->tof_data_claw) <= TOF_REFLECTANCE_THRESHOLD) {
+                state_machine->stable_pillar_count++;
+                state_machine->stable_pet_count = 0;
+                if (state_machine->stable_pillar_count >= 3) {
+                    state_machine->stable_pillar_count = 0;
+                    return EVENT_PILLAR_DETECTED;
+                }
+            } else { // if it isn't a pillar, it is a pet!
+                state_machine->stable_pet_count++;
+                state_machine->stable_pillar_count = 0;
+                if (state_machine->stable_pet_count >= 3) {
+                    state_machine->stable_pet_count = 0;
+                    return EVENT_PET_DETECTED_LEFT;
+                }
+            }
+            
+        } else if (
+            mean_center_dist < TOF_CENTER_DIST_LOWER_THRESHOLD_MM && 
+            tof_cylindrical_object_detected(&state_machine->tof_data_claw) &&
+            tof_get_center_reflectance(&state_machine->tof_data_claw) > TOF_REFLECTANCE_THRESHOLD
+        ) {
+            state_machine->stable_pet_count++;
+            state_machine->stable_pillar_count = 0;
+            if (state_machine->stable_pet_count >= 3) {
+                state_machine->stable_pet_count = 0;
+                return EVENT_PET_NEAR;
+            }
+        } else {
+            state_machine->stable_pet_count = 0;
+            state_machine->stable_pillar_count = 0;
+        }
+    }
+
+    if (tof_chassis.isDataReady() && tof_chassis.getRangingData(&state_machine->tof_data_chassis)) {
+
+        mean_center_dist = tof_get_center_dist(&state_machine->tof_data_chassis);
+        
+        if (
+            mean_center_dist >= TOF_CENTER_DIST_LOWER_THRESHOLD_MM && 
+            mean_center_dist <= TOF_CENTER_DIST_UPPER_THRESHOLD_MM && 
+            tof_cylindrical_object_detected(&state_machine->tof_data_chassis)
+        ) {
+            return EVENT_PET_DETECTED_RIGHT;
+        }
+    }
+
+    return EVENT_NONE;
+}
+
 state_event_e process_input(struct state_machine *state_machine) {
     
     // internal events take precedence
@@ -160,42 +226,13 @@ state_event_e process_input(struct state_machine *state_machine) {
         return EVENT_PET_GRASPED;
     }
     
-    // TODO: fully integrate ToF
-    float mean_center_dist;
-
-    if (tof_claw.isDataReady() && tof_claw.getRangingData(&state_machine->tof_data_claw)) {
-
-        mean_center_dist = tof_get_center_dist(&state_machine->tof_data_claw);
-        
-        if (mean_center_dist >= TOF_CENTER_DIST_LOWER_BOUND_MM && mean_center_dist <= TOF_CENTER_DIST_UPPER_BOUND_MM) {
-            
-            if (tof_pillar_detected(&state_machine->tof_data_claw)) {
-                return EVENT_PILLAR_DETECTED;
-            }
-            
-            if (tof_pet_detected(&state_machine->tof_data_claw)) {
-                return EVENT_PET_DETECTED_LEFT;
-            }
-            
-        } else if (mean_center_dist < TOF_CENTER_DIST_LOWER_BOUND_MM && tof_pet_detected(&state_machine->tof_data_claw)) {
-            return EVENT_PET_NEAR;
-        }
-    }
-
-    if (tof_chassis.isDataReady() && tof_chassis.getRangingData(&state_machine->tof_data_chassis)) {
-
-        mean_center_dist = tof_get_center_dist(&state_machine->tof_data_chassis);
-        
-        if (mean_center_dist >= TOF_CENTER_DIST_LOWER_BOUND_MM && mean_center_dist <= TOF_CENTER_DIST_UPPER_BOUND_MM && tof_pet_detected(&state_machine->tof_data_chassis)) {
-            return EVENT_PET_DETECTED_RIGHT;
-        }
-    }
-
+    // platform edge detection
     if (sonar_get_distance_mm() > 500) {
         return EVENT_EDGE_DETECTED;
     }
 
-    return EVENT_NONE;
+    // both tof inputs, EVENT_NONE is returned if neither sees anything
+    return process_tof_inputs(state_machine);
 }
 
 void process_event(struct state_machine *state_machine, state_event_e next_event) {
