@@ -17,53 +17,153 @@
  * 265 262 258 255 255 258 262 265        55 53 50 49 48 50 53 54
  */
 
-
 #include <Arduino.h>
 #include <Wire.h>
 #include <SparkFun_VL53L5CX_Library.h>
 
-// I2C pins
+
 #define SDA_PIN 21
 #define SCL_PIN 22
 
-SparkFun_VL53L5CX tof;
-VL53L5CX_ResultsData result;
+#define MUX_ADDRESS   0x70  // I2C multiplexar address
+#define TOF_ADDRESS   0x29
 
-const int CLK_FREQUENCY = 400000; // 100kHz~1MHz
-const int CLAW_TOF_I2C_ADDR = 0x29;
-const int CHASSIS_TOF_I2C_ADDR = 0x2A;
-const int SIZE = 8; // 4*4 or 8*8 matrix
-const int RANGING_FREQUENCY = 8; // 1~15 Hz
+#define ARM_TOF_CHANNEL 0x10
+#define CHASSIS_TOF_CHANNEL 0x02
 
-float distMap[SIZE][SIZE];
-float reflMap[SIZE][SIZE];
+#define RESOLUTION 8 // 4*4 or 8*8 matrix
+#define CLK_FREQUENCY 400000 // 100kHz~1MHz
+#define RANGING_FREQUENCY 8 // 1~15 Hz
+
+#define DEBUG true
+
+SparkFun_VL53L5CX armTof, chassisTof;
+VL53L5CX_ResultsData armResults, chassisResults;
+
+float distMap[RESOLUTION][RESOLUTION];
+float reflMap[RESOLUTION][RESOLUTION];
 
 int stablePillarCount = 0;
-int stablePetCount = 0;
+int stablePetLCount = 0;
+int stablePetRCount = 0;
+
+
+void selectMuxChannel(uint8_t mask) {
+  Wire.beginTransmission(MUX_ADDRESS);
+  Wire.write(mask);
+  Wire.endTransmission();
+  delay(10);
+}
+
+void scanMux(uint8_t mask) {
+  selectMuxChannel(mask);
+  Wire.beginTransmission(TOF_ADDRESS);
+  uint8_t err = Wire.endTransmission();
+  Serial.printf("Scan mask 0x%02X: %s\n",
+                mask,
+                err == 0 ? "FOUND" : "NOT FOUND");
+}
+
+bool initTof(SparkFun_VL53L5CX &sensor, uint8_t mask) {
+  selectMuxChannel(mask);
+
+  if(DEBUG){
+    if (!sensor.begin()) {
+      Serial.printf("✗ 0x%02X\n", mask);
+      return false;
+    }
+    Serial.printf("✓ 0x%02X\n", mask);
+  }
+
+  sensor.setResolution(RESOLUTION * RESOLUTION);
+  sensor.setRangingFrequency(RANGING_FREQUENCY);
+  sensor.startRanging();
+  return true;
+}
+
+void readSensor(SparkFun_VL53L5CX &sensor, uint8_t mask, VL53L5CX_ResultsData &result) {
+  selectMuxChannel(mask);
+  delay(10);
+
+  if (sensor.isDataReady()) {
+      if (sensor.getRangingData(&result)) {
+
+        CreateDistanceMap(distMap, result);
+        float meanDistance = getMeanCenterDistance(distMap);
+
+        if (meanDistance >= 100.0f && meanDistance <= 240.0f) {
+          if(mask == ARM_TOF_CHANNEL && detectLeftCylindricalObject(distMap)) {
+            createReflectanceMap(reflMap, result);
+
+            if (getMeanCenterReflectance(reflMap) <= 10.0f) {
+              stablePillarCount++;
+              stablePetLCount = 0;
+              Serial.println("Pillar detected");
+
+              if (stablePillarCount == 2) {
+                Serial.println("*** Confirmed Pillar after 2 frames! ***");
+                // TODO: Handle confirmed pillar detection
+                stablePillarCount = 0;
+              }
+            } 
+            else {
+              stablePetLCount++;
+              stablePillarCount = 0;
+              Serial.println("Pet on ground");
+
+              if (stablePetLCount == 2) {
+                Serial.println("*** Confirmed Pet after 2 frames! ***");
+                // TODO: Handle confirmed pet detection
+                stablePetLCount = 0;
+              }
+            }
+          } 
+          else if(mask == CHASSIS_TOF_CHANNEL && detectRightCylindricalObject(distMap)) {
+            stablePetRCount++;
+            Serial.println("Pet on ground");
+
+            if (stablePetRCount == 2) {
+              Serial.println("*** Confirmed Pet after 2 frames! ***");
+            }
+          }
+          else {
+            stablePetLCount = 0;
+            stablePetRCount = 0;
+            stablePillarCount = 0;
+            Serial.println("Not centered");
+          }
+        } else {
+          stablePetLCount = 0;
+          stablePetRCount = 0;
+          stablePillarCount = 0;
+        }
+      }
+    }
+}
 
 float getDistanceToObject(){
   return (distMap[3][3] + distMap[3][4] + distMap[4][3] + distMap[4][4]) * 0.25f; // Center distance
 }
 
-void CreateDistanceMap(float distMap[SIZE][SIZE], const VL53L5CX_ResultsData& result) {
-  for (int row = 0; row < SIZE; row++) {
-    for (int col = 0; col < SIZE; col++) {
-      int i = row * SIZE + col;
+void CreateDistanceMap(float distMap[RESOLUTION][RESOLUTION], const VL53L5CX_ResultsData& result) {
+  for (int row = 0; row < RESOLUTION; row++) {
+    for (int col = 0; col < RESOLUTION; col++) {
+      int i = row * RESOLUTION + col;
       distMap[7 - row][col] = result.distance_mm[i]; // vertically flipped
     }
   }
 }
 
-void createReflectanceMap(float reflMap[SIZE][SIZE], const VL53L5CX_ResultsData& result) {
-  for (int row = 0; row < SIZE; row++) {
-    for (int col = 0; col < SIZE; col++) {
-      int i = row * SIZE + col;
+void createReflectanceMap(float reflMap[RESOLUTION][RESOLUTION], const VL53L5CX_ResultsData& result) {
+  for (int row = 0; row < RESOLUTION; row++) {
+    for (int col = 0; col < RESOLUTION; col++) {
+      int i = row * RESOLUTION + col;
       reflMap[7 - row][col] = result.reflectance[i];  // vertically flipped
     }
   }
 }
 
-float getMeanCenterDistance(const float distMap[SIZE][SIZE]) {
+float getMeanCenterDistance(const float distMap[RESOLUTION][RESOLUTION]) {
   float sum = 0.0f;
   for (int i = 4; i < 7; i++) {
     for (int j = 3; j < 5; j++) {
@@ -73,7 +173,7 @@ float getMeanCenterDistance(const float distMap[SIZE][SIZE]) {
   return sum * 0.17f;
 }
 
-float getMeanCenterReflectance(const float refl[SIZE][SIZE]) {
+float getMeanCenterReflectance(const float refl[RESOLUTION][RESOLUTION]) {
   
   float sum = 0.0f;
   int count = 0;
@@ -86,7 +186,7 @@ float getMeanCenterReflectance(const float refl[SIZE][SIZE]) {
   return sum / count;
 }
 
-bool detectCylindricalObject(const float distance[SIZE][SIZE]) {
+bool detectLeftCylindricalObject(const float distance[RESOLUTION][RESOLUTION]) {
 
   //Checks the difference between the mean of two center columns
   float meanCenterL = (distance[3][3] + distance[4][3] + distance[5][3]) * 0.33f;
@@ -107,72 +207,45 @@ bool detectCylindricalObject(const float distance[SIZE][SIZE]) {
   return (diffSide <= 30.0f && meanCenter < meanSide && meanCenterTop >= 260.0f);
 }
 
+bool detectRightCylindricalObject(const float distance[RESOLUTION][RESOLUTION]) {
+  // Checks the difference between the mean of two center columns
+  float meanCenterL = (distance[3][4] + distance[4][4] + distance[5][4]) * 0.33f;
+  float meanCenterR = (distance[3][5] + distance[4][5] + distance[5][5]) * 0.33f;
+  float meanCenter = (meanCenterL + meanCenterR) * 0.5f;
+  float diffMiddle = fabs(meanCenterL - meanCenterR);
+
+  // Checks the difference between the mean of two columns beside the center columns
+  float meanSideL = (distance[3][3] + distance[4][3] + distance[5][3]) * 0.33f;
+  float meanSideR = (distance[3][6] + distance[4][6] + distance[5][6]) * 0.33f;
+  float meanSide = (meanSideL + meanSideR) * 0.5f;
+  float diffSide = fabs(meanSideL - meanSideR);
+
+  // Checks if the top middle grids are more than threshold
+  // This is to ensure that it does not detect zipline poles as a pet
+  float meanCenterTop = (distance[0][4] + distance[0][5]) * 0.5f;
+
+  return (diffSide <= 30.0f && meanCenter < meanSide && meanCenterTop >= 260.0f);
+}
 
 void setup() {
 
   Serial.begin(115200);
-
   Wire.begin(SDA_PIN, SCL_PIN);
-  Wire.setClock(CLK_FREQUENCY);
 
-  Serial.println("Initializing VL53L5CX...");
-  if (!tof.begin()) {
-    Serial.println("Sensor not found!");
+  if(DEBUG){
+    scanMux(ARM_TOF_CHANNEL);
+    scanMux(CHASSIS_TOF_CHANNEL); 
   }
 
-  tof.setAddress(CLAW_TOF_I2C_ADDR);
-  tof.setResolution(SIZE*SIZE);
-  tof.setRangingFrequency(RANGING_FREQUENCY);
-  tof.startRanging();
+  initTof(armTof, ARM_TOF_CHANNEL);
+  initTof(chassisTof, CHASSIS_TOF_CHANNEL);
 }
 
 void loop() {
-  if (tof.isDataReady()) {
-    if (tof.getRangingData(&result)) {
 
-      CreateDistanceMap(distMap, result);
-      float meanDistance = getMeanCenterDistance(distMap);
+  readSensor(armTof, ARM_TOF_CHANNEL, armResults);
+  delay(67);
 
-      if (meanDistance >= 100.0f && meanDistance <= 240.0f) {
-        if(detectCylindricalObject(distMap)) {
-
-          createReflectanceMap(reflMap, result);
-
-          if (getMeanCenterReflectance(reflMap) <= 10.0f) {
-            stablePillarCount++;
-            stablePetCount = 0;
-            Serial.println("Pillar detected");
-
-            if (stablePillarCount == 3) {
-              Serial.println("*** Confirmed Pillar after 3 frames! ***");
-              // TODO: Handle confirmed pillar detection
-              stablePillarCount = 0;
-            }
-          } 
-          else {
-            stablePetCount++;
-            stablePillarCount = 0;
-            Serial.println("Pet on ground");
-
-            if (stablePetCount == 3) {
-              Serial.println("*** Confirmed Pet after 3 frames! ***");
-              // TODO: Handle confirmed pet detection
-              stablePetCount = 0;
-            }
-          }
-
-        } 
-        else {
-          stablePetCount = 0;
-          stablePillarCount = 0;
-          Serial.println("Not centered");
-        }
-      } else {
-        // Out of desired range
-        stablePetCount = 0;
-        stablePillarCount = 0;
-      }
-    }
-  }
-  delay(0.5);
+  readSensor(chassisTof, CHASSIS_TOF_CHANNEL, chassisResults);
+  delay(67);
 }
