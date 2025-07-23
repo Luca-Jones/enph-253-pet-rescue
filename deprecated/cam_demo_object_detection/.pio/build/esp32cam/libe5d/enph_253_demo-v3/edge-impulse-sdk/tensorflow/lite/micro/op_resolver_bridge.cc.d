@@ -1,0 +1,29 @@
+.pio/build/esp32cam/libe5d/enph_253_demo-v3/edge-impulse-sdk/tensorflow/lite/micro/op_resolver_bridge.cc.o: \
+ lib/enph_253_demo-v3/edge-impulse-sdk/tensorflow/lite/micro/op_resolver_bridge.cc \
+ lib/enph_253_demo-v3/edge-impulse-sdk/tensorflow/lite/micro/op_resolver_bridge.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/tensorflow/lite/c/c_api_types.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/tensorflow/lite/core/c/c_api_types.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/tensorflow/lite/c/common.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/tensorflow/lite/core/c/common.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/tensorflow/lite/core/api/op_resolver.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/tensorflow/lite/core/api/error_reporter.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/tensorflow/lite/schema/schema_generated.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/third_party/flatbuffers/include/flatbuffers/flatbuffers.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/third_party/flatbuffers/include/flatbuffers/fb_array.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/third_party/flatbuffers/include/flatbuffers/fb_base.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/third_party/flatbuffers/include/flatbuffers/fb_stl_emulation.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/third_party/flatbuffers/include/flatbuffers/fb_vector.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/third_party/flatbuffers/include/flatbuffers/fb_buffer.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/third_party/flatbuffers/include/flatbuffers/fb_buffer_ref.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/third_party/flatbuffers/include/flatbuffers/fb_verifier.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/third_party/flatbuffers/include/flatbuffers/fb_detached_buffer.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/third_party/flatbuffers/include/flatbuffers/fb_allocator.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/third_party/flatbuffers/include/flatbuffers/fb_default_allocator.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/third_party/flatbuffers/include/flatbuffers/fb_flatbuffer_builder.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/third_party/flatbuffers/include/flatbuffers/fb_string.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/third_party/flatbuffers/include/flatbuffers/fb_struct.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/third_party/flatbuffers/include/flatbuffers/fb_table.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/third_party/flatbuffers/include/flatbuffers/fb_vector_downward.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/tensorflow/lite/micro/micro_error_reporter.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/tensorflow/lite/micro/compatibility.h \
+ lib/enph_253_demo-v3/edge-impulse-sdk/tensorflow/lite/schema/schema_utils.h
