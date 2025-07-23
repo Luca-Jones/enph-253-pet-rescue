@@ -28,8 +28,8 @@
 #define TOF_ADDRESS   0x29
 
 //Channel masks for the multiplexer
-#define ARM_TOF_CHANNEL 0x10
 #define CHASSIS_TOF_CHANNEL 0x02
+#define ARM_TOF_CHANNEL 0x10
 
 #define RESOLUTION 8
 #define CLK_FREQUENCY 400000
@@ -230,7 +230,7 @@ bool detectRightCylindricalObject(const float distance[RESOLUTION][RESOLUTION]) 
   float diffSide = fabs(meanSideL - meanSideR);
 
   // Checks if the top middle grids are more than threshold
-  // This is to ensure that it does not detect zipline poles as a pet
+  // This is to ensure that it does not detect zipline pole as a pet
   float meanCenterTop = (distance[0][4] + distance[0][5]) * 0.5f;
 
   return (diffSide <= 30.0f && meanCenter < meanSide && meanCenterTop >= 260.0f);
