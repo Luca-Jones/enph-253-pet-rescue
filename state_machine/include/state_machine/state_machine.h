@@ -31,7 +31,6 @@ extern BaseGear base_gear;
 
 /* Sensors */
 #include <sensors/MagneticEncoder.h>
-#include <sensors/RotaryEncoder.h>
 #include <sensors/Sonar.h>
 #include <sensors/ToF.h>
 
@@ -69,7 +68,6 @@ struct state_machine {
 void            state_machine_init  (struct state_machine *state_machine);
 state_event_e   process_input       (struct state_machine *state_machine);
 void            process_event       (struct state_machine *state_machine, state_event_e next_event);
-void IRAM_ATTR  button_pressed_ISR  ();
 void IRAM_ATTR  limit_switch_ISR    ();
 
 

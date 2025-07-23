@@ -138,8 +138,7 @@
  include/config/pwm_config.h include/actuators/Servo.h \
  include/actuators/Arm.h include/actuators/Claw.h \
  include/actuators/BaseGear.h include/sensors/MagneticEncoder.h \
- include/sensors/RotaryEncoder.h include/sensors/Sonar.h \
- include/sensors/ToF.h \
+ include/sensors/Sonar.h include/sensors/ToF.h \
  .pio/libdeps/pico32/SparkFun\ VL53L5CX\ Arduino\ Library/src/SparkFun_VL53L5CX_Library.h \
  C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src/Wire.h \
  C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal.h \

@@ -1,5 +1,5 @@
 .pio/build/pico32/src/actuators/Arm.cpp.o: src/actuators/Arm.cpp \
- include/Arm.h include/Servo.h \
+ include/actuators/Arm.h include/actuators/Servo.h \
  C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal.h \
  C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/esp_system/include/esp_system.h \
  C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/esp_common/include/esp_err.h \

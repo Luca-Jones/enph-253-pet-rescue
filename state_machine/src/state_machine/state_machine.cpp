@@ -35,7 +35,6 @@ BaseGear base_gear = BaseGear();
 /* Sensors */
 ToF tof_claw;
 ToF tof_chassis;
-volatile bool button_pressed = false;
 volatile bool switch_triggered = false;
 
 /* STATE MACHINE */
@@ -48,7 +47,6 @@ struct state_transition {
 
 // consult the diagram to understand these transitions
 static const struct state_transition state_transitions[] = {
-    {   STATE_WAIT,             EVENT_BUTTON_PRESSED,       STATE_TAPE_FOLLOWING    },
     {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_LEFT,    STATE_REACH             },
     {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_RIGHT,   STATE_REACH             },
     {   STATE_TAPE_FOLLOWING,   EVENT_PILLAR_DETECTED,      STATE_REACH             },
@@ -70,7 +68,7 @@ static void state_exit  (struct state_machine *state_machine, state_e previous_s
 void state_machine_init(struct state_machine *state_machine) {
     
     // set up state machine data
-    state_machine->state = STATE_WAIT;
+    state_machine->state = STATE_TAPE_FOLLOWING;
     state_machine->internal_event = EVENT_NONE;
     state_machine->pets = 0;
     state_machine->stable_pet_count = 0;
@@ -124,9 +122,6 @@ void state_machine_init(struct state_machine *state_machine) {
     ledcSetup(PWM_CHANNEL_BASE_GEAR, PWM_FRQ_HZ_BASE_GEAR, PWM_RESOLUTION_BASE_GEAR);
     ledcAttachPin(PIN_BASE_GEAR_PWM, PWM_CHANNEL_BASE_GEAR);
 
-    // set up start button
-    attachInterrupt(digitalPinToInterrupt(PIN_START_BUTTON), button_pressed_ISR, CHANGE);
-    
     // set up claw switch
     attachInterrupt(digitalPinToInterrupt(PIN_LIMIT_SWITCH), limit_switch_ISR, CHANGE);
 
@@ -145,9 +140,6 @@ void state_machine_init(struct state_machine *state_machine) {
 
     // set up the magnetic encoder
     mag_setup();
-
-    // set up the rotary encoder
-    rot_setup();
 
     // set up sonar
     sonar_setup();
@@ -225,12 +217,6 @@ state_event_e process_input(struct state_machine *state_machine) {
         state_event_e ie = state_machine->internal_event;
         state_machine->internal_event = EVENT_NONE;
         return ie;
-    }
-
-    // start button
-    if (button_pressed) {
-        button_pressed = false;
-        return EVENT_BUTTON_PRESSED;
     }
 
     // claw limit switch
@@ -322,10 +308,6 @@ static void state_exit(struct state_machine *state_machine, state_e previous_sta
 
 }
 
-void IRAM_ATTR button_pressed_ISR() {
-    button_pressed = true;
-}
-
 void IRAM_ATTR limit_switch_ISR() {
     switch_triggered = gpio_get_level((gpio_num_t) PIN_LIMIT_SWITCH);
 }
@@ -381,10 +363,6 @@ void print_event(state_event_e event) {
         case EVENT_NONE:
             display_handler.println("NONE");
             Serial.println("NONE");
-            break;
-        case EVENT_BUTTON_PRESSED:
-            display_handler.println("BUTTON PRESSED");
-            Serial.println("BUTTON PRESSED");
             break;
         case EVENT_PET_DETECTED_LEFT:
             display_handler.println("PET DETECTED LEFT");
