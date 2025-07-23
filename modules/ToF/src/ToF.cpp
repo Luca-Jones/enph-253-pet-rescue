@@ -21,21 +21,21 @@
 #include <Wire.h>
 #include <SparkFun_VL53L5CX_Library.h>
 
-
 #define SDA_PIN 21
 #define SCL_PIN 22
 
 #define MUX_ADDRESS   0x70  // I2C multiplexar address
 #define TOF_ADDRESS   0x29
 
+//Channel masks for the multiplexer
 #define ARM_TOF_CHANNEL 0x10
 #define CHASSIS_TOF_CHANNEL 0x02
 
-#define RESOLUTION 8 // 4*4 or 8*8 matrix
-#define CLK_FREQUENCY 400000 // 100kHz~1MHz
-#define RANGING_FREQUENCY 8 // 1~15 Hz
+#define RESOLUTION 8
+#define CLK_FREQUENCY 400000
+#define RANGING_FREQUENCY 8
 
-#define DEBUG true
+#define DEBUG false
 
 SparkFun_VL53L5CX armTof, chassisTof;
 VL53L5CX_ResultsData armResults, chassisResults;
@@ -98,10 +98,13 @@ void readSensor(SparkFun_VL53L5CX &sensor, uint8_t mask, VL53L5CX_ResultsData &r
             if (getMeanCenterReflectance(reflMap) <= 10.0f) {
               stablePillarCount++;
               stablePetLCount = 0;
-              Serial.println("Pillar detected");
+
+              if(DEBUG){
+                Serial.println("Pillar detected");
+              }
 
               if (stablePillarCount == 2) {
-                Serial.println("*** Confirmed Pillar after 2 frames! ***");
+                Serial.println("*** Confirmed Pillar! ***");
                 // TODO: Handle confirmed pillar detection
                 stablePillarCount = 0;
               }
@@ -109,10 +112,13 @@ void readSensor(SparkFun_VL53L5CX &sensor, uint8_t mask, VL53L5CX_ResultsData &r
             else {
               stablePetLCount++;
               stablePillarCount = 0;
-              Serial.println("Pet on ground");
+
+              if(DEBUG){
+                Serial.println("Pet on left");
+              }
 
               if (stablePetLCount == 2) {
-                Serial.println("*** Confirmed Pet after 2 frames! ***");
+                Serial.println("*** Confirmed Pet on left! ***");
                 // TODO: Handle confirmed pet detection
                 stablePetLCount = 0;
               }
@@ -120,10 +126,13 @@ void readSensor(SparkFun_VL53L5CX &sensor, uint8_t mask, VL53L5CX_ResultsData &r
           } 
           else if(mask == CHASSIS_TOF_CHANNEL && detectRightCylindricalObject(distMap)) {
             stablePetRCount++;
-            Serial.println("Pet on ground");
+
+            if(DEBUG){
+              Serial.println("Pet on right");
+            }
 
             if (stablePetRCount == 2) {
-              Serial.println("*** Confirmed Pet after 2 frames! ***");
+              Serial.println("*** Confirmed Pet on right! ***");
             }
           }
           else {
