@@ -134,9 +134,19 @@
  C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/esp_hw_support/include/soc/esp32/spiram.h \
  C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/cores/esp32/io_pin_remap.h \
  C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
- include/pin_out.h src/state_machine/state_machine.h \
+ include/state_machine/state_machine.h include/config/pin_out.h \
+ include/config/pwm_config.h include/actuators/Servo.h \
+ include/actuators/Arm.h include/actuators/Claw.h \
+ include/actuators/BaseGear.h include/sensors/MagneticEncoder.h \
+ include/sensors/Sonar.h include/sensors/ToF.h \
+ .pio/libdeps/pico32/SparkFun\ VL53L5CX\ Arduino\ Library/src/SparkFun_VL53L5CX_Library.h \
  C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src/Wire.h \
  C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal.h \
+ .pio/libdeps/pico32/SparkFun\ VL53L5CX\ Arduino\ Library/src/SparkFun_VL53L5CX_Library_Constants.h \
+ .pio/libdeps/pico32/SparkFun\ VL53L5CX\ Arduino\ Library/src/SparkFun_VL53L5CX_IO.h \
+ .pio/libdeps/pico32/SparkFun\ VL53L5CX\ Arduino\ Library/src/vl53l5cx_api.h \
+ .pio/libdeps/pico32/SparkFun\ VL53L5CX\ Arduino\ Library/src/platform.h \
+ include/state_machine/states.h include/state_machine/events.h \
  .pio/libdeps/pico32/Adafruit\ GFX\ Library/Adafruit_GFX.h \
  C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/cores/esp32/Print.h \
  .pio/libdeps/pico32/Adafruit\ GFX\ Library/gfxfont.h \
@@ -144,25 +154,12 @@
  .pio/libdeps/pico32/Adafruit\ BusIO/Adafruit_SPIDevice.h \
  C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src/SPI.h \
  C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-spi.h \
- .pio/libdeps/pico32/Adafruit\ SSD1306/Adafruit_SSD1306.h include/Arm.h \
- include/Servo.h include/Claw.h include/tof.h \
- .pio/libdeps/pico32/SparkFun\ VL53L5CX\ Arduino\ Library/src/SparkFun_VL53L5CX_Library.h \
- .pio/libdeps/pico32/SparkFun\ VL53L5CX\ Arduino\ Library/src/SparkFun_VL53L5CX_Library_Constants.h \
- .pio/libdeps/pico32/SparkFun\ VL53L5CX\ Arduino\ Library/src/SparkFun_VL53L5CX_IO.h \
- .pio/libdeps/pico32/SparkFun\ VL53L5CX\ Arduino\ Library/src/vl53l5cx_api.h \
- .pio/libdeps/pico32/SparkFun\ VL53L5CX\ Arduino\ Library/src/platform.h \
- src/state_machine/states.h src/state_machine/events.h \
- src/state_machine/close_claw/state_close_claw.h \
- src/state_machine/close_claw/../state_machine.h \
- src/state_machine/close_claw/../states.h \
- src/state_machine/raise_arm/state_raise_arm.h \
- src/state_machine/raise_arm/../state_machine.h \
- src/state_machine/raise_arm/../states.h \
- src/state_machine/reach/state_reach.h \
- src/state_machine/reach/../state_machine.h \
- src/state_machine/reach/../states.h \
- src/state_machine/store/state_store.h \
- src/state_machine/store/../state_machine.h \
- src/state_machine/wait/state_wait.h \
- src/state_machine/wait/../state_machine.h \
- src/state_machine/wait/../states.h
+ .pio/libdeps/pico32/Adafruit\ SSD1306/Adafruit_SSD1306.h \
+ include/state_machine/state_close_claw.h \
+ include/state_machine/state_machine.h \
+ include/state_machine/state_reach.h \
+ include/state_machine/state_retreat.h \
+ include/state_machine/state_return_pets.h \
+ include/state_machine/state_store.h \
+ include/state_machine/state_tape_following.h \
+ include/state_machine/state_wait.h

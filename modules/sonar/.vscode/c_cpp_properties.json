@@ -8,8 +8,8 @@
         {
             "name": "PlatformIO",
             "includePath": [
-                "C:/Users/Luca/source/esp32/enph-253-pet-rescue/modules/sonar/include",
-                "C:/Users/Luca/source/esp32/enph-253-pet-rescue/modules/sonar/src",
+                "C:/Users/Luca/source/enph-253-pet-rescue/modules/sonar/include",
+                "C:/Users/Luca/source/enph-253-pet-rescue/modules/sonar/src",
                 "C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/newlib/platform_include",
                 "C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/freertos/include",
                 "C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/freertos/include/esp_additions/freertos",
@@ -244,8 +244,8 @@
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
                 "path": [
-                    "C:/Users/Luca/source/esp32/enph-253-pet-rescue/modules/sonar/include",
-                    "C:/Users/Luca/source/esp32/enph-253-pet-rescue/modules/sonar/src",
+                    "C:/Users/Luca/source/enph-253-pet-rescue/modules/sonar/include",
+                    "C:/Users/Luca/source/enph-253-pet-rescue/modules/sonar/src",
                     "C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/newlib/platform_include",
                     "C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/freertos/include",
                     "C:/Users/Luca/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/freertos/include/esp_additions/freertos",
