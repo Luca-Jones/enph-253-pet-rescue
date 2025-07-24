@@ -29,7 +29,7 @@ void state_reach_enter(struct state_machine *state_machine, state_event_e event)
         case EVENT_PILLAR_DETECTED:
             // raise
             state_machine->claw_open_angle = CLAW_SEMI_OPEN;
-            arm.lerp_to_pos(ARM_HOME_X, ARM_PILLAR_Y, 500);
+            arm.lerp_to_pos(ARM_PILLAR_X, ARM_PILLAR_Y, 500);
             break;
         default:
             break;

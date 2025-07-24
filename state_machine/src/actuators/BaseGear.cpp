@@ -19,6 +19,9 @@ BaseGear::BaseGear() {}
 BaseGear::~BaseGear() {}
 
 void BaseGear::write(int angle) {
+
+    if (angle < 0) angle = 0;
+    if (angle > 360) angle = 360;
     
     int error = 0, last_error = 0, proportional = 0, integral = 0, derivative = 0, output = 0;
 
