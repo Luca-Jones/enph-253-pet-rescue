@@ -26,5 +26,5 @@ void loop() {
     }
     int angle = mag_get_angle();
     Serial.printf("angle = %d\n", angle);
-    delay(1000);
+    delay(300);
 }

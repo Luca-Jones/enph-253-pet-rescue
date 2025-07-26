@@ -13,14 +13,16 @@
 #define ARM_SERVO_1_ANGLE_OFFSET -96
 
 #define ARM_SERVO_2_ANGLE_MAX 270
-#define ARM_SERVO_2_ANGLE_OFFSET 90
+#define ARM_SERVO_2_ANGLE_OFFSET 0
 
-#define ARM_HOME_X 250
+#define ARM_HOME_X 150
 #define ARM_HOME_Y 50
-#define ARM_PILLAR_X 250
-#define ARM_PILLAR_Y 300
-#define ARM_RAISED_X 200
-#define ARM_RAISED_Y 350
+
+#define ARM_PILLAR_X 190
+#define ARM_PILLAR_Y 170
+
+#define ARM_RAISED_X 190
+#define ARM_RAISED_Y 250
 
 
 class Arm

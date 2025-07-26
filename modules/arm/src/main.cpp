@@ -52,7 +52,7 @@ void calibrate() {
 
 void loop() {
 
-    // calibrate();
+    calibrate();
     
     // claw.write(140);
     // arm.lerp_to_pos(250,50,250);
@@ -71,21 +71,21 @@ void loop() {
     // claw.write(180);
     // delay(5000);
 
-    claw.write(180);
-    arm.lerp_to_pos(250,50,250);
-    delay(1500);
-    arm.lerp_to_pos(250,100,250);
-    delay(500);
-    arm.lerp_to_pos(350,100,250);
-    delay(500);
-    claw.write(100);
-    delay(500);
-    arm.lerp_to_pos(350,300,250);
-    delay(500);
-    arm.lerp_to_pos(180,300,250);
-    delay(500);
-    claw.write(180);
-    delay(5000);
+    // claw.write(180);
+    // arm.lerp_to_pos(250,50,250);
+    // delay(1500);
+    // arm.lerp_to_pos(250,100,250);
+    // delay(500);
+    // arm.lerp_to_pos(350,100,250);
+    // delay(500);
+    // claw.write(100);
+    // delay(500);
+    // arm.lerp_to_pos(350,300,250);
+    // delay(500);
+    // arm.lerp_to_pos(180,300,250);
+    // delay(500);
+    // claw.write(180);
+    // delay(5000);
     
 }
 

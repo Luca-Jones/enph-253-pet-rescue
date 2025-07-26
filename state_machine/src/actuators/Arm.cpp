@@ -45,13 +45,13 @@ void Arm::get_pos(int *x, int *y) {
 
 int Arm::move_to_pos(int x, int y) {
     int theta_1, theta_2;
-    if (is_valid_pos(x,y)) {
+    // if (is_valid_pos(x,y)) {
         pos_to_angle(x, y, &theta_1, &theta_2);
         servo_1->write(theta_1);
         servo_2->write(theta_2);
         return 0;
-    }
-    return -1;
+    // }
+    // return -1;
 }
 
 void Arm::lerp_to_pos(int x, int y, int time_ms) {

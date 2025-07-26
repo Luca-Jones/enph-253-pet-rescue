@@ -18,6 +18,8 @@ void Servo::attach(int pin, int channel, int min_us, int max_us) {
     this->pin = pin;
     this->channel = channel;
 
+    // Setup LEDC channel first, then attach pin
+    ledcSetup(channel, 50, SERVO_BIT_RESOLUTION); // 50Hz frequency, 12-bit resolution
     ledcAttachPin(pin, channel);
     this->is_attached = true;
 }

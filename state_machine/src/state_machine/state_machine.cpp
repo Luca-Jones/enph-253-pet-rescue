@@ -35,7 +35,7 @@ BaseGear base_gear = BaseGear();
 /* Sensors */
 ToF tof_claw;
 ToF tof_chassis;
-volatile bool switch_triggered = false;
+// volatile bool switch_triggered = false;
 
 /* STATE MACHINE */
 
@@ -51,9 +51,9 @@ static const struct state_transition state_transitions[] = {
     {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_RIGHT,   STATE_REACH             },
     {   STATE_TAPE_FOLLOWING,   EVENT_PILLAR_DETECTED,      STATE_REACH             },
     {   STATE_REACH,            EVENT_PET_NEAR,             STATE_CLOSE_CLAW        },
-    {   STATE_CLOSE_CLAW,       EVENT_PET_MISSED,           STATE_RETREAT           },
-    {   STATE_RETREAT,          EVENT_ARM_READY,            STATE_REACH             },
-    {   STATE_RETREAT,          EVENT_PET_FAILED,           STATE_TAPE_FOLLOWING    },
+    // {   STATE_CLOSE_CLAW,       EVENT_PET_MISSED,           STATE_RETREAT           },
+    // {   STATE_RETREAT,          EVENT_ARM_READY,            STATE_REACH             },
+    // {   STATE_RETREAT,          EVENT_PET_FAILED,           STATE_TAPE_FOLLOWING    },
     {   STATE_CLOSE_CLAW,       EVENT_PET_GRASPED,          STATE_STORE             },
     {   STATE_STORE,            EVENT_PET_STORED,           STATE_TAPE_FOLLOWING    },
     {   STATE_TAPE_FOLLOWING,   EVENT_EDGE_DETECTED,        STATE_RETURN_PETS       },
@@ -118,20 +118,18 @@ void state_machine_init(struct state_machine *state_machine) {
     ledcAttachPin(PIN_CASCADE_PWM, PWM_CHANNEL_CASCADE);
     
     // set up base gear motor
-    pinMode(PIN_BASE_GEAR_DIR, OUTPUT);
-    ledcSetup(PWM_CHANNEL_BASE_GEAR, PWM_FRQ_HZ_BASE_GEAR, PWM_RESOLUTION_BASE_GEAR);
-    ledcAttachPin(PIN_BASE_GEAR_PWM, PWM_CHANNEL_BASE_GEAR);
+    base_gear.setup();
 
     // set up claw switch
-    attachInterrupt(digitalPinToInterrupt(PIN_LIMIT_SWITCH), limit_switch_ISR, CHANGE);
+    // attachInterrupt(digitalPinToInterrupt(PIN_LIMIT_SWITCH), limit_switch_ISR, CHANGE);
 
     // set up I2C
     Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);
     Wire.setClock(I2C_FRQ_HZ);
 
     // set up ToF
-    tof_setup(&tof_claw, TOF_I2C_ADDRESS_CLAW);
-    tof_setup(&tof_chassis, TOF_I2C_ADDRESS_CHASSIS);
+    tof_setup(&tof_claw, TOF_CHANNEL_CLAW);
+    tof_setup(&tof_chassis, TOF_CHANNEL_CHASSIS);
     
     #ifdef DEBUG
     print_event(state_machine->internal_event);
@@ -156,8 +154,8 @@ state_event_e process_tof_inputs(struct state_machine *state_machine) {
         
         if (
             mean_center_dist >= TOF_CENTER_DIST_LOWER_THRESHOLD_MM && 
-            mean_center_dist <= TOF_CENTER_DIST_UPPER_THRESHOLD_MM &&
-            tof_cylindrical_object_detected(&state_machine->tof_data_claw)
+            mean_center_dist <= TOF_CENTER_DIST_UPPER_THRESHOLD_MM //&&
+            // tof_cylindrical_object_detected(&state_machine->tof_data_claw)
         ) {
             
             // checks if the object is a pillar
@@ -179,7 +177,7 @@ state_event_e process_tof_inputs(struct state_machine *state_machine) {
             
         } else if (
             mean_center_dist < TOF_CENTER_DIST_LOWER_THRESHOLD_MM && 
-            tof_cylindrical_object_detected(&state_machine->tof_data_claw) &&
+            // tof_cylindrical_object_detected(&state_machine->tof_data_claw) &&
             tof_get_center_reflectance(&state_machine->tof_data_claw) > TOF_REFLECTANCE_THRESHOLD
         ) {
             state_machine->stable_pet_count++;
@@ -200,8 +198,8 @@ state_event_e process_tof_inputs(struct state_machine *state_machine) {
         
         if (
             mean_center_dist >= TOF_CENTER_DIST_LOWER_THRESHOLD_MM && 
-            mean_center_dist <= TOF_CENTER_DIST_UPPER_THRESHOLD_MM && 
-            tof_cylindrical_object_detected(&state_machine->tof_data_chassis)
+            mean_center_dist <= TOF_CENTER_DIST_UPPER_THRESHOLD_MM // && 
+            // tof_cylindrical_object_detected(&state_machine->tof_data_chassis)
         ) {
             return EVENT_PET_DETECTED_RIGHT;
         }
@@ -220,14 +218,14 @@ state_event_e process_input(struct state_machine *state_machine) {
     }
 
     // claw limit switch
-    if (state_machine->claw_closed) {   
-        if (switch_triggered) {
-            switch_triggered = false;
-            return EVENT_PET_GRASPED;
-        } else {
-            return EVENT_PET_MISSED;
-        }
-    }
+    // if (state_machine->claw_closed) {   
+    //     if (switch_triggered) {
+    //         switch_triggered = false;
+    //         return EVENT_PET_GRASPED;
+    //     } else {
+    //         return EVENT_PET_MISSED;
+    //     }
+    // }
     
     // platform edge detection
     if (sonar_get_distance_mm() > SONAR_EDGE_DISTANCE_CM) {
@@ -308,9 +306,9 @@ static void state_exit(struct state_machine *state_machine, state_e previous_sta
 
 }
 
-void IRAM_ATTR limit_switch_ISR() {
-    switch_triggered = gpio_get_level((gpio_num_t) PIN_LIMIT_SWITCH);
-}
+// void IRAM_ATTR limit_switch_ISR() {
+//     switch_triggered = gpio_get_level((gpio_num_t) PIN_LIMIT_SWITCH);
+// }
 
 #ifdef DEBUG
 
