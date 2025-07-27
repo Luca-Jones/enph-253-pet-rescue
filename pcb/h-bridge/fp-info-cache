@@ -1,4 +1,4 @@
-25623857485114623
+25629115611024422
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -102711,6 +102711,13 @@ ubc-logo
 0
 0
 lib_luca
+ESP32_PICO_KIT
+
+
+0
+36
+36
+lib_luca
 fizz-logo
 
 
@@ -102726,6 +102733,20 @@ fizz-logo_copy
 0
 lib_luca
 hotdog
+
+
+0
+0
+0
+lib_luca
+hotdog-reflectance
+
+
+0
+0
+0
+lib_luca
+hotdog-taichi
 
 
 0
