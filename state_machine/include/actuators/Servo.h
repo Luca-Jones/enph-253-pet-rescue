@@ -3,9 +3,6 @@
 
 #define SERVO_DEFAULT_MIN_US    500
 #define SERVO_DEFAULT_MAX_US    2500
-#define SERVO_PWM_PERIOD_US     20000   // 50 Hz
-#define SERVO_BIT_RESOLUTION    12      // 12 bits is enough for the PWM resolution
-#define SERVO_PWM_WIDTH         4096    // 2 ^ 12
 
 class Servo
 {

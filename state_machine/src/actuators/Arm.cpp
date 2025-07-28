@@ -1,6 +1,8 @@
 #include <actuators/Arm.h>
 #include <esp32-hal.h>
 #include <math.h>
+#include <config/pin_out.h>
+#include <config/pwm_config.h>
 
 /*  
     x and y denote the tip of the claw.    
@@ -25,6 +27,16 @@ Arm::Arm(Servo *servo_1, Servo *servo_2) {
     this->servo_2 = servo_2;
 }
 
+Arm::~Arm() {
+    this->servo_1->detach();
+    this->servo_2->detach();
+}
+
+void Arm::setup() {
+    servo_1->attach(PIN_SERVO_1, PWM_CHANNEL_SERVO_1);
+    servo_2->attach(PIN_SERVO_2, PWM_CHANNEL_SERVO_2);
+}
+
 void Arm::get_pos(int *x, int *y) {
     
     // forwards kinematics
@@ -45,13 +57,13 @@ void Arm::get_pos(int *x, int *y) {
 
 int Arm::move_to_pos(int x, int y) {
     int theta_1, theta_2;
-    // if (is_valid_pos(x,y)) {
+    if (is_valid_pos(x,y)) {
         pos_to_angle(x, y, &theta_1, &theta_2);
         servo_1->write(theta_1);
         servo_2->write(theta_2);
         return 0;
-    // }
-    // return -1;
+    }
+    return -1;
 }
 
 void Arm::lerp_to_pos(int x, int y, int time_ms) {
@@ -64,10 +76,8 @@ void Arm::lerp_to_pos(int x, int y, int time_ms) {
     }
 }
 
-Arm::~Arm(){}
-
+// the valid region is a right semicircle offset to the right by the length of the claw
 bool is_valid_pos(int x, int y) {
-    // the valid region is a right semicircle offset to the right by the length of the claw
     return (
         x > CLAW_LENGTH && 
         (x - CLAW_LENGTH) * (x - CLAW_LENGTH) + y * y < 2 * ARM_LARGE_LENGTH * 2 * ARM_LARGE_LENGTH

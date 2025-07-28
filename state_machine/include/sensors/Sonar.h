@@ -8,6 +8,6 @@
 #define SONAR_EDGE_DISTANCE_CM 150
 
 void sonar_setup();
-int sonar_get_distance_mm();
+int sonar_get_distance_cm();
 
 #endif

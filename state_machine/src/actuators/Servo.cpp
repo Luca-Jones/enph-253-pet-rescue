@@ -1,6 +1,12 @@
 #include <actuators/Servo.h>
 #include <esp32-hal-ledc.h>
 
+/* These work on pretty much every servo */
+#define SERVO_PWM_FREQUENCY     50
+#define SERVO_PWM_PERIOD_US     20000       // 50 Hz
+#define SERVO_PWM_RESOLUTION    12
+#define SERVO_PWM_WIDTH         4096        // 2 ^ 12
+
 Servo::Servo(int servo_max_angle) {
     this->servo_max_angle = servo_max_angle;
     this->is_attached = false;
@@ -19,7 +25,7 @@ void Servo::attach(int pin, int channel, int min_us, int max_us) {
     this->channel = channel;
 
     // Setup LEDC channel first, then attach pin
-    ledcSetup(channel, 50, SERVO_BIT_RESOLUTION); // 50Hz frequency, 12-bit resolution
+    ledcSetup(channel, SERVO_PWM_FREQUENCY, SERVO_PWM_RESOLUTION);
     ledcAttachPin(pin, channel);
     this->is_attached = true;
 }
@@ -44,7 +50,7 @@ void Servo::writeMicroseconds(int duty_cycle_us) {
         duty_us = max_us;
 
     // converts from us to bits
-    int duty_bits = (float) duty_us / SERVO_PWM_PERIOD_US * (SERVO_PWM_WIDTH); // do not remove brackets
+    int duty_bits = (float) duty_us / SERVO_PWM_PERIOD_US * (SERVO_PWM_WIDTH);
 
     ledcWrite(this->channel, duty_bits);
 }

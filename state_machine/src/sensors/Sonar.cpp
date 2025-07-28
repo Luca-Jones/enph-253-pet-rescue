@@ -7,7 +7,7 @@ void sonar_setup() {
     pinMode(PIN_SONAR_ECHO, INPUT);
 }
 
-int sonar_get_distance_mm() {
+int sonar_get_distance_cm() {
     digitalWrite(PIN_SONAR_TRIG, LOW);
     delayMicroseconds(SONAR_STABILIZING_DELAY_US);
     digitalWrite(PIN_SONAR_TRIG, HIGH);

@@ -10,11 +10,12 @@
 #include <state_machine/state_tape_following.h>
 #include <state_machine/state_wait.h>
 
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
+
 /*
     This is a state machine implemented with enums and functions.
     The robot moves between states through Transitions, which are triggered by Events.
     The event that ocurred is determined by the sensors.
-    
 
     1. Process the sensor input and return the appropriate event
     2. Process the event and change the state accordingly
@@ -23,22 +24,23 @@
 
 */
 
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
-
 /* Actuators */
 Servo servo_1(ARM_SERVO_1_ANGLE_MAX);
 Servo servo_2(ARM_SERVO_2_ANGLE_MAX);
 Arm arm(&servo_1, &servo_2);
 Servo claw(CLAW_OPEN);
-BaseGear base_gear = BaseGear();
+Motor base_gear_motor(PIN_BASE_GEAR_PWM, PWM_CHANNEL_BASE_GEAR, PWM_FRQ_HZ_BASE_GEAR, PWM_RESOLUTION_BASE_GEAR, PIN_BASE_GEAR_DIR);
+BaseGear base_gear = BaseGear(&base_gear_motor);
+Motor left_motor(PIN_MOTOR_LEFT_PWM, PWM_CHANNEL_MOTOR_LEFT, PWM_FRQ_HZ_MOTOR_LEFT, PWM_RESOLUTION_MOTOR_LEFT, PIN_MOTOR_LEFT_DIR);
+Motor right_motor(PIN_MOTOR_RIGHT_PWM, PWM_CHANNEL_MOTOR_RIGHT, PWM_FRQ_HZ_MOTOR_RIGHT, PWM_RESOLUTION_MOTOR_RIGHT, PIN_MOTOR_RIGHT_DIR);
+Motor cascade_motor(PIN_CASCADE_PWM, PWM_CHANNEL_CASCADE, PWM_FRQ_HZ_CASCADE, PWM_RESOLUTION_CASCADE, PIN_CASCADE_DIR);
 
 /* Sensors */
 ToF tof_claw;
 ToF tof_chassis;
-// volatile bool switch_triggered = false;
+volatile bool switch_triggered = false;
 
-/* STATE MACHINE */
-
+/* STATE TRANSITIONS */
 struct state_transition {
     state_e previous_state;
     state_event_e event;
@@ -97,32 +99,6 @@ void state_machine_init(struct state_machine *state_machine) {
     Serial.println("Initializing State Machine...");
     #endif
 
-    // set up servos
-    servo_1.attach(PIN_SERVO_1, PWM_CHANNEL_SERVO_1, 500, 2500);
-    servo_2.attach(PIN_SERVO_2, PWM_CHANNEL_SERVO_2, 500, 2500);
-    claw.attach(PIN_SERVO_3, PWM_CHANNEL_SERVO_3, 500, 2500);
-
-    // set up left motor
-    pinMode(PIN_MOTOR_LEFT_DIR, OUTPUT);
-    ledcSetup(PWM_CHANNEL_MOTOR_LEFT, PWM_FRQ_HZ_MOTOR_LEFT, PWM_RESOLUTION_MOTOR_LEFT);
-    ledcAttachPin(PIN_MOTOR_LEFT_PWM, PWM_CHANNEL_MOTOR_LEFT);
-    
-    // set up right motor
-    pinMode(PIN_MOTOR_RIGHT_DIR, OUTPUT);
-    ledcSetup(PWM_CHANNEL_MOTOR_RIGHT, PWM_FRQ_HZ_MOTOR_RIGHT, PWM_RESOLUTION_MOTOR_RIGHT);
-    ledcAttachPin(PIN_MOTOR_RIGHT_PWM, PWM_CHANNEL_MOTOR_RIGHT);
-    
-    // set up cascade motor
-    pinMode(PIN_CASCADE_DIR, OUTPUT);
-    ledcSetup(PWM_CHANNEL_CASCADE, PWM_FRQ_HZ_CASCADE, PWM_RESOLUTION_CASCADE);
-    ledcAttachPin(PIN_CASCADE_PWM, PWM_CHANNEL_CASCADE);
-    
-    // set up base gear motor
-    base_gear.setup();
-
-    // set up claw switch
-    // attachInterrupt(digitalPinToInterrupt(PIN_LIMIT_SWITCH), limit_switch_ISR, CHANGE);
-
     // set up I2C
     Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);
     Wire.setClock(I2C_FRQ_HZ);
@@ -130,20 +106,31 @@ void state_machine_init(struct state_machine *state_machine) {
     // set up ToF
     tof_setup(&tof_claw, TOF_CHANNEL_CLAW);
     tof_setup(&tof_chassis, TOF_CHANNEL_CHASSIS);
-    
+
+    // set up sonar
+    sonar_setup();
+
+    // set up servos
+    arm.setup();
+    claw.attach(PIN_SERVO_3, PWM_CHANNEL_SERVO_3);
+
+    // set up motors
+    left_motor.setup();
+    right_motor.setup();
+    cascade_motor.setup();
+    base_gear.setup();      // sets up the motor and magnetic encoder internally
+
+    // set up claw switch
+    attachInterrupt(digitalPinToInterrupt(PIN_LIMIT_SWITCH), limit_switch_ISR, CHANGE);
+
     #ifdef DEBUG
     print_event(state_machine->internal_event);
     print_state(state_machine->state);
     #endif
 
-    // set up the magnetic encoder
-    mag_setup();
-
-    // set up sonar
-    sonar_setup();
-
 }
 
+// TODO: updateto match recent ToF code
 state_event_e process_tof_inputs(struct state_machine *state_machine) {
     
     float mean_center_dist;
@@ -217,18 +204,18 @@ state_event_e process_input(struct state_machine *state_machine) {
         return ie;
     }
 
-    // claw limit switch
-    // if (state_machine->claw_closed) {   
-    //     if (switch_triggered) {
-    //         switch_triggered = false;
-    //         return EVENT_PET_GRASPED;
-    //     } else {
-    //         return EVENT_PET_MISSED;
-    //     }
-    // }
+    // TODO: debounce claw limit switch
+    if (state_machine->claw_closed) {   
+        if (switch_triggered) {
+            switch_triggered = false;
+            return EVENT_PET_GRASPED;
+        } else {
+            return EVENT_PET_MISSED;
+        }
+    }
     
     // platform edge detection
-    if (sonar_get_distance_mm() > SONAR_EDGE_DISTANCE_CM) {
+    if (sonar_get_distance_cm() > SONAR_EDGE_DISTANCE_CM) {
         return EVENT_EDGE_DETECTED;
     }
 
@@ -306,9 +293,9 @@ static void state_exit(struct state_machine *state_machine, state_e previous_sta
 
 }
 
-// void IRAM_ATTR limit_switch_ISR() {
-//     switch_triggered = gpio_get_level((gpio_num_t) PIN_LIMIT_SWITCH);
-// }
+void IRAM_ATTR limit_switch_ISR() {
+    switch_triggered = gpio_get_level((gpio_num_t) PIN_LIMIT_SWITCH);
+}
 
 #ifdef DEBUG
 

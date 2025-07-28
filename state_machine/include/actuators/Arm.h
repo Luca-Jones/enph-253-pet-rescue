@@ -34,12 +34,12 @@ public:
     // note: servos need to be set up outside this class
     Arm(Servo *servo_1, Servo *servo_2); 
     ~Arm();
+    void setup();
     void get_pos(int *x, int *y);
     int move_to_pos(int x, int y);
     void lerp_to_pos(int x, int y, int time_ms);
 
-    // FOR TESTING 
-    // TODO: remove
+    // TODO: remove testing functions
     void move_to_angle(int theta_1, int theta_2);
     void move_to_phi(float phi_1, float phi_2);
     void log_pos(int *theta_1, int *theta_2, float *phi_1, float *phi_2, int *x, int *y);
