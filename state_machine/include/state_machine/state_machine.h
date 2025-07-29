@@ -49,7 +49,8 @@ struct state_machine {
     state_e state;
     state_event_e internal_event;
     int pets;
-    int stable_pet_count;
+    int stable_pet_count_left;
+    int stable_pet_count_right;
     int stable_pillar_count;
     bool arm_in_start_pos;
     bool claw_closed;
