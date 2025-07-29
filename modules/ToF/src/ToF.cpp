@@ -248,7 +248,6 @@ void readSensor(SparkFun_VL53L5CX &sensor, uint8_t mask, VL53L5CX_ResultsData &r
 }
 
 
-
 void setup() {
 
   Serial.begin(115200);
@@ -267,6 +266,8 @@ void loop() {
 
   readSensor(armTof, ARM_TOF_CHANNEL, armResults);
   delay(67);
+  
+
 
   readSensor(chassisTof, CHASSIS_TOF_CHANNEL, chassisResults);
   delay(67);
