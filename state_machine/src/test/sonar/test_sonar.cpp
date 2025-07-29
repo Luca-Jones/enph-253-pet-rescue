@@ -7,7 +7,7 @@ void setup() {
 }
 
 void loop() {
-    int dist = sonar_get_distance_mm();
+    int dist = sonar_get_distance_cm();
     Serial.printf("distance = %d\n", dist);
     delay(1000);
 }

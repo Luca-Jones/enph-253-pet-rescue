@@ -18,8 +18,6 @@
 #define TOF_CENTER_DIST_UPPER_THRESHOLD_MM  240.0f
 #define TOF_REFLECTANCE_THRESHOLD           10.0f
 
-// TODO: write a wrapper object?
-
 typedef SparkFun_VL53L5CX ToF;
 typedef VL53L5CX_ResultsData ToF_data;
 

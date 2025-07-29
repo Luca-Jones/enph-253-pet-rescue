@@ -38,6 +38,8 @@ Motor cascade_motor(PIN_CASCADE_PWM, PWM_CHANNEL_CASCADE, PWM_FRQ_HZ_CASCADE, PW
 /* Sensors */
 ToF tof_claw;
 ToF tof_chassis;
+ToF_data tof_data_claw;
+ToF_data tof_data_chassis;
 volatile bool switch_triggered = false;
 
 /* STATE TRANSITIONS */
@@ -135,9 +137,9 @@ state_event_e process_tof_inputs(struct state_machine *state_machine) {
     
     float mean_center_dist;
 
-    if (tof_claw.isDataReady() && tof_claw.getRangingData(&state_machine->tof_data_claw)) {
+    if (tof_claw.isDataReady() && tof_claw.getRangingData(&tof_data_claw)) {
 
-        mean_center_dist = tof_get_center_dist(&state_machine->tof_data_claw);
+        mean_center_dist = tof_get_center_dist(&tof_data_claw);
         
         if (
             mean_center_dist >= TOF_CENTER_DIST_LOWER_THRESHOLD_MM && 
@@ -146,7 +148,7 @@ state_event_e process_tof_inputs(struct state_machine *state_machine) {
         ) {
             
             // checks if the object is a pillar
-            if (tof_get_center_reflectance(&state_machine->tof_data_claw) <= TOF_REFLECTANCE_THRESHOLD) {
+            if (tof_get_center_reflectance(&tof_data_claw) <= TOF_REFLECTANCE_THRESHOLD) {
                 state_machine->stable_pillar_count++;
                 state_machine->stable_pet_count = 0;
                 if (state_machine->stable_pillar_count >= 3) {
@@ -165,7 +167,7 @@ state_event_e process_tof_inputs(struct state_machine *state_machine) {
         } else if (
             mean_center_dist < TOF_CENTER_DIST_LOWER_THRESHOLD_MM && 
             // tof_cylindrical_object_detected(&state_machine->tof_data_claw) &&
-            tof_get_center_reflectance(&state_machine->tof_data_claw) > TOF_REFLECTANCE_THRESHOLD
+            tof_get_center_reflectance(&tof_data_claw) > TOF_REFLECTANCE_THRESHOLD
         ) {
             state_machine->stable_pet_count++;
             state_machine->stable_pillar_count = 0;
@@ -179,9 +181,9 @@ state_event_e process_tof_inputs(struct state_machine *state_machine) {
         }
     }
 
-    if (tof_chassis.isDataReady() && tof_chassis.getRangingData(&state_machine->tof_data_chassis)) {
+    if (tof_chassis.isDataReady() && tof_chassis.getRangingData(&tof_data_chassis)) {
 
-        mean_center_dist = tof_get_center_dist(&state_machine->tof_data_chassis);
+        mean_center_dist = tof_get_center_dist(&tof_data_chassis);
         
         if (
             mean_center_dist >= TOF_CENTER_DIST_LOWER_THRESHOLD_MM && 

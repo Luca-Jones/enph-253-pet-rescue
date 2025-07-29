@@ -36,6 +36,8 @@ extern BaseGear base_gear;
 
 extern ToF tof_claw;
 extern ToF tof_chassis;
+extern ToF_data tof_data_claw;
+extern ToF_data tof_data_chassis;
 
 
 /* STATE MACHINE */
@@ -47,8 +49,6 @@ struct state_machine {
     state_e state;
     state_event_e internal_event;
     int pets;
-    ToF_data tof_data_claw;
-    ToF_data tof_data_chassis;
     int stable_pet_count;
     int stable_pillar_count;
     bool arm_in_start_pos;
