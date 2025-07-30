@@ -24,6 +24,7 @@
 #define ARM_RAISED_X 190
 #define ARM_RAISED_Y 250
 
+#define ARM_ILLEGAL_POS -1
 
 class Arm
 {
@@ -36,7 +37,7 @@ public:
     ~Arm();
     void setup();
     void get_pos(int *x, int *y);
-    int move_to_pos(int x, int y);
+    int move_to_pos(int x, int y);                  // returns ARM_ILLEGAL_POS if the position is not possible to move to
     void lerp_to_pos(int x, int y, int time_ms);
 
     // TODO: remove testing functions

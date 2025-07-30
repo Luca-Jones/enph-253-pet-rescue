@@ -13,6 +13,9 @@
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
 
 /*
+    Author: Luca Jones
+    Date:   July 2025
+
     This is a state machine implemented with enums and functions.
     The robot moves between states through Transitions, which are triggered by Events.
     The event that ocurred is determined by the sensors.
@@ -55,9 +58,9 @@ static const struct state_transition state_transitions[] = {
     {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_RIGHT,   STATE_REACH             },
     {   STATE_TAPE_FOLLOWING,   EVENT_PILLAR_DETECTED,      STATE_REACH             },
     {   STATE_REACH,            EVENT_PET_NEAR,             STATE_CLOSE_CLAW        },
-    // {   STATE_CLOSE_CLAW,       EVENT_PET_MISSED,           STATE_RETREAT           },
-    // {   STATE_RETREAT,          EVENT_ARM_READY,            STATE_REACH             },
-    // {   STATE_RETREAT,          EVENT_PET_FAILED,           STATE_TAPE_FOLLOWING    },
+    {   STATE_CLOSE_CLAW,       EVENT_PET_MISSED,           STATE_RETREAT           },
+    {   STATE_RETREAT,          EVENT_ARM_READY,            STATE_REACH             },
+    {   STATE_RETREAT,          EVENT_PET_FAILED,           STATE_TAPE_FOLLOWING    },
     {   STATE_CLOSE_CLAW,       EVENT_PET_GRASPED,          STATE_STORE             },
     {   STATE_STORE,            EVENT_PET_STORED,           STATE_TAPE_FOLLOWING    },
     {   STATE_TAPE_FOLLOWING,   EVENT_EDGE_DETECTED,        STATE_RETURN_PETS       },
@@ -74,21 +77,24 @@ void state_machine_init(struct state_machine *state_machine) {
     // set up state machine data
     state_machine->state = STATE_TAPE_FOLLOWING;
     state_machine->internal_event = EVENT_NONE;
-    state_machine->pets = 0;
-    state_machine->stable_pet_count_left = 0;
-    state_machine->stable_pet_count_right = 0;
-    state_machine->stable_pillar_count = 0;
-    state_machine->arm_in_start_pos = true;
-    state_machine->claw_closed = false;
-    state_machine->claw_open_angle = CLAW_OPEN;
-    state_machine->attempts = 0;
-    state_machine->last_error = 0;
-    state_machine->last_pid_time = 0;
-    state_machine->last_ir_ll = false;
-    state_machine->last_ir_l = false;
-    state_machine->last_ir_c = false;
-    state_machine->last_ir_r = false;
-    state_machine->last_ir_rr = false;
+
+    state_machine->stable_pet_count_left    = 0;
+    state_machine->stable_pet_count_right   = 0;
+    state_machine->stable_pillar_count      = 0;
+
+    state_machine->pets_stored              = 0;
+    state_machine->arm_in_start_pos         = true;
+    state_machine->claw_closed              = false;
+    state_machine->claw_open_angle          = CLAW_OPEN;
+    state_machine->attempts                 = 0;
+
+    state_machine->last_error               = 0;
+    state_machine->last_pid_time            = 0;
+    state_machine->last_ir_ll               = false;
+    state_machine->last_ir_l                = false;
+    state_machine->last_ir_c                = false;
+    state_machine->last_ir_r                = false;
+    state_machine->last_ir_rr               = false;
 
     #ifdef DEBUG
     // set up display for debugging
@@ -124,7 +130,8 @@ void state_machine_init(struct state_machine *state_machine) {
     base_gear.setup();      // sets up the motor and magnetic encoder internally
 
     // set up claw switch
-    attachInterrupt(digitalPinToInterrupt(PIN_LIMIT_SWITCH), limit_switch_ISR, CHANGE);
+    pinMode(PIN_LIMIT_SWITCH, INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(PIN_LIMIT_SWITCH), limit_switch_ISR, FALLING);
 
     #ifdef DEBUG
     print_event(state_machine->internal_event);
@@ -190,6 +197,8 @@ state_event_e process_tof_inputs(struct state_machine *state_machine) {
     } else {
         state_machine->stable_pet_count_right = 0;
     }
+
+    return EVENT_NONE;
     
 }
 
@@ -202,14 +211,15 @@ state_event_e process_input(struct state_machine *state_machine) {
         return ie;
     }
 
-    // TODO: debounce claw limit switch
-    if (state_machine->claw_closed) {   
+    if (state_machine->claw_closed) {
         if (switch_triggered) {
             switch_triggered = false;
             return EVENT_PET_GRASPED;
         } else {
             return EVENT_PET_MISSED;
         }
+    } else {
+        switch_triggered = false;
     }
     
     // platform edge detection
@@ -240,6 +250,10 @@ void process_event(struct state_machine *state_machine, state_event_e next_event
             return;
         }
     }
+
+    // if the current state + event is not recognized as a valid transition, stay in the same state
+    state_enter(state_machine, state_machine->state, EVENT_NONE); // stay in the same state
+
 }
 
 static void state_enter(struct state_machine *state_machine, state_e next_state, state_event_e event) {
@@ -292,7 +306,7 @@ static void state_exit(struct state_machine *state_machine, state_e previous_sta
 }
 
 void IRAM_ATTR limit_switch_ISR() {
-    switch_triggered = gpio_get_level((gpio_num_t) PIN_LIMIT_SWITCH);
+    switch_triggered = true; // gpio_get_level((gpio_num_t) PIN_LIMIT_SWITCH);
 }
 
 #ifdef DEBUG

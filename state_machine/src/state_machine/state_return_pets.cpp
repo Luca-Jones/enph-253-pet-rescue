@@ -2,33 +2,33 @@
 #include <esp32-hal-ledc.h>
 #include <config/pwm_config.h>
 #include <config/pin_out.h>
-
-#define CASCADE_LIFT_TIME_MS    2000
-#define REVERSE_DRIVING_TIME_MS 2000
+#include <config/dir_config.h>
 
 void state_return_pets_run(struct state_machine *state_machine) {
-    
+
     // raise the cascade
-    digitalWrite(PIN_CASCADE_DIR, HIGH); // associate HIGH to the correct direction
-    ledcWrite(PWM_CHANNEL_CASCADE, PWM_MAX_DUTY_CASCADE);
+    cascade_motor.write(PWM_MAX_DUTY_CASCADE, CASCADE_MOTOR_UP);
     delay(CASCADE_LIFT_TIME_MS);
+    cascade_motor.stop();
 
     // drive backwards for some time, then stop
-    digitalWrite(PIN_MOTOR_LEFT_DIR, LOW);  // associate with the correct direction
-    digitalWrite(PIN_MOTOR_RIGHT_DIR, LOW);
-    ledcWrite(PWM_CHANNEL_MOTOR_LEFT, PWM_MAX_DUTY_MOTOR_LEFT);
-    ledcWrite(PWM_CHANNEL_MOTOR_RIGHT, PWM_MAX_DUTY_MOTOR_RIGHT);
+    left_motor.write(PWM_MAX_DUTY_MOTOR_LEFT, LEFT_MOTOR_BACKWARD);
+    right_motor.write(PWM_MAX_DUTY_MOTOR_RIGHT, RIGHT_MOTOR_BACKWARD);
     delay(REVERSE_DRIVING_TIME_MS);
-    ledcWrite(PWM_CHANNEL_MOTOR_LEFT, 0);
-    ledcWrite(PWM_CHANNEL_MOTOR_RIGHT, 0);
-    
+    left_motor.stop();
+    right_motor.stop();
+
     // lower the cascade
-    ledcWrite(PWM_CHANNEL_CASCADE, 0);
-    delayMicroseconds(100);
-    digitalWrite(PIN_CASCADE_DIR, LOW);
-    ledcWrite(PWM_CHANNEL_CASCADE, PWM_MAX_DUTY_CASCADE);
+    cascade_motor.write(PWM_MAX_DUTY_CASCADE, CASCADE_MOTOR_DOWN);
     delay(CASCADE_LIFT_TIME_MS);
-    ledcWrite(PWM_CHANNEL_CASCADE, 0); // stop the cascade
+    cascade_motor.stop();
+    
+    // move a little bit forwards
+    left_motor.write(PWM_MAX_DUTY_MOTOR_LEFT, LEFT_MOTOR_FORWARD);
+    right_motor.write(PWM_MAX_DUTY_MOTOR_RIGHT, RIGHT_MOTOR_FORWARD);
+    delay(REVERSE_DRIVING_TIME_MS / 2);
+    left_motor.stop();
+    right_motor.stop();
     
     // post an internal event
     state_machine->internal_event = EVENT_PETS_RETURNED;

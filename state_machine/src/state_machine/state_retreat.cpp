@@ -2,8 +2,6 @@
 #include <actuators/Claw.h>
 #include <actuators/Arm.h>
 
-#define RETREAT_ATTEMPTS 3
-
 void state_retreat_run(struct state_machine *state_machine) {
     int x,y;
     arm.get_pos(&x, &y);

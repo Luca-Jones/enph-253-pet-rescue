@@ -63,7 +63,7 @@ int Arm::move_to_pos(int x, int y) {
         servo_2->write(theta_2);
         return 0;
     }
-    return -1;
+    return ARM_ILLEGAL_POS;
 }
 
 void Arm::lerp_to_pos(int x, int y, int time_ms) {

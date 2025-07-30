@@ -1,0 +1,13 @@
+#ifndef DIR_CONFIG_H
+#define DIR_CONFIG_H
+
+#define LEFT_MOTOR_FORWARD      LOW
+#define LEFT_MOTOR_BACKWARD     HIGH
+
+#define RIGHT_MOTOR_FORWARD     LOW
+#define RIGHT_MOTOR_BACKWARD    HIGH
+
+#define CASCADE_MOTOR_UP        HIGH
+#define CASCADE_MOTOR_DOWN      LOW
+
+#endif

@@ -18,29 +18,30 @@ void setup() {
 
 void loop() {
     
-    if (Serial.available() > 0) {
+    servo_1.write(270);
+    // if (Serial.available() > 0) {
         
-        String input = Serial.readStringUntil('\n');
-        Serial.println(input);
+    //     String input = Serial.readStringUntil('\n');
+    //     Serial.println(input);
 
-        int val = input.toInt();
+    //     int val = input.toInt();
         
-        if (val == 1) {
-            Serial.println("Input an angle for Servo 1");
-            String next_input = Serial.readStringUntil('\n');
-            Serial.println(next_input);
-            val = next_input.toInt();
-            servo_1.write(val);
-        } else if (val == 2) {
-            Serial.println("Input an angle for Servo 2");
-            String next_input = Serial.readStringUntil('\n');
-            Serial.println(next_input);
-            val = next_input.toInt();
-            servo_2.write(val);
-        } else {
-            Serial.println("Invalid input, choose Servo (1) or (2)");
-        }
-    }
+    //     if (val == 1) {
+    //         Serial.println("Input an angle for Servo 1");
+    //         String next_input = Serial.readStringUntil('\n');
+    //         Serial.println(next_input);
+    //         val = next_input.toInt();
+    //         servo_1.write(val);
+    //     } else if (val == 2) {
+    //         Serial.println("Input an angle for Servo 2");
+    //         String next_input = Serial.readStringUntil('\n');
+    //         Serial.println(next_input);
+    //         val = next_input.toInt();
+    //         servo_2.write(val);
+    //     } else {
+    //         Serial.println("Invalid input, choose Servo (1) or (2)");
+    //     }
+    // }
     delay(1000);
 
 }

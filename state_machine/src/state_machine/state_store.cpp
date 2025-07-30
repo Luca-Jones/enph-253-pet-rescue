@@ -13,14 +13,15 @@ static void state_store_run(struct state_machine *state_machine) {
 
     delay(1000);
     claw.write(CLAW_OPEN);
-    delay(500);
+    delay(1000);
 
     base_gear.write(BASE_GEAR_HOME);
 
     arm.move_to_pos(ARM_HOME_X, ARM_HOME_Y);
-    delay(500);
+    delay(1000);
 
-    state_machine->pets++;
+    state_machine->pets_stored++;
+    state_machine->claw_closed = false;
     state_machine->internal_event = EVENT_PET_STORED;
 }
 

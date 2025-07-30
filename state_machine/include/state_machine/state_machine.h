@@ -11,21 +11,25 @@
     <state>_exit(struct state_machine *sm)                                        handles things when exiting a state
     <state>_run(struct state_machine *sm)                                         one iteration of the state's routine. Post any internal events from here.
     
+    Most states will only need to implement the first and third functions.
+
 */
+
 
 #define DEBUG // comment out this line to remove logging through Serial and the OLED display
 
 
 /* Actuators */
-#include <actuators/Servo.h>
 #include <actuators/Arm.h>
+#include <actuators/Servo.h>
 #include <actuators/Claw.h>
 #include <actuators/BaseGear.h>
 
-extern Servo servo_1;
-extern Servo servo_2;
 extern Arm arm;
 extern Servo claw;
+extern Motor left_motor;
+extern Motor right_motor;
+extern Motor cascade_motor;
 extern BaseGear base_gear;
 
 
@@ -46,18 +50,20 @@ extern ToF_data tof_data_chassis;
 
 // TODD: decide what should be included in the state machine struct
 struct state_machine {
+
     state_e state;
     state_event_e internal_event;
-    int pets;
+    
     int stable_pet_count_left;
     int stable_pet_count_right;
     int stable_pillar_count;
+    
+    int pets_stored;
     bool arm_in_start_pos;
     bool claw_closed;
-    int claw_open_angle; // either CLAW_OPEN or CLAW_SEMI_OPEN
+    int claw_open_angle;         // either CLAW_OPEN or CLAW_SEMI_OPEN
     int attempts;
 
-    // tape following data
     float last_error;
     unsigned long last_pid_time; // set to zero when leaving the state
     bool last_ir_ll, last_ir_l, last_ir_c, last_ir_r, last_ir_rr;
