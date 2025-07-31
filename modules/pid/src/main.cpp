@@ -42,10 +42,10 @@ const int SENSOR_RIGHT     = 35;
 const int SENSOR_RIGHT_RIGHT = 9;
 
 
-const int MOTOR_LEFT_PWM  = 13;
-const int MOTOR_LEFT_DIR  = 12;
-const int MOTOR_RIGHT_PWM = 14;
-const int MOTOR_RIGHT_DIR = 27;
+const int MOTOR_LEFT_PWM  = 14;
+const int MOTOR_LEFT_DIR  = 27;
+const int MOTOR_RIGHT_PWM = 13;
+const int MOTOR_RIGHT_DIR = 12;
 
 
 const int PWM_FREQ = 1000;

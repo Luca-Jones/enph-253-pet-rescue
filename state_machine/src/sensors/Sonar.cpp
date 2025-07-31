@@ -8,11 +8,14 @@ void sonar_setup() {
 }
 
 int sonar_get_distance_cm() {
+
     digitalWrite(PIN_SONAR_TRIG, LOW);
-    delayMicroseconds(SONAR_STABILIZING_DELAY_US);
+    delayMicroseconds(2);
     digitalWrite(PIN_SONAR_TRIG, HIGH);
-    delayMicroseconds(SONAR_HIGH_TIME_US);
+    delayMicroseconds(10);
     digitalWrite(PIN_SONAR_TRIG, LOW);
-    unsigned long duration_us = pulseIn(PIN_SONAR_ECHO, HIGH);
-    return (duration_us * SPEED_OF_SOUND_CM_PER_US) / 2; // round trip distance divided by 2
+
+    unsigned long duration_us = pulseIn(PIN_SONAR_ECHO, HIGH, 30000);
+    float distance = (duration_us * SPEED_OF_SOUND_CM_PER_US) / 2; // round trip distance divided by 2
+    return distance;
 }

@@ -8,6 +8,9 @@ void setup() {
 
 void loop() {
     int dist = sonar_get_distance_cm();
-    Serial.printf("distance = %d\n", dist);
-    delay(1000);
+    // Serial.printf("distance = %d\n", dist);
+    delay(10);
+    if (dist > 20) {
+        Serial.println("Edge Detected!");
+    }
 }

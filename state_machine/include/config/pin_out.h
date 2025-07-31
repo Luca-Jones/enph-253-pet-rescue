@@ -13,10 +13,10 @@
 #define PIN_MOTOR_LEFT_DIR      12
 #define PIN_MOTOR_RIGHT_PWM     14
 #define PIN_MOTOR_RIGHT_DIR     27
-#define PIN_CASCADE_PWM         26
-#define PIN_CASCADE_DIR         25
-#define PIN_BASE_GEAR_PWM       33
-#define PIN_BASE_GEAR_DIR       32
+#define PIN_CASCADE_PWM         33
+#define PIN_CASCADE_DIR         32
+#define PIN_BASE_GEAR_PWM       26
+#define PIN_BASE_GEAR_DIR       25
 
 #define PIN_IR_SENSOR_LL        37
 #define PIN_IR_SENSOR_L         38
