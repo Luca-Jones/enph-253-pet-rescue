@@ -15,13 +15,13 @@
 #define ARM_SERVO_2_ANGLE_MAX 270
 #define ARM_SERVO_2_ANGLE_OFFSET 0
 
-#define ARM_HOME_X 150
-#define ARM_HOME_Y 50
+#define ARM_HOME_X 200
+#define ARM_HOME_Y 100
 
-#define ARM_PILLAR_X 190
+#define ARM_PILLAR_X 200
 #define ARM_PILLAR_Y 170
 
-#define ARM_RAISED_X 190
+#define ARM_RAISED_X 200
 #define ARM_RAISED_Y 250
 
 #define ARM_ILLEGAL_POS -1

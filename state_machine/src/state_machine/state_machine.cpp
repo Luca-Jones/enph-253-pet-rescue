@@ -10,6 +10,8 @@
 #include <state_machine/state_tape_following.h>
 #include <state_machine/state_wait.h>
 
+#include <config/dir_config.h>
+
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
 
 /*
@@ -212,7 +214,7 @@ state_event_e process_input(struct state_machine *state_machine) {
     }
 
     if (state_machine->claw_closed) {
-        if (switch_triggered) {
+        if (digitalRead(PIN_LIMIT_SWITCH) == SWITCH_CLOSED) {
             switch_triggered = false;
             return EVENT_PET_GRASPED;
         } else {

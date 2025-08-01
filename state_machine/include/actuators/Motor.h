@@ -46,7 +46,7 @@ private:
     uint8_t pwm_channel;
     int pwm_frequency;
     uint8_t pwm_resolution;
-    uint8_t pwm_width;      // 2 ^ pwm_resolution
+    int pwm_width;      // 2 ^ pwm_resolution
     uint8_t dir_pin;
     int last_dir;
 };

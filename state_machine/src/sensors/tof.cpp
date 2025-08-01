@@ -75,19 +75,19 @@ float tof_get_center_reflectance(const ToF_data *data) {
       1 .[ ][ ][ ][ ][ ][ ][ ][ ]
       2 .[ ][ ][ ][ ][ ][ ][ ][ ]
       3 .[ ][ ][ ][ ][ ][ ][ ][ ]
-      4 .[ ][ ][ ][*][*][ ][ ][ ]
+      4 .[ ][ ][ ][ ][ ][ ][ ][ ]
       5 .[ ][ ][ ][*][*][ ][ ][ ]
       6 .[ ][ ][ ][*][*][ ][ ][ ]
-      7 .[ ][ ][ ][ ][ ][ ][ ][ ]
+      7 .[ ][ ][ ][*][*][ ][ ][ ]
     **/
 
     return (
-        data->reflectance[8 * (7 - 4) + 3] + 
-        data->reflectance[8 * (7 - 4) + 4] + 
         data->reflectance[8 * (7 - 5) + 3] + 
         data->reflectance[8 * (7 - 5) + 4] + 
         data->reflectance[8 * (7 - 6) + 3] + 
-        data->reflectance[8 * (7 - 6) + 4]
+        data->reflectance[8 * (7 - 6) + 4] +
+        data->reflectance[8 * (7 - 7) + 3] + 
+        data->reflectance[8 * (7 - 7) + 4] 
     ) * 0.167f;
 
 }
@@ -99,20 +99,20 @@ bool tof_left_cylinder_detected(const ToF_data *data) {
       0 .[ ][ ][ ][*][*][ ][ ][ ]
       1 .[ ][ ][ ][ ][ ][ ][ ][ ]
       2 .[ ][ ][ ][ ][ ][ ][ ][ ]
-      3 .[ ][ ][/][*][*][\][ ][ ]
-      4 .[ ][ ][/][*][*][\][ ][ ]
+      3 .[ ][ ][ ][ ][ ][ ][ ][ ]
+      4 .[ ][ ][ ][ ][ ][ ][ ][ ]
       5 .[ ][ ][/][*][*][\][ ][ ]
-      6 .[ ][ ][ ][ ][ ][ ][ ][ ]
-      7 .[ ][ ][ ][ ][ ][ ][ ][ ]
+      6 .[ ][ ][/][*][*][\][ ][ ]
+      7 .[ ][ ][/][*][*][\][ ][ ]
     **/
 
     // key: [8 * row + col]
-    float center_left_mean = (data->distance_mm[8 * (7 - 3) + 3] + data->distance_mm[8 * (7 - 4) + 3] + data->distance_mm[8 * (7 - 5) + 3]) * 0.33f;
-    float center_right_mean = (data->distance_mm[8 * (7 - 3) + 4] + data->distance_mm[8 * (7 - 4) + 4] + data->distance_mm[8 * (7 - 5) + 4]) * 0.33f;
+    float center_left_mean = (data->distance_mm[8 * (7 - 5) + 3] + data->distance_mm[8 * (7 - 6) + 3] + data->distance_mm[8 * (7 - 7) + 3]) * 0.33f;
+    float center_right_mean = (data->distance_mm[8 * (7 - 5) + 4] + data->distance_mm[8 * (7 - 6) + 4] + data->distance_mm[8 * (7 - 7) + 4]) * 0.33f;
     float center_mean = 0.5f * (center_left_mean + center_right_mean);
 
-    float side_left_mean = (data->distance_mm[8 * (7 - 3) + 2] + data->distance_mm[8 * (7 - 4) + 2] + data->distance_mm[8 * (7 - 5) + 2]) * 0.33f;
-    float side_right_mean = (data->distance_mm[8 * (7 - 3) + 5] + data->distance_mm[8 * (7 - 4) + 5] + data->distance_mm[8 * (7 - 5) + 5]) * 0.33f;
+    float side_left_mean = (data->distance_mm[8 * (7 - 5) + 2] + data->distance_mm[8 * (7 - 6) + 2] + data->distance_mm[8 * (7 - 7) + 2]) * 0.33f;
+    float side_right_mean = (data->distance_mm[8 * (7 - 5) + 5] + data->distance_mm[8 * (7 - 6) + 5] + data->distance_mm[8 * (7 - 7) + 5]) * 0.33f;
     float side_mean = 0.5f * (side_left_mean + side_right_mean);
     float side_mean_diff = fabs(side_left_mean - side_right_mean);
 

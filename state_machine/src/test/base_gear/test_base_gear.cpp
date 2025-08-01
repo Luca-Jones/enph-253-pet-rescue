@@ -29,11 +29,11 @@ void loop() {
     Serial.printf("real angle = %d\n\n", mag_get_angle());
     delay(2000);
     
-    Serial.println("target angle = 183");
-    Serial.printf("current angle = %d\n", mag_get_angle());
-    base_gear.write(183);
-    Serial.printf("real angle = %d\n\n", mag_get_angle());
-    delay(2000);
+    // Serial.println("target angle = 183");
+    // Serial.printf("current angle = %d\n", mag_get_angle());
+    // base_gear.write(183);
+    // Serial.printf("real angle = %d\n\n", mag_get_angle());
+    // delay(2000);
     
     Serial.println("target angle = 270");
     Serial.printf("current angle = %d\n", mag_get_angle());

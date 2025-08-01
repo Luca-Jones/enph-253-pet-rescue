@@ -10,4 +10,10 @@
 #define CASCADE_MOTOR_UP        HIGH
 #define CASCADE_MOTOR_DOWN      LOW
 
+#define BASE_GEAR_CW            HIGH
+#define BASE_GEAR_CCW           LOW
+
+#define SWITCH_OPEN             LOW
+#define SWITCH_CLOSED           HIGH
+
 #endif
