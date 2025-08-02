@@ -43,33 +43,8 @@ float tof_get_dist_to_object(const ToF_data *data) {
     ) * 0.25f;
 }
 
-float tof_get_center_dist(const ToF_data *data) {
-
-     /**
-          0  1  2  3  4  5  6  7 
-      0 .[ ][ ][ ][ ][ ][ ][ ][ ]
-      1 .[ ][ ][ ][ ][ ][ ][ ][ ]
-      2 .[ ][ ][ ][ ][ ][ ][ ][ ]
-      3 .[ ][ ][ ][ ][ ][ ][ ][ ]
-      4 .[ ][ ][ ][*][*][ ][ ][ ]
-      5 .[ ][ ][ ][*][*][ ][ ][ ]
-      6 .[ ][ ][ ][*][*][ ][ ][ ]
-      7 .[ ][ ][ ][ ][ ][ ][ ][ ]
-    **/
-
-    return (
-        data->distance_mm[8 * (7 - 4) + 3] + 
-        data->distance_mm[8 * (7 - 4) + 4] + 
-        data->distance_mm[8 * (7 - 5) + 3] + 
-        data->distance_mm[8 * (7 - 5) + 4] +
-        data->distance_mm[8 * (7 - 6) + 3] + 
-        data->distance_mm[8 * (7 - 6) + 4]
-    ) * 0.167f;
-}
-
-float tof_get_center_reflectance(const ToF_data *data) {
-    
-     /**
+float tof_get_left_center_dist(const ToF_data *data) {
+    /**
           0  1  2  3  4  5  6  7 
       0 .[ ][ ][ ][ ][ ][ ][ ][ ]
       1 .[ ][ ][ ][ ][ ][ ][ ][ ]
@@ -82,8 +57,56 @@ float tof_get_center_reflectance(const ToF_data *data) {
     **/
 
     return (
-        data->reflectance[8 * (7 - 5) + 3] + 
-        data->reflectance[8 * (7 - 5) + 4] + 
+        data->distance_mm[8 * (7 - 5) + 3] + 
+        data->distance_mm[8 * (7 - 5) + 4] + 
+        data->distance_mm[8 * (7 - 6) + 3] + 
+        data->distance_mm[8 * (7 - 6) + 4] +
+        data->distance_mm[8 * (7 - 7) + 3] + 
+        data->distance_mm[8 * (7 - 7) + 4]
+    ) * 0.167f;
+}
+
+float tof_get_right_center_dist(const ToF_data *data) {
+
+    /**
+          0  1  2  3  4  5  6  7 
+      0 .[ ][ ][ ][ ][ ][ ][ ][ ]
+      1 .[ ][ ][ ][ ][ ][ ][ ][ ]
+      2 .[ ][ ][ ][ ][ ][ ][ ][ ]
+      3 .[ ][ ][ ][*][*][ ][ ][ ]
+      4 .[ ][ ][ ][*][*][ ][ ][ ]
+      5 .[ ][ ][ ][*][*][ ][ ][ ]
+      6 .[ ][ ][ ][ ][ ][ ][ ][ ]
+      7 .[ ][ ][ ][ ][ ][ ][ ][ ]
+    **/
+
+    return (
+        data->distance_mm[8 * (7 - 2) + 3] + 
+        data->distance_mm[8 * (7 - 3) + 4] + 
+        data->distance_mm[8 * (7 - 4) + 3] + 
+        data->distance_mm[8 * (7 - 4) + 4] +
+        data->distance_mm[8 * (7 - 5) + 3] + 
+        data->distance_mm[8 * (7 - 5) + 4]
+    ) * 0.167f;
+}
+
+float tof_get_center_reflectance(const ToF_data *data) {
+    
+    /**
+          0  1  2  3  4  5  6  7 
+      0 .[ ][ ][ ][ ][ ][ ][ ][ ]
+      1 .[ ][ ][ ][ ][ ][ ][ ][ ]
+      2 .[ ][ ][ ][ ][ ][ ][ ][ ]
+      3 .[ ][ ][ ][ ][ ][ ][ ][ ]
+      4 .[ ][ ][ ][ ][ ][ ][ ][ ]
+      5 .[ ][ ][ ][ ][ ][ ][ ][ ]
+      6 .[ ][ ][ ][*][*][ ][ ][ ]
+      7 .[ ][ ][ ][*][*][ ][ ][ ]
+    **/
+
+    return (
+        // data->reflectance[8 * (7 - 5) + 3] + 
+        // data->reflectance[8 * (7 - 5) + 4] + 
         data->reflectance[8 * (7 - 6) + 3] + 
         data->reflectance[8 * (7 - 6) + 4] +
         data->reflectance[8 * (7 - 7) + 3] + 
@@ -118,7 +141,7 @@ bool tof_left_cylinder_detected(const ToF_data *data) {
 
     float top_center_mean = 0.5f * (data->distance_mm[8 * (7 - 0) + 3] + data->distance_mm[8 * (7 - 0) + 4]);
 
-    return (side_mean_diff <= TOF_MAX_SIDE_DIFF_MM && center_mean < side_mean && top_center_mean >= TOF_MAX_TOP_MM);
+    return (side_mean_diff <= TOF_MAX_SIDE_DIFF_MM && center_mean < side_mean);// && top_center_mean >= TOF_MAX_TOP_MM);
 }
 
 bool tof_right_cylinder_detected(const ToF_data *data) {

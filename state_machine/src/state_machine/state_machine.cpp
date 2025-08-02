@@ -56,17 +56,21 @@ struct state_transition {
 
 // consult the diagram to understand these transitions
 static const struct state_transition state_transitions[] = {
-    {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_LEFT,    STATE_REACH             },
-    {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_RIGHT,   STATE_REACH             },
-    {   STATE_TAPE_FOLLOWING,   EVENT_PILLAR_DETECTED,      STATE_REACH             },
-    {   STATE_REACH,            EVENT_PET_NEAR,             STATE_CLOSE_CLAW        },
-    {   STATE_CLOSE_CLAW,       EVENT_PET_MISSED,           STATE_RETREAT           },
-    {   STATE_RETREAT,          EVENT_ARM_READY,            STATE_REACH             },
-    {   STATE_RETREAT,          EVENT_PET_FAILED,           STATE_TAPE_FOLLOWING    },
-    {   STATE_CLOSE_CLAW,       EVENT_PET_GRASPED,          STATE_STORE             },
-    {   STATE_STORE,            EVENT_PET_STORED,           STATE_TAPE_FOLLOWING    },
-    {   STATE_TAPE_FOLLOWING,   EVENT_EDGE_DETECTED,        STATE_RETURN_PETS       },
-    {   STATE_RETURN_PETS,      EVENT_PETS_RETURNED,        STATE_WAIT              },
+    // {STATE_TAPE_FOLLOWING, EVENT_PET_DETECTED_LEFT, STATE_WAIT},
+    // {STATE_TAPE_FOLLOWING, EVENT_PET_DETECTED_RIGHT, STATE_WAIT},
+    // {STATE_TAPE_FOLLOWING, EVENT_PILLAR_DETECTED, STATE_WAIT},
+    // {STATE_WAIT, EVENT_PET_GRASPED, STATE_TAPE_FOLLOWING},
+    // {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_LEFT,    STATE_REACH             },
+    // {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_RIGHT,   STATE_REACH             },
+    // {   STATE_TAPE_FOLLOWING,   EVENT_PILLAR_DETECTED,      STATE_REACH             },
+    // {   STATE_REACH,            EVENT_PET_NEAR,             STATE_CLOSE_CLAW        },
+    // {   STATE_CLOSE_CLAW,       EVENT_PET_MISSED,           STATE_RETREAT           },
+    // {   STATE_RETREAT,          EVENT_ARM_READY,            STATE_REACH             },
+    // {   STATE_RETREAT,          EVENT_PET_FAILED,           STATE_TAPE_FOLLOWING    },
+    // {   STATE_CLOSE_CLAW,       EVENT_PET_GRASPED,          STATE_STORE             },
+    // {   STATE_STORE,            EVENT_PET_STORED,           STATE_TAPE_FOLLOWING    },
+    // {   STATE_TAPE_FOLLOWING,   EVENT_EDGE_DETECTED,        STATE_RETURN_PETS       },
+    // {   STATE_RETURN_PETS,      EVENT_PETS_RETURNED,        STATE_WAIT              },
 };
 
 
@@ -148,7 +152,7 @@ state_event_e process_tof_inputs(struct state_machine *state_machine) {
 
     if (tof_claw.isDataReady() && tof_get_data(&tof_claw, TOF_CHANNEL_CLAW, &tof_data_claw)) {
 
-        mean_distance_mm = tof_get_center_dist(&tof_data_claw);
+        mean_distance_mm = tof_get_left_center_dist(&tof_data_claw);
 
         if (
             mean_distance_mm >= TOF_CENTER_DIST_LOWER_THRESHOLD_MM && 
@@ -156,48 +160,48 @@ state_event_e process_tof_inputs(struct state_machine *state_machine) {
             tof_left_cylinder_detected(&tof_data_claw)
         ) {
             if (tof_get_center_reflectance(&tof_data_claw) <= TOF_REFLECTANCE_THRESHOLD) {
-                state_machine->stable_pillar_count++;
-                state_machine->stable_pet_count_left = 0;
-                if (state_machine->stable_pillar_count >= 2) {
-                    state_machine->stable_pillar_count = 0;
+                // state_machine->stable_pillar_count++;
+                // state_machine->stable_pet_count_left = 0;
+                // if (state_machine->stable_pillar_count >= 2) {
+                //     state_machine->stable_pillar_count = 0;
                     return EVENT_PILLAR_DETECTED;
-                }
+                // }
             } else {
-                state_machine->stable_pet_count_left++;
-                state_machine->stable_pillar_count = 0;
-                if (state_machine->stable_pet_count_left >= 2) {
-                    state_machine->stable_pet_count_left = 0;
+                // state_machine->stable_pet_count_left++;
+                // state_machine->stable_pillar_count = 0;
+                // if (state_machine->stable_pet_count_left >= 2) {
+                //     state_machine->stable_pet_count_left = 0;
                     return EVENT_PET_DETECTED_LEFT;
-                }
+                // }
             }
         } else {
-            state_machine->stable_pet_count_left = 0;
-            state_machine->stable_pillar_count = 0;
+            // state_machine->stable_pet_count_left = 0;
+            // state_machine->stable_pillar_count = 0;
         }
     } else {
-        state_machine->stable_pet_count_left = 0;
-        state_machine->stable_pillar_count = 0;
+        // state_machine->stable_pet_count_left = 0;
+        // state_machine->stable_pillar_count = 0;
     }
 
     if (tof_chassis.isDataReady() && tof_get_data(&tof_chassis, TOF_CHANNEL_CHASSIS, &tof_data_chassis)) {
 
-        mean_distance_mm = tof_get_center_dist(&tof_data_chassis);
+        mean_distance_mm = tof_get_right_center_dist(&tof_data_chassis);
 
         if (
             mean_distance_mm >= TOF_CENTER_DIST_LOWER_THRESHOLD_MM &&
             mean_distance_mm <= TOF_CENTER_DIST_UPPER_THRESHOLD_MM &&
             tof_right_cylinder_detected(&tof_data_chassis)
         ) {
-            state_machine->stable_pet_count_right++;
-            if (state_machine->stable_pet_count_right >= 2) {
-                state_machine->stable_pet_count_right = 0;
+            // state_machine->stable_pet_count_right++;
+            // if (state_machine->stable_pet_count_right >= 2) {
+            //     state_machine->stable_pet_count_right = 0;
                 return EVENT_PET_DETECTED_RIGHT;
-            }
+            // }
         } else {
-            state_machine->stable_pet_count_right = 0;
+            // state_machine->stable_pet_count_right = 0;
         }
     } else {
-        state_machine->stable_pet_count_right = 0;
+        // state_machine->stable_pet_count_right = 0;
     }
 
     return EVENT_NONE;

@@ -4,9 +4,9 @@
 
 #define TAPE_FOLLOWING_BASE_SPEED       100
 #define TAPE_FOLLOWING_MAX_SPEED        255
-#define TAPE_FOLLOWING_RECOVERY_SPEED   200
+#define TAPE_FOLLOWING_RECOVERY_SPEED   255
 
-#define KP 25
+#define KP 35
 #define KD 5
 
 #define WIFI_PID_TUNING
@@ -21,13 +21,17 @@ void state_tape_following_run(struct state_machine *state_machine) {
     if (state_machine->last_pid_time == 0) {
         state_machine->last_pid_time = now;
     }
-
+    #ifdef DEBUG
+    Serial.printf("dt = %lu ms\n", now - state_machine->last_pid_time);
+    #endif
     bool ir_ll = digitalRead(PIN_IR_SENSOR_LL);
     bool ir_l  = digitalRead(PIN_IR_SENSOR_L);
     bool ir_c  = digitalRead(PIN_IR_SENSOR_C);
     bool ir_r  = digitalRead(PIN_IR_SENSOR_R);
     bool ir_rr = digitalRead(PIN_IR_SENSOR_RR);
-
+    #ifdef DEBUG
+    Serial.printf("ir: %d %d %d %d %d\n", ir_ll, ir_l, ir_c, ir_r, ir_rr);
+    #endif
     float pid_output, error, proportional, derivative;
 
     if (!ir_ll && !ir_l && !ir_c && !ir_r && !ir_rr) {
@@ -49,10 +53,13 @@ void state_tape_following_run(struct state_machine *state_machine) {
         #endif
         
         proportional = KP * error;
-        derivative = KD * (state_machine->last_error - error) / delta_time_s;
+        derivative = KD * (error - state_machine->last_error) / delta_time_s;
 
         pid_output = proportional + derivative; // output is not constrained, but the speed of each motor is
         control_motors(pid_output);
+        #ifdef DEBUG
+        Serial.printf("output = %f", pid_output);
+        #endif
     }
     
     state_machine->last_pid_time = now;

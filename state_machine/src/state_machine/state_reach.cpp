@@ -27,11 +27,13 @@ void state_reach_enter(struct state_machine *state_machine, state_event_e event)
         case EVENT_PET_DETECTED_LEFT:
             // just reach
             state_machine->claw_open_angle = CLAW_OPEN;
+            arm.lerp_to_pos(ARM_REACH_X, ARM_REACH_Y, 500);
             break;
         case EVENT_PET_DETECTED_RIGHT:
             // turn right first  
             state_machine->claw_open_angle = CLAW_OPEN;
             base_gear.write(BASE_GEAR_RIGHT);
+            arm.lerp_to_pos(ARM_REACH_X, ARM_REACH_Y, 500);
             break;
         case EVENT_PILLAR_DETECTED:
             // raise up first (pillars are always on the left)
