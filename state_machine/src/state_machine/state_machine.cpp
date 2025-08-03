@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <assert.h>
+#include <driver/timer.h>
 
 #include <state_machine/state_machine.h>
 #include <state_machine/state_close_claw.h>
@@ -9,6 +9,7 @@
 #include <state_machine/state_store.h>
 #include <state_machine/state_tape_following.h>
 #include <state_machine/state_wait.h>
+#include <state_machine/state_drop_off.h>
 
 #include <config/dir_config.h>
 
@@ -46,6 +47,7 @@ ToF tof_chassis;
 ToF_data tof_data_claw;
 ToF_data tof_data_chassis;
 volatile bool switch_triggered = false;
+volatile bool ramp_detected = false;
 
 /* STATE TRANSITIONS */
 struct state_transition {
@@ -60,6 +62,7 @@ static const struct state_transition state_transitions[] = {
     // {STATE_TAPE_FOLLOWING, EVENT_PET_DETECTED_RIGHT, STATE_WAIT},
     // {STATE_TAPE_FOLLOWING, EVENT_PILLAR_DETECTED, STATE_WAIT},
     // {STATE_WAIT, EVENT_PET_GRASPED, STATE_TAPE_FOLLOWING},
+    {STATE_TAPE_FOLLOWING, EVENT_EDGE_DETECTED, STATE_WAIT},
     // {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_LEFT,    STATE_REACH             },
     // {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_RIGHT,   STATE_REACH             },
     // {   STATE_TAPE_FOLLOWING,   EVENT_PILLAR_DETECTED,      STATE_REACH             },
@@ -67,6 +70,8 @@ static const struct state_transition state_transitions[] = {
     // {   STATE_CLOSE_CLAW,       EVENT_PET_MISSED,           STATE_RETREAT           },
     // {   STATE_RETREAT,          EVENT_ARM_READY,            STATE_REACH             },
     // {   STATE_RETREAT,          EVENT_PET_FAILED,           STATE_TAPE_FOLLOWING    },
+    // {   STATE_CLOSE_CLAW,       EVENT_FIRST_PET,            STATE_TAPE_FOLLOWING    },
+    // {   STATE_TAPE_FOLLOWING,   EVENT_RAMP,                 STATE_DROP_OFF          },
     // {   STATE_CLOSE_CLAW,       EVENT_PET_GRASPED,          STATE_STORE             },
     // {   STATE_STORE,            EVENT_PET_STORED,           STATE_TAPE_FOLLOWING    },
     // {   STATE_TAPE_FOLLOWING,   EVENT_EDGE_DETECTED,        STATE_RETURN_PETS       },
@@ -77,6 +82,10 @@ static const struct state_transition state_transitions[] = {
 /* FUNCTIONS */
 static void state_enter (struct state_machine *state_machine, state_e next_state, state_event_e event);
 static void state_exit  (struct state_machine *state_machine, state_e previous_state);
+
+bool IRAM_ATTR timer_isr_callback (void *args) {
+    ramp_detected = true;
+}
 
 void state_machine_init(struct state_machine *state_machine) {
     
@@ -102,6 +111,19 @@ void state_machine_init(struct state_machine *state_machine) {
     state_machine->last_ir_r                = false;
     state_machine->last_ir_rr               = false;
 
+    timer_config_t timer_config = {
+        .alarm_en = TIMER_ALARM_EN,
+        .counter_en = TIMER_PAUSE,
+        .counter_dir = TIMER_COUNT_UP,
+        .auto_reload = TIMER_AUTORELOAD_DIS,
+        .divider = 16,
+    };
+    timer_init(TIMER_GROUP_0, TIMER_0, &timer_config);
+    timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0);
+    timer_set_alarm_value(TIMER_GROUP_0, TIMER_0, RAMP_TIME_S * TIMER_BASE_CLK / 16);
+    timer_enable_intr(TIMER_GROUP_0, TIMER_0);
+    timer_isr_callback_add(TIMER_GROUP_0, TIMER_0, timer_isr_callback, 0, 0);
+
     #ifdef DEBUG
     // set up display for debugging
     display_handler.begin(SSD1306_SWITCHCAPVCC, 0x3C); // 3.3V at the default i2c addr
@@ -119,8 +141,8 @@ void state_machine_init(struct state_machine *state_machine) {
     Wire.setClock(I2C_FRQ_HZ);
 
     // set up ToF
-    tof_setup(&tof_claw, TOF_CHANNEL_CLAW);
-    tof_setup(&tof_chassis, TOF_CHANNEL_CHASSIS);
+    // tof_setup(&tof_claw, TOF_CHANNEL_CLAW);
+    // tof_setup(&tof_chassis, TOF_CHANNEL_CHASSIS);
 
     // set up sonar
     sonar_setup();
@@ -129,15 +151,21 @@ void state_machine_init(struct state_machine *state_machine) {
     arm.setup();
     claw.attach(PIN_SERVO_3, PWM_CHANNEL_SERVO_3);
 
+    // set up IR
+    pinMode(PIN_IR_SENSOR_LL, INPUT);
+    pinMode(PIN_IR_SENSOR_L, INPUT);
+    pinMode(PIN_IR_SENSOR_C, INPUT);
+    pinMode(PIN_IR_SENSOR_R, INPUT);
+    pinMode(PIN_IR_SENSOR_RR, INPUT);
+
     // set up motors
     left_motor.setup();
     right_motor.setup();
     cascade_motor.setup();
-    base_gear.setup();      // sets up the motor and magnetic encoder internally
+    // base_gear.setup();      // sets up the motor and magnetic encoder internally
 
     // set up claw switch
     pinMode(PIN_LIMIT_SWITCH, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(PIN_LIMIT_SWITCH), limit_switch_ISR, FALLING);
 
     #ifdef DEBUG
     print_event(state_machine->internal_event);
@@ -217,15 +245,27 @@ state_event_e process_input(struct state_machine *state_machine) {
         return ie;
     }
 
+    if (ramp_detected) {
+        ramp_detected = false;
+        return EVENT_RAMP;
+    }
+
     if (state_machine->claw_closed) {
-        if (digitalRead(PIN_LIMIT_SWITCH) == SWITCH_CLOSED) {
-            switch_triggered = false;
-            return EVENT_PET_GRASPED;
-        } else {
+        if (digitalRead(PIN_LIMIT_SWITCH) == SWITCH_CLOSED && !switch_triggered) {
+            if (state_machine->pets_stored == 0) {
+                timer_start(TIMER_GROUP_0, TIMER_0);
+                // move the arm back home
+                base_gear.write(BASE_GEAR_HOME);
+                arm.move_to_pos(ARM_HOME_X, ARM_HOME_Y);
+                return EVENT_FIRST_PET_GRASPED;
+            } else {
+                return EVENT_PET_GRASPED;
+            }
+            switch_triggered = true;
+        } else if (digitalRead(PIN_LIMIT_SWITCH) == SWITCH_OPEN && switch_triggered) {
             return EVENT_PET_MISSED;
+            switch_triggered = false;
         }
-    } else {
-        switch_triggered = false;
     }
     
     // platform edge detection
@@ -234,7 +274,8 @@ state_event_e process_input(struct state_machine *state_machine) {
     }
 
     // both tof inputs, EVENT_NONE is returned if neither sees anything
-    return process_tof_inputs(state_machine);
+    // return process_tof_inputs(state_machine);
+    return EVENT_NONE;
 }
 
 void process_event(struct state_machine *state_machine, state_event_e next_event) {
@@ -288,6 +329,9 @@ static void state_enter(struct state_machine *state_machine, state_e next_state,
         case STATE_RETURN_PETS:
             state_return_pets_enter(state_machine);
             break;
+        case STATE_DROP_OFF:
+            state_drop_off_enter(state_machine);
+            break;
         default:
             break;
     }
@@ -305,14 +349,11 @@ static void state_exit(struct state_machine *state_machine, state_e previous_sta
         case STATE_STORE:
         case STATE_RETREAT:
         case STATE_RETURN_PETS:
+        case STATE_DROP_OFF:
         default:
             break;
     }
 
-}
-
-void IRAM_ATTR limit_switch_ISR() {
-    switch_triggered = true; // gpio_get_level((gpio_num_t) PIN_LIMIT_SWITCH);
 }
 
 #ifdef DEBUG
@@ -342,6 +383,10 @@ void print_state(state_e state) {
         case STATE_STORE:
             display_handler.println("STORE");
             Serial.println("STORE");
+            break;
+        case STATE_DROP_OFF:
+            display_handler.println("DROP OFF");
+            Serial.println("DROP OFF");
             break;
         case STATE_RETREAT:
             display_handler.println("RETREAT");
@@ -410,6 +455,14 @@ void print_event(state_event_e event) {
         case EVENT_PETS_RETURNED:
             display_handler.println("PETS RETURNED");
             Serial.println("PETS RETURNED");
+            break;
+        case EVENT_RAMP:
+            display_handler.println("RAMP DETECTED");
+            Serial.println("RAMP DETECTED");
+            break;
+        case EVENT_FIRST_PET_GRASPED:
+            display_handler.println("1st PET GRASPED");
+            Serial.println("1st PET GRASPED");
             break;
         default:
             break;

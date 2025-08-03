@@ -29,8 +29,9 @@ void Motor::write(int speed, int direction) {
     if (direction != last_dir || last_dir == -1) {
         last_dir = direction;
         ledcWrite(pwm_channel, 0);
-        delayMicroseconds(10);
+        delayMicroseconds(100);
         digitalWrite(dir_pin, direction);
+        delayMicroseconds(100);
     }
     ledcWrite(pwm_channel, speed);
 }

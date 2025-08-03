@@ -14,6 +14,8 @@ typedef enum {
     EVENT_PET_STORED,
     EVENT_EDGE_DETECTED,
     EVENT_PETS_RETURNED,
+    EVENT_RAMP,
+    EVENT_FIRST_PET_GRASPED,
 } state_event_e;
 
 #endif

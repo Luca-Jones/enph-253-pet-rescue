@@ -7,6 +7,7 @@ typedef enum {
     STATE_REACH,
     STATE_CLOSE_CLAW,
     STATE_STORE,
+    STATE_DROP_OFF,
     STATE_RETREAT,
     STATE_RETURN_PETS
 } state_e;

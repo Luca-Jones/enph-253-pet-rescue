@@ -42,6 +42,8 @@ extern ToF tof_claw;
 extern ToF tof_chassis;
 extern ToF_data tof_data_claw;
 extern ToF_data tof_data_chassis;
+extern volatile bool ramp_detected;
+#define RAMP_TIME_S 1000
 
 
 /* STATE MACHINE */
@@ -75,7 +77,7 @@ struct state_machine {
 void            state_machine_init  (struct state_machine *state_machine);
 state_event_e   process_input       (struct state_machine *state_machine);
 void            process_event       (struct state_machine *state_machine, state_event_e next_event);
-void IRAM_ATTR  limit_switch_ISR    ();
+bool IRAM_ATTR  timer_isr_callback  (void *args);
 
 
 #ifdef DEBUG

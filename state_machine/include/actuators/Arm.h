@@ -27,7 +27,10 @@
 #define ARM_RAISED_X 150
 #define ARM_RAISED_Y 350
 
-#define ARM_BUCKET_x 100
+#define ARM_BUCKET_X 100
+
+#define ARM_DROP_OFF_X 300
+#define ARM_DROP_OFF_Y 200
 
 #define ARM_ILLEGAL_POS -1
 

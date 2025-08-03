@@ -9,6 +9,7 @@ void state_retreat_run(struct state_machine *state_machine) {
     claw.write(state_machine->claw_open_angle);
     state_machine->attempts++;
     state_machine->internal_event = (state_machine->attempts < RETREAT_ATTEMPTS) ? EVENT_ARM_READY : EVENT_PET_FAILED;
+    if (state_machine->internal_event == EVENT_PET_FAILED && state_machine->pets_stored == 0) state_machine->pets_stored++; // abort ramp strat
 }
 
 void state_retreat_enter(struct state_machine *state_machine) {

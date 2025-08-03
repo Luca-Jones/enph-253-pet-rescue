@@ -9,7 +9,7 @@
 #define KP 35
 #define KD 5
 
-#define WIFI_PID_TUNING
+#define TAPE_FOLLOWING_PERIOD 10
 
 /* Helper functions */
 void control_motors(float pid_output);
@@ -20,25 +20,23 @@ void state_tape_following_run(struct state_machine *state_machine) {
     unsigned long now = millis();
     if (state_machine->last_pid_time == 0) {
         state_machine->last_pid_time = now;
+    } else if (now - state_machine->last_pid_time < TAPE_FOLLOWING_PERIOD) {
+        return;
     }
-    #ifdef DEBUG
-    Serial.printf("dt = %lu ms\n", now - state_machine->last_pid_time);
-    #endif
+
     bool ir_ll = digitalRead(PIN_IR_SENSOR_LL);
     bool ir_l  = digitalRead(PIN_IR_SENSOR_L);
     bool ir_c  = digitalRead(PIN_IR_SENSOR_C);
     bool ir_r  = digitalRead(PIN_IR_SENSOR_R);
     bool ir_rr = digitalRead(PIN_IR_SENSOR_RR);
-    #ifdef DEBUG
-    Serial.printf("ir: %d %d %d %d %d\n", ir_ll, ir_l, ir_c, ir_r, ir_rr);
-    #endif
+
     float pid_output, error, proportional, derivative;
 
     if (!ir_ll && !ir_l && !ir_c && !ir_r && !ir_rr) {
         if (state_machine->last_ir_ll) {
-            control_motors(TAPE_FOLLOWING_RECOVERY_SPEED);
-        } else if (state_machine->last_ir_rr) {
             control_motors(-TAPE_FOLLOWING_RECOVERY_SPEED);
+        } else if (state_machine->last_ir_rr) {
+            control_motors(+TAPE_FOLLOWING_RECOVERY_SPEED);
         } else {
             // go straight to run over debris
             control_motors(0);
@@ -47,27 +45,25 @@ void state_tape_following_run(struct state_machine *state_machine) {
         error = calculate_error(state_machine->last_error, ir_ll, ir_l, ir_c, ir_r, ir_rr);
         state_machine->last_error = error;
         float delta_time_s = (now - state_machine->last_pid_time) / 1000.0f;
-
-        #ifdef DEBUG
-        Serial.printf("delta time (s) = %f\n", delta_time_s);
-        #endif
         
         proportional = KP * error;
         derivative = KD * (error - state_machine->last_error) / delta_time_s;
 
         pid_output = proportional + derivative; // output is not constrained, but the speed of each motor is
         control_motors(pid_output);
+
         #ifdef DEBUG
-        Serial.printf("output = %f", pid_output);
+        Serial.printf("IR: %d %d %d %d %d | output = %f\n", ir_ll, ir_l, ir_c, ir_r, ir_rr, pid_output);
         #endif
+
+        state_machine->last_ir_ll = ir_ll;
+        state_machine->last_ir_l  = ir_l;
+        state_machine->last_ir_c  = ir_c;
+        state_machine->last_ir_r  = ir_r;
+        state_machine->last_ir_rr = ir_rr;
     }
     
     state_machine->last_pid_time = now;
-    state_machine->last_ir_ll = ir_ll;
-    state_machine->last_ir_l  = ir_l;
-    state_machine->last_ir_c  = ir_c;
-    state_machine->last_ir_r  = ir_r;
-    state_machine->last_ir_rr = ir_rr;
 }
 
 void state_tape_following_enter(struct state_machine *state_machine, state_event_e event) {
@@ -76,10 +72,12 @@ void state_tape_following_enter(struct state_machine *state_machine, state_event
 
 void state_tape_following_exit(struct state_machine *state_machine) {
     // turn off motors
+    state_machine->last_pid_time = 0;
     left_motor.stop();
     right_motor.stop();
 }
 
+// positive output -> turning left (since the right motor gets more power)
 void control_motors(float pid_output) {
     int left_speed = TAPE_FOLLOWING_BASE_SPEED - pid_output;
     int right_speed = TAPE_FOLLOWING_BASE_SPEED + pid_output;
