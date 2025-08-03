@@ -43,7 +43,7 @@ extern ToF tof_chassis;
 extern ToF_data tof_data_claw;
 extern ToF_data tof_data_chassis;
 extern volatile bool ramp_detected;
-#define RAMP_TIME_S 1000
+#define RAMP_TIME_S 10
 
 
 /* STATE MACHINE */
