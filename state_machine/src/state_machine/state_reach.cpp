@@ -1,6 +1,7 @@
 #include <state_machine/state_reach.h>
 #include <actuators/Arm.h>
 
+
 #define REACH_STEP 30
 
 static void state_reach_run(struct state_machine *state_machine) {
@@ -22,15 +23,21 @@ void state_reach_enter(struct state_machine *state_machine, state_event_e event)
         arm.lerp_to_pos(ARM_HOME_X, ARM_HOME_Y, 1000);
     }
 
-    if (eTaskGetState(tof_task_handle) != eSuspended) {
-        if (xSemaphoreTake(i2c_mutex, portMAX_DELAY)) {
+    if (tof_task_handle != NULL && eTaskGetState(tof_task_handle) != eSuspended) {
+        if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, portMAX_DELAY)) {
             vTaskSuspend(tof_task_handle);
+            #ifdef DEBUG
+            Serial.println("tof task suspended");
+            #endif
             xSemaphoreGive(i2c_mutex);
         }
     }
     
-    if (eTaskGetState(dist_task_handle) == eSuspended) {    
+    if (dist_task_handle != NULL && eTaskGetState(dist_task_handle) == eSuspended) {    
         vTaskResume(dist_task_handle);
+        #ifdef DEBUG
+        Serial.println("dist task resumed");
+        #endif
     }
 
     switch (event) {

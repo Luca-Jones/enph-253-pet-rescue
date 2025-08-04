@@ -4,6 +4,9 @@
 #include <config/pin_out.h>
 #include <config/pwm_config.h>
 
+#include "states.h"
+#include "events.h"
+
 /*
     Each state should implement the following functions:
     
@@ -55,8 +58,6 @@ extern volatile bool ramp_detected;
 
 
 /* STATE MACHINE */
-#include "states.h"
-#include "events.h"
 
 struct state_machine {
 

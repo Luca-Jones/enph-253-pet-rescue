@@ -18,9 +18,7 @@ void tof_setup(ToF *tof, uint8_t channel) {
 
 bool tof_get_data(ToF *tof, uint8_t channel, ToF_data *data) {
     select_mux(channel);
-    unsigned long before = millis();
     bool ret = tof->getRangingData(data);
-    Serial.printf("tof processing time: %lu\n", millis() - before);
     return ret;
 }
 
