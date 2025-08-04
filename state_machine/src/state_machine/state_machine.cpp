@@ -264,7 +264,7 @@ void dist_input_task(void *pvParamters) {
             if (
                 tof_claw.isDataReady() && 
                 tof_get_data(&tof_claw, TOF_CHANNEL_CLAW, &tof_data_claw) && 
-                tof_get_dist_to_object(&tof_data_claw) <= TOF_CENTER_DIST_LOWER_THRESHOLD_MM
+                tof_get_dist_to_object(&tof_data_claw) <= 10
             ) {
                 tof_reading = EVENT_PET_NEAR;
             } 
