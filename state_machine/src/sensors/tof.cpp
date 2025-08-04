@@ -12,13 +12,16 @@ void tof_setup(ToF *tof, uint8_t channel) {
     select_mux(channel);
     tof->begin();
     tof->setResolution(TOF_RESOLUTION);
-    tof->setRangingFrequency(TOF_RANGING_FREQUENCY_HZ);
+    tof->setRangingFrequency(15);
     tof->startRanging();
 }
 
 bool tof_get_data(ToF *tof, uint8_t channel, ToF_data *data) {
     select_mux(channel);
-    return tof->getRangingData(data);
+    unsigned long before = millis();
+    bool ret = tof->getRangingData(data);
+    Serial.printf("tof processing time: %lu\n", millis() - before);
+    return ret;
 }
 
 float tof_get_dist_to_object(const ToF_data *data) {

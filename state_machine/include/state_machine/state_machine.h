@@ -50,7 +50,6 @@ extern volatile bool ramp_detected;
 #include "states.h"
 #include "events.h"
 
-// TODD: decide what should be included in the state machine struct
 struct state_machine {
 
     state_e state;

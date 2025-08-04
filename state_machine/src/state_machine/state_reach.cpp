@@ -1,13 +1,14 @@
 #include <state_machine/state_reach.h>
 #include <actuators/Arm.h>
 
-#define REACH_STEP 10
+#define REACH_STEP 30
 
 static void state_reach_run(struct state_machine *state_machine) {
     int x,y;
     arm.get_pos(&x, &y);
+    
     if (arm.move_to_pos(x + REACH_STEP, y) == ARM_ILLEGAL_POS) {
-        state_machine->internal_event = EVENT_PET_MISSED;
+        // state_machine->internal_event = EVENT_PET_MISSED;
     }
 }
 
@@ -17,7 +18,7 @@ void state_reach_enter(struct state_machine *state_machine, state_event_e event)
         arm.lerp_to_pos(ARM_RAISED_X, ARM_RAISED_Y, 500);
         state_machine->arm_in_start_pos = false;
         delay(1000);
-        base_gear.write(BASE_GEAR_LEFT);
+        base_gear.write(BASE_GEAR_HOME);
         arm.lerp_to_pos(ARM_HOME_X, ARM_HOME_Y, 1000);
     }
 
@@ -27,17 +28,23 @@ void state_reach_enter(struct state_machine *state_machine, state_event_e event)
         case EVENT_PET_DETECTED_LEFT:
             // just reach
             state_machine->claw_open_angle = CLAW_OPEN;
+            claw.write(CLAW_OPEN);
+            delay(500);
             arm.lerp_to_pos(ARM_REACH_X, ARM_REACH_Y, 500);
             break;
         case EVENT_PET_DETECTED_RIGHT:
             // turn right first  
             state_machine->claw_open_angle = CLAW_OPEN;
+            claw.write(CLAW_OPEN);
+            delay(500);
             base_gear.write(BASE_GEAR_RIGHT);
             arm.lerp_to_pos(ARM_REACH_X, ARM_REACH_Y, 500);
             break;
-        case EVENT_PILLAR_DETECTED:
+            case EVENT_PILLAR_DETECTED:
             // raise up first (pillars are always on the left)
             state_machine->claw_open_angle = CLAW_SEMI_OPEN;
+            claw.write(CLAW_SEMI_OPEN);
+            delay(500);
             arm.lerp_to_pos(ARM_PILLAR_X, ARM_PILLAR_Y, 500);
             break;
         default:

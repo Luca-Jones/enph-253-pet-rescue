@@ -2,7 +2,7 @@
 #include <esp32-hal.h>
 #include <config/dir_config.h>
 
-#define TAPE_FOLLOWING_BASE_SPEED       100
+#define TAPE_FOLLOWING_BASE_SPEED       80
 #define TAPE_FOLLOWING_MAX_SPEED        255
 #define TAPE_FOLLOWING_RECOVERY_SPEED   255
 
@@ -20,7 +20,8 @@ void state_tape_following_run(struct state_machine *state_machine) {
     unsigned long now = millis();
     if (state_machine->last_pid_time == 0) {
         state_machine->last_pid_time = now;
-    } else if (now - state_machine->last_pid_time < TAPE_FOLLOWING_PERIOD) {
+    } 
+    else if (now - state_machine->last_pid_time < TAPE_FOLLOWING_PERIOD) {
         return;
     }
 
@@ -53,7 +54,7 @@ void state_tape_following_run(struct state_machine *state_machine) {
         control_motors(pid_output);
 
         #ifdef DEBUG
-        Serial.printf("IR: %d %d %d %d %d | output = %f\n", ir_ll, ir_l, ir_c, ir_r, ir_rr, pid_output);
+        Serial.printf("IR: %d %d %d %d %d | output = %f | dt = %f\n", ir_ll, ir_l, ir_c, ir_r, ir_rr, pid_output, delta_time_s);
         #endif
 
         state_machine->last_ir_ll = ir_ll;

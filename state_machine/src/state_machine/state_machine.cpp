@@ -62,18 +62,22 @@ static const struct state_transition state_transitions[] = {
     // {STATE_TAPE_FOLLOWING, EVENT_PET_DETECTED_RIGHT, STATE_WAIT},
     // {STATE_TAPE_FOLLOWING, EVENT_PILLAR_DETECTED, STATE_WAIT},
     // {STATE_WAIT, EVENT_PET_GRASPED, STATE_TAPE_FOLLOWING},
-    {STATE_TAPE_FOLLOWING, EVENT_EDGE_DETECTED, STATE_WAIT},
-    // {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_LEFT,    STATE_REACH             },
-    // {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_RIGHT,   STATE_REACH             },
-    // {   STATE_TAPE_FOLLOWING,   EVENT_PILLAR_DETECTED,      STATE_REACH             },
-    // {   STATE_REACH,            EVENT_PET_NEAR,             STATE_CLOSE_CLAW        },
+    // {STATE_TAPE_FOLLOWING, EVENT_EDGE_DETECTED, STATE_WAIT},
+    // {   STATE_WAIT,   EVENT_PET_DETECTED_LEFT,    STATE_REACH             },
+    // {   STATE_WAIT,   EVENT_PET_DETECTED_RIGHT,   STATE_REACH             },
+    // {   STATE_WAIT,   EVENT_PILLAR_DETECTED,      STATE_REACH             },
+    {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_LEFT,    STATE_REACH             },
+    {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_RIGHT,   STATE_REACH             },
+    {   STATE_TAPE_FOLLOWING,   EVENT_PILLAR_DETECTED,      STATE_REACH             },
+    {   STATE_REACH,            EVENT_PET_NEAR,             STATE_CLOSE_CLAW        },
     // {   STATE_CLOSE_CLAW,       EVENT_PET_MISSED,           STATE_RETREAT           },
     // {   STATE_RETREAT,          EVENT_ARM_READY,            STATE_REACH             },
     // {   STATE_RETREAT,          EVENT_PET_FAILED,           STATE_TAPE_FOLLOWING    },
-    // {   STATE_CLOSE_CLAW,       EVENT_FIRST_PET,            STATE_TAPE_FOLLOWING    },
+    // {   STATE_CLOSE_CLAW,       EVENT_FIRST_PET_GRASPED,    STATE_TAPE_FOLLOWING    },
     // {   STATE_TAPE_FOLLOWING,   EVENT_RAMP,                 STATE_DROP_OFF          },
-    // {   STATE_CLOSE_CLAW,       EVENT_PET_GRASPED,          STATE_STORE             },
-    // {   STATE_STORE,            EVENT_PET_STORED,           STATE_TAPE_FOLLOWING    },
+    {   STATE_CLOSE_CLAW,       EVENT_PET_GRASPED,          STATE_STORE             },
+    // {   STATE_STORE,            EVENT_PET_STORED,           STATE_WAIT              },
+    {   STATE_STORE,            EVENT_PET_STORED,           STATE_TAPE_FOLLOWING    },
     // {   STATE_TAPE_FOLLOWING,   EVENT_EDGE_DETECTED,        STATE_RETURN_PETS       },
     // {   STATE_RETURN_PETS,      EVENT_PETS_RETURNED,        STATE_WAIT              },
 };
@@ -85,6 +89,7 @@ static void state_exit  (struct state_machine *state_machine, state_e previous_s
 
 bool IRAM_ATTR timer_isr_callback (void *args) {
     ramp_detected = true;
+    return true;
 }
 
 void state_machine_init(struct state_machine *state_machine) {
@@ -98,7 +103,7 @@ void state_machine_init(struct state_machine *state_machine) {
     state_machine->stable_pillar_count      = 0;
 
     state_machine->pets_stored              = 0;
-    state_machine->arm_in_start_pos         = true;
+    state_machine->arm_in_start_pos         = false;
     state_machine->claw_closed              = false;
     state_machine->claw_open_angle          = CLAW_OPEN;
     state_machine->attempts                 = 0;
@@ -141,15 +146,15 @@ void state_machine_init(struct state_machine *state_machine) {
     Wire.setClock(I2C_FRQ_HZ);
 
     // set up ToF
-    // tof_setup(&tof_claw, TOF_CHANNEL_CLAW);
-    // tof_setup(&tof_chassis, TOF_CHANNEL_CHASSIS);
+    tof_setup(&tof_claw, TOF_CHANNEL_CLAW);
+    tof_setup(&tof_chassis, TOF_CHANNEL_CHASSIS);
 
     // set up sonar
     sonar_setup();
 
     // set up servos
     arm.setup();
-    claw.attach(PIN_SERVO_3, PWM_CHANNEL_SERVO_3);
+    claw.attach(PIN_SERVO_3, PWM_CHANNEL_SERVO_3, 500, 2500);
 
     // set up IR
     pinMode(PIN_IR_SENSOR_LL, INPUT);
@@ -162,7 +167,7 @@ void state_machine_init(struct state_machine *state_machine) {
     left_motor.setup();
     right_motor.setup();
     cascade_motor.setup();
-    // base_gear.setup();      // sets up the motor and magnetic encoder internally
+    base_gear.setup();      // sets up the motor and magnetic encoder internally
 
     // set up claw switch
     pinMode(PIN_LIMIT_SWITCH, INPUT_PULLUP);
@@ -177,7 +182,7 @@ void state_machine_init(struct state_machine *state_machine) {
 state_event_e process_tof_inputs(struct state_machine *state_machine) {
 
     float mean_distance_mm;
-
+    
     if (tof_claw.isDataReady() && tof_get_data(&tof_claw, TOF_CHANNEL_CLAW, &tof_data_claw)) {
 
         mean_distance_mm = tof_get_left_center_dist(&tof_data_claw);
@@ -202,6 +207,8 @@ state_event_e process_tof_inputs(struct state_machine *state_machine) {
                     return EVENT_PET_DETECTED_LEFT;
                 // }
             }
+        } else if (tof_get_dist_to_object(&tof_data_claw) <= TOF_CENTER_DIST_LOWER_THRESHOLD_MM) {
+            return EVENT_PET_NEAR;
         } else {
             // state_machine->stable_pet_count_left = 0;
             // state_machine->stable_pillar_count = 0;
@@ -212,7 +219,6 @@ state_event_e process_tof_inputs(struct state_machine *state_machine) {
     }
 
     if (tof_chassis.isDataReady() && tof_get_data(&tof_chassis, TOF_CHANNEL_CHASSIS, &tof_data_chassis)) {
-
         mean_distance_mm = tof_get_right_center_dist(&tof_data_chassis);
 
         if (
@@ -250,23 +256,23 @@ state_event_e process_input(struct state_machine *state_machine) {
         return EVENT_RAMP;
     }
 
-    if (state_machine->claw_closed) {
-        if (digitalRead(PIN_LIMIT_SWITCH) == SWITCH_CLOSED && !switch_triggered) {
-            if (state_machine->pets_stored == 0) {
-                timer_start(TIMER_GROUP_0, TIMER_0);
-                // move the arm back home
-                base_gear.write(BASE_GEAR_HOME);
-                arm.move_to_pos(ARM_HOME_X, ARM_HOME_Y);
-                return EVENT_FIRST_PET_GRASPED;
-            } else {
-                return EVENT_PET_GRASPED;
-            }
-            switch_triggered = true;
-        } else if (digitalRead(PIN_LIMIT_SWITCH) == SWITCH_OPEN && switch_triggered) {
-            return EVENT_PET_MISSED;
-            switch_triggered = false;
-        }
-    }
+    // if (state_machine->claw_closed) {
+    //     if (digitalRead(PIN_LIMIT_SWITCH) == SWITCH_CLOSED && !switch_triggered) {
+    //         if (state_machine->pets_stored == 0) {
+    //             timer_start(TIMER_GROUP_0, TIMER_0);
+    //             // move the arm back home
+    //             base_gear.write(BASE_GEAR_HOME);
+    //             arm.move_to_pos(ARM_HOME_X, ARM_HOME_Y);
+    //             return EVENT_FIRST_PET_GRASPED;
+    //         } else {
+    //             return EVENT_PET_GRASPED;
+    //         }
+    //         switch_triggered = true;
+    //     } else if (digitalRead(PIN_LIMIT_SWITCH) == SWITCH_OPEN && switch_triggered) {
+    //         return EVENT_PET_MISSED;
+    //         switch_triggered = false;
+    //     }
+    // }
     
     // platform edge detection
     if (sonar_get_distance_cm() > SONAR_EDGE_DISTANCE_CM) {
@@ -274,12 +280,12 @@ state_event_e process_input(struct state_machine *state_machine) {
     }
 
     // both tof inputs, EVENT_NONE is returned if neither sees anything
-    // return process_tof_inputs(state_machine);
+    // state_event_e event = process_tof_inputs(state_machine);    
     return EVENT_NONE;
 }
 
 void process_event(struct state_machine *state_machine, state_event_e next_event) {
-    
+
     if (next_event == EVENT_NONE) {
         state_enter(state_machine, state_machine->state, EVENT_NONE); // stay in the same state
     }
@@ -377,8 +383,8 @@ void print_state(state_e state) {
             Serial.println("REACH");
             break;
         case STATE_CLOSE_CLAW:
-            display_handler.println("CLOSE ARM");
-            Serial.println("CLOSE ARM");
+            display_handler.println("CLOSE CLAW");
+            Serial.println("CLOSE CLAW");
             break;
         case STATE_STORE:
             display_handler.println("STORE");
@@ -414,7 +420,7 @@ void print_event(state_event_e event) {
             break;
         case EVENT_PET_DETECTED_LEFT:
             display_handler.println("PET DETECTED LEFT");
-            Serial.println("TAPE DETECTED");
+            Serial.println("PET DETECTED LEFT");
             break;
         case EVENT_PET_DETECTED_RIGHT:
             display_handler.println("PET DETECTED RIGHT");
