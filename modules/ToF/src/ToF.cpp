@@ -33,7 +33,7 @@
 
 #define RESOLUTION 8
 #define CLK_FREQUENCY 400000
-#define RANGING_FREQUENCY 1
+#define RANGING_FREQUENCY 15
 
 #define DEBUG true
 
@@ -166,10 +166,13 @@ bool initTof(SparkFun_VL53L5CX &sensor, uint8_t mask) {
 void readSensor(SparkFun_VL53L5CX &sensor, uint8_t mask, VL53L5CX_ResultsData &result) {
   selectMuxChannel(mask);
   delay(10);
-
+unsigned long startTime = millis();
   if (sensor.isDataReady()) {
+      
       if (sensor.getRangingData(&result)) {
-
+        if(DEBUG){
+          Serial.printf("Sensor 0x%02X data ready in %lu ms\n", mask, millis() - startTime);
+        }
         createDistanceMap(distMap, result);
         float meanDistance = getMeanCenterDistance(distMap);
 
@@ -264,11 +267,11 @@ void setup() {
 
 void loop() {
 
+  unsigned long startTime = millis();
   readSensor(armTof, ARM_TOF_CHANNEL, armResults);
-  delay(67);
-  
+  Serial.printf("Time taken for arm sensor: %lu ms\n", millis() - startTime);
 
-
+  startTime = millis();
   readSensor(chassisTof, CHASSIS_TOF_CHANNEL, chassisResults);
-  delay(67);
+  Serial.printf("Time taken for chassis sensor: %lu ms\n", millis() - startTime);
 }
