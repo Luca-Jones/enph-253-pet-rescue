@@ -8,7 +8,7 @@
 #include <config/dir_config.h>
 
 #define BASE_GEAR_KP 1.5f
-#define BASE_GEAR_KI 0.5f
+#define BASE_GEAR_KI 1.0f
 #define BASE_GEAR_KD 2.0f   
 
 #define BASE_GEAR_MAX_PID_ITERATIONS 100

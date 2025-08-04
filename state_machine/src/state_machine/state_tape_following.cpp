@@ -2,7 +2,7 @@
 #include <esp32-hal.h>
 #include <config/dir_config.h>
 
-#define TAPE_FOLLOWING_BASE_SPEED       80
+#define TAPE_FOLLOWING_BASE_SPEED       50
 #define TAPE_FOLLOWING_MAX_SPEED        255
 #define TAPE_FOLLOWING_RECOVERY_SPEED   255
 
@@ -93,6 +93,9 @@ void state_tape_following_enter(struct state_machine *state_machine, state_event
 void state_tape_following_exit(struct state_machine *state_machine) {
     // turn off motors
     state_machine->last_pid_time = 0;
+    left_motor.write(50, LEFT_MOTOR_BACKWARD);
+    right_motor.write(50, RIGHT_MOTOR_BACKWARD);
+    delay(500);
     left_motor.stop();
     right_motor.stop();
 }
