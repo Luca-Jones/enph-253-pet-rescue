@@ -7,9 +7,9 @@
 #include <esp32-hal.h>
 #include <config/dir_config.h>
 
-#define BASE_GEAR_KP 0.2f
-#define BASE_GEAR_KI 0.0f
-#define BASE_GEAR_KD 0.0f   
+#define BASE_GEAR_KP 1.5f
+#define BASE_GEAR_KI 0.5f
+#define BASE_GEAR_KD 2.0f   
 
 #define BASE_GEAR_MAX_PID_ITERATIONS 100
 #define BASE_GEAR_MAX_OUTPUT PWM_MAX_DUTY_BASE_GEAR

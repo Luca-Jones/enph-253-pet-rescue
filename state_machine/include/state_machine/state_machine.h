@@ -37,7 +37,15 @@ extern BaseGear base_gear;
 #include <sensors/MagneticEncoder.h>
 #include <sensors/Sonar.h>
 #include <sensors/ToF.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
 
+extern SemaphoreHandle_t i2c_mutex;
+extern volatile state_event_e tof_reading;
+// extern SemaphoreHandle_t tof_reading_mutex;
+extern TaskHandle_t tof_task_handle;
+extern TaskHandle_t dist_task_handle;
 extern ToF tof_claw;
 extern ToF tof_chassis;
 extern ToF_data tof_data_claw;
@@ -75,6 +83,8 @@ struct state_machine {
 /* FUNCTIONS */
 void            state_machine_init  (struct state_machine *state_machine);
 state_event_e   process_input       (struct state_machine *state_machine);
+void            tof_input_task      (void *pvParameters);
+void            dist_input_task     (void *pvParameters);
 void            process_event       (struct state_machine *state_machine, state_event_e next_event);
 bool IRAM_ATTR  timer_isr_callback  (void *args);
 

@@ -68,6 +68,19 @@ void state_tape_following_run(struct state_machine *state_machine) {
 }
 
 void state_tape_following_enter(struct state_machine *state_machine, state_event_e event) {
+    
+    if (eTaskGetState(dist_task_handle) != eSuspended) {
+        if (xSemaphoreTake(i2c_mutex, portMAX_DELAY)) {
+            // Task is not using I2C right now (mutex is available)
+            vTaskSuspend(dist_task_handle);  // Now safe to suspend
+            xSemaphoreGive(i2c_mutex);
+        }
+    }
+
+    if (eTaskGetState(tof_task_handle) == eSuspended) {
+        vTaskResume(tof_task_handle);
+    }
+
     state_tape_following_run(state_machine);
 }
 

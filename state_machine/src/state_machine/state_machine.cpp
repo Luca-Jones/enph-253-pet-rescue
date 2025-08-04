@@ -42,6 +42,11 @@ Motor right_motor(PIN_MOTOR_RIGHT_PWM, PWM_CHANNEL_MOTOR_RIGHT, PWM_FRQ_HZ_MOTOR
 Motor cascade_motor(PIN_CASCADE_PWM, PWM_CHANNEL_CASCADE, PWM_FRQ_HZ_CASCADE, PWM_RESOLUTION_CASCADE, PIN_CASCADE_DIR);
 
 /* Sensors */
+SemaphoreHandle_t i2c_mutex;
+volatile state_event_e tof_reading;
+// SemaphoreHandle_t tof_reading_mutex;
+TaskHandle_t tof_task_handle = NULL;
+TaskHandle_t dist_task_handle = NULL;
 ToF tof_claw;
 ToF tof_chassis;
 ToF_data tof_data_claw;
@@ -145,6 +150,32 @@ void state_machine_init(struct state_machine *state_machine) {
     Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);
     Wire.setClock(I2C_FRQ_HZ);
 
+    i2c_mutex = xSemaphoreCreateMutex();
+    tof_reading = EVENT_NONE;
+    // tof_reading_mutex = xSemaphoreCreateMutex();
+    
+    xTaskCreatePinnedToCore(
+        dist_input_task,
+        "dist Task",
+        4096,
+        NULL,
+        1,
+        &dist_task_handle,
+        0
+    );
+
+    vTaskSuspend(dist_task_handle);
+
+    xTaskCreatePinnedToCore(
+        tof_input_task,        // Function
+        "ToF Task",     // Name
+        4096,              // Stack size
+        NULL,              // Parameters
+        1,                 // Priority
+        &tof_task_handle, // Task handle
+        0                  // Core 0
+    );
+
     // set up ToF
     tof_setup(&tof_claw, TOF_CHANNEL_CLAW);
     tof_setup(&tof_chassis, TOF_CHANNEL_CHASSIS);
@@ -177,6 +208,72 @@ void state_machine_init(struct state_machine *state_machine) {
     print_state(state_machine->state);
     #endif
 
+}
+
+void tof_input_task(void *pvParameters) {
+
+    for (;;) {
+
+        if (xSemaphoreTake(i2c_mutex, portMAX_DELAY) == pdTRUE) {
+            
+            float mean_distance_mm;
+            
+            if (tof_claw.isDataReady() && tof_get_data(&tof_claw, TOF_CHANNEL_CLAW, &tof_data_claw)) {
+                
+                mean_distance_mm = tof_get_left_center_dist(&tof_data_claw);
+                
+                if (
+                    mean_distance_mm >= TOF_CENTER_DIST_LOWER_THRESHOLD_MM && 
+                    mean_distance_mm <= TOF_CENTER_DIST_UPPER_THRESHOLD_MM &&
+                    tof_left_cylinder_detected(&tof_data_claw)
+                ) {
+                    if (tof_get_center_reflectance(&tof_data_claw) <= TOF_REFLECTANCE_THRESHOLD) {
+                        tof_reading = EVENT_PILLAR_DETECTED;
+                    } else {
+                        tof_reading = EVENT_PET_DETECTED_LEFT;
+                    }
+                }
+            }
+        
+            if (tof_chassis.isDataReady() && tof_get_data(&tof_chassis, TOF_CHANNEL_CHASSIS, &tof_data_chassis)) {
+                mean_distance_mm = tof_get_right_center_dist(&tof_data_chassis);
+                
+                if (
+                    mean_distance_mm >= TOF_CENTER_DIST_LOWER_THRESHOLD_MM &&
+                    mean_distance_mm <= TOF_CENTER_DIST_UPPER_THRESHOLD_MM &&
+                    tof_right_cylinder_detected(&tof_data_chassis)
+                ) {
+                    tof_reading = EVENT_PET_DETECTED_RIGHT;
+                }
+            }
+
+            xSemaphoreGive(i2c_mutex);
+
+        }
+    }
+
+}
+
+void dist_input_task(void *pvParamters) {
+
+    delay(500); // gives me time to suspend the task before it aquires the i2c_mutex
+    
+    for (;;) {
+        if (xSemaphoreTake(i2c_mutex, portMAX_DELAY) == pdTRUE) {
+
+            if (
+                tof_claw.isDataReady() && 
+                tof_get_data(&tof_claw, TOF_CHANNEL_CLAW, &tof_data_claw) && 
+                tof_get_dist_to_object(&tof_data_claw) <= TOF_CENTER_DIST_LOWER_THRESHOLD_MM
+            ) {
+                tof_reading = EVENT_PET_NEAR;
+            } 
+
+            xSemaphoreGive(i2c_mutex);
+
+        }
+    }
+    
 }
 
 state_event_e process_tof_inputs(struct state_machine *state_machine) {
@@ -251,36 +348,40 @@ state_event_e process_input(struct state_machine *state_machine) {
         return ie;
     }
 
+    // ramp timer goes off
     if (ramp_detected) {
         ramp_detected = false;
         return EVENT_RAMP;
     }
-
-    // if (state_machine->claw_closed) {
-    //     if (digitalRead(PIN_LIMIT_SWITCH) == SWITCH_CLOSED && !switch_triggered) {
-    //         if (state_machine->pets_stored == 0) {
-    //             timer_start(TIMER_GROUP_0, TIMER_0);
-    //             // move the arm back home
-    //             base_gear.write(BASE_GEAR_HOME);
-    //             arm.move_to_pos(ARM_HOME_X, ARM_HOME_Y);
-    //             return EVENT_FIRST_PET_GRASPED;
-    //         } else {
-    //             return EVENT_PET_GRASPED;
-    //         }
-    //         switch_triggered = true;
-    //     } else if (digitalRead(PIN_LIMIT_SWITCH) == SWITCH_OPEN && switch_triggered) {
-    //         return EVENT_PET_MISSED;
-    //         switch_triggered = false;
-    //     }
-    // }
     
     // platform edge detection
     if (sonar_get_distance_cm() > SONAR_EDGE_DISTANCE_CM) {
         return EVENT_EDGE_DETECTED;
     }
 
-    // both tof inputs, EVENT_NONE is returned if neither sees anything
-    // state_event_e event = process_tof_inputs(state_machine);    
+    // poll the tof background task
+    if (tof_reading != EVENT_NONE) {
+
+        if (eTaskGetState(dist_task_handle) != eSuspended) {
+            if (xSemaphoreTake(i2c_mutex, portMAX_DELAY)) {
+                // Task is not using I2C right now (mutex is available)
+                vTaskSuspend(dist_task_handle);  // Now safe to suspend
+                xSemaphoreGive(i2c_mutex);
+            }
+        } 
+
+        if (eTaskGetState(tof_task_handle) != eSuspended) {
+            if (xSemaphoreTake(i2c_mutex, portMAX_DELAY)) {
+                vTaskSuspend(tof_task_handle);
+                xSemaphoreGive(i2c_mutex);
+            }
+        }
+
+        state_event_e event = tof_reading;
+        tof_reading = EVENT_NONE; // safe to modify shared data after suspending both tasks
+        return event;
+    }
+
     return EVENT_NONE;
 }
 

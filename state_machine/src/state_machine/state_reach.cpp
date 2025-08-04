@@ -22,6 +22,17 @@ void state_reach_enter(struct state_machine *state_machine, state_event_e event)
         arm.lerp_to_pos(ARM_HOME_X, ARM_HOME_Y, 1000);
     }
 
+    if (eTaskGetState(tof_task_handle) != eSuspended) {
+        if (xSemaphoreTake(i2c_mutex, portMAX_DELAY)) {
+            vTaskSuspend(tof_task_handle);
+            xSemaphoreGive(i2c_mutex);
+        }
+    }
+    
+    if (eTaskGetState(dist_task_handle) == eSuspended) {    
+        vTaskResume(dist_task_handle);
+    }
+
     switch (event) {
         case EVENT_NONE:
             break;
