@@ -19,7 +19,7 @@ void setup() {
 void loop() {
     
     servo_1.write(270);
-    servo_2.write(90);
+    // servo_2.write(90);
     // if (Serial.available() > 0) {
         
     //     String input = Serial.readStringUntil('\n');

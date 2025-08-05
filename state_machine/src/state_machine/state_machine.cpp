@@ -73,9 +73,9 @@ static const struct state_transition state_transitions[] = {
     // {   STATE_WAIT,   EVENT_PET_DETECTED_LEFT,    STATE_REACH             },
     // {   STATE_WAIT,   EVENT_PET_DETECTED_RIGHT,   STATE_REACH             },
     // {   STATE_WAIT,   EVENT_PILLAR_DETECTED,      STATE_REACH             },
-    {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_LEFT,    STATE_REACH             },
-    {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_RIGHT,   STATE_REACH             },
-    {   STATE_TAPE_FOLLOWING,   EVENT_PILLAR_DETECTED,      STATE_REACH             },
+    {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_LEFT,    STATE_WAIT             },
+    {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_RIGHT,   STATE_WAIT             },
+    {   STATE_TAPE_FOLLOWING,   EVENT_PILLAR_DETECTED,      STATE_WAIT             },
     {   STATE_REACH,            EVENT_PET_NEAR,             STATE_CLOSE_CLAW        },
     // {   STATE_CLOSE_CLAW,       EVENT_PET_MISSED,           STATE_RETREAT           },
     // {   STATE_RETREAT,          EVENT_ARM_READY,            STATE_REACH             },
@@ -255,6 +255,7 @@ void tof_input_task(void *pvParameters) {
     vTaskDelay(pdMS_TO_TICKS(1000));
 
     float mean_distance_mm;
+    float distMap[8][8];
 
     for (;;) {
 
@@ -270,52 +271,51 @@ void tof_input_task(void *pvParameters) {
             
             if (tof_get_data(&tof_claw, TOF_CHANNEL_CLAW, &tof_data_claw)) {
                 
-                // float distMap[8][8];
-
-                // for (int row = 0; row < 8; row++) {
-                //     for (int col = 0; col < 8; col++) {
-                //         int i = row * 8 + col;
-                //         distMap[7 - row][col] = tof_data_claw.distance_mm[i]; // vertically flipped
-                //     }
-                // }
-
-                // for (int row = 0; row < 8; row ++) {
-                //     for (int col = 0; col < 8; col++) {
-                //         Serial.printf("%.0f ", distMap[row][col]);
-                //     }
-                //     Serial.println("");
-                // }
-                // Serial.println("");
-
-                mean_distance_mm = tof_get_left_center_dist(&tof_data_claw);
-                
-                if (
-                    mean_distance_mm >= TOF_CENTER_DIST_LOWER_THRESHOLD_MM && 
-                    mean_distance_mm <= TOF_CENTER_DIST_UPPER_THRESHOLD_MM &&
-                    tof_left_cylinder_detected(&tof_data_claw)
-                ) {
-                    if (tof_get_center_reflectance(&tof_data_claw) <= TOF_REFLECTANCE_THRESHOLD) {
-                        tof_reading = EVENT_PILLAR_DETECTED;
-                        // Don't break - suspend this task instead
-                        #ifdef DEBUG
-                        Serial.println("pillar detected! ToF task suspended!");
-                        #endif
-
-                        xSemaphoreGive(i2c_mutex);
-                        vTaskSuspend(NULL);
-                    } else {
-                        tof_reading = EVENT_PET_DETECTED_LEFT;
-                        // Don't break - suspend this task instead
-                        #ifdef DEBUG
-                        Serial.println("pet detected left! ToF task suspended!");
-                        #endif  
-
-                        detection_time = millis();
-                        
-                        xSemaphoreGive(i2c_mutex);
-                        vTaskSuspend(NULL);
+                Serial.println("Claw grid:");
+                for (int row = 0; row < 8; row++) {
+                    for (int col = 0; col < 8; col++) {
+                        int i = row * 8 + col;
+                        distMap[7 - row][col] = tof_data_claw.distance_mm[i]; // vertically flipped
                     }
                 }
+
+                for (int row = 0; row < 8; row ++) {
+                    for (int col = 0; col < 8; col++) {
+                        Serial.printf("%.0f ", distMap[row][col]);
+                    }
+                    Serial.println("");
+                }
+                Serial.println("");
+
+                // mean_distance_mm = tof_get_left_center_dist(&tof_data_claw);
+                
+                // if (
+                //     mean_distance_mm >= TOF_CENTER_DIST_LOWER_THRESHOLD_MM && 
+                //     mean_distance_mm <= TOF_CENTER_DIST_UPPER_THRESHOLD_MM &&
+                //     tof_left_cylinder_detected(&tof_data_claw)
+                // ) {
+                //     if (tof_get_center_reflectance(&tof_data_claw) <= TOF_REFLECTANCE_THRESHOLD) {
+                //         tof_reading = EVENT_PILLAR_DETECTED;
+                //         // Don't break - suspend this task instead
+                //         #ifdef DEBUG
+                //         Serial.println("pillar detected! ToF task suspended!");
+                //         #endif
+
+                //         xSemaphoreGive(i2c_mutex);
+                //         vTaskSuspend(NULL);
+                //     } else {
+                //         tof_reading = EVENT_PET_DETECTED_LEFT;
+                //         // Don't break - suspend this task instead
+                //         #ifdef DEBUG
+                //         Serial.println("pet detected left! ToF task suspended!");
+                //         #endif  
+
+                //         detection_time = millis();
+                        
+                //         xSemaphoreGive(i2c_mutex);
+                //         vTaskSuspend(NULL);
+                //     }
+                // }
             }
 
             xSemaphoreGive(i2c_mutex);
@@ -329,21 +329,37 @@ void tof_input_task(void *pvParameters) {
         if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, pdMS_TO_TICKS(500)) == pdTRUE) {
             if (tof_get_data(&tof_chassis, TOF_CHANNEL_CHASSIS, &tof_data_chassis)) {
                 mean_distance_mm = tof_get_right_center_dist(&tof_data_chassis);
-                
-                if (
-                    mean_distance_mm >= TOF_CENTER_DIST_LOWER_THRESHOLD_MM &&
-                    mean_distance_mm <= TOF_CENTER_DIST_UPPER_THRESHOLD_MM &&
-                    tof_right_cylinder_detected(&tof_data_chassis)
-                ) {
-                    tof_reading = EVENT_PET_DETECTED_RIGHT;
-                    // Don't break - suspend this task instead
-                    #ifdef DEBUG
-                    Serial.println("pet detected right! ToF task suspended!");
-                    #endif
-                    
-                    xSemaphoreGive(i2c_mutex);
-                    vTaskSuspend(NULL);
+
+                Serial.println("Chassis grid:");
+                for (int row = 0; row < 8; row++) {
+                    for (int col = 0; col < 8; col++) {
+                        int i = row * 8 + col;
+                        distMap[7 - row][col] = tof_data_chassis.distance_mm[i]; // vertically flipped
+                    }
                 }
+
+                for (int row = 0; row < 8; row ++) {
+                    for (int col = 0; col < 8; col++) {
+                        Serial.printf("%.0f ", distMap[row][col]);
+                    }
+                    Serial.println("");
+                }
+                Serial.println("");
+                
+                // if (
+                //     mean_distance_mm >= TOF_CENTER_DIST_LOWER_THRESHOLD_MM &&
+                //     mean_distance_mm <= TOF_CENTER_DIST_UPPER_THRESHOLD_MM &&
+                //     tof_right_cylinder_detected(&tof_data_chassis)
+                // ) {
+                //     tof_reading = EVENT_PET_DETECTED_RIGHT;
+                //     // Don't break - suspend this task instead
+                //     #ifdef DEBUG
+                //     Serial.println("pet detected right! ToF task suspended!");
+                //     #endif
+                    
+                //     xSemaphoreGive(i2c_mutex);
+                //     vTaskSuspend(NULL);
+                // }
             }
 
             xSemaphoreGive(i2c_mutex);

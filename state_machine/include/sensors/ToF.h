@@ -9,7 +9,7 @@
 #define TOF_CHANNEL_CLAW            0x10
 
 #define TOF_RESOLUTION              8*8
-#define TOF_RANGING_FREQUENCY_HZ    15
+#define TOF_RANGING_FREQUENCY_HZ    1
 
 #define TOF_MAX_SIDE_DIFF_MM                30.0f
 #define TOF_MAX_TOP_MM                      260.0f
