@@ -24,7 +24,6 @@ typedef VL53L5CX_ResultsData ToF_data;
 void    tof_setup(ToF *tof, uint8_t mux_channel);
 bool    tof_get_data(ToF *tof, uint8_t channel, ToF_data *data);
 float   tof_get_dist_to_object(const ToF_data *data);
-// float   tof_get_center_dist(const ToF_data *data);
 float   tof_get_left_center_dist(const ToF_data *data);
 float   tof_get_right_center_dist(const ToF_data *data);
 float   tof_get_center_reflectance(const ToF_data *data);

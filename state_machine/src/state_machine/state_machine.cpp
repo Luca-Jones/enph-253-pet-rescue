@@ -165,14 +165,14 @@ void state_machine_init(struct state_machine *state_machine) {
     tof_reading = EVENT_NONE;
     
     // set up ToF FIRST (before creating tasks that use them)
-    #ifdef DEBUG
+    // #ifdef DEBUG
     Serial.println("Setting up ToF claw sensor...");
-    #endif
+    // #endif
     tof_setup(&tof_claw, TOF_CHANNEL_CLAW);
     
-    #ifdef DEBUG
-    Serial.println("Setting up ToF chassis sensor...");
-    #endif
+    // #ifdef DEBUG
+    // Serial.println("Setting up ToF chassis sensor...");
+    // #endif
     tof_setup(&tof_chassis, TOF_CHANNEL_CHASSIS);
 
     BaseType_t dist_task_result = xTaskCreatePinnedToCore(
@@ -208,12 +208,12 @@ void state_machine_init(struct state_machine *state_machine) {
 
     if (tof_task_result == pdPASS && tof_task_handle != NULL) {
         #ifdef DEBUG
-        Serial.println("ToF task created successfully");
         #endif
+        Serial.println("ToF task created successfully");
     } else {
         #ifdef DEBUG
-        Serial.println("Failed to create ToF task!");
         #endif
+        Serial.println("Failed to create ToF task!");
     }
 
     // set up sonar
@@ -232,6 +232,9 @@ void state_machine_init(struct state_machine *state_machine) {
     Serial.println("Setting up claw servo...");
     #endif
     claw.attach(PIN_SERVO_3, PWM_CHANNEL_SERVO_3, 500, 2500);
+
+    arm.move_to_pos(ARM_HOME_X, ARM_HOME_Y);
+    claw.write(CLAW_OPEN);
 
     // set up IR
     pinMode(PIN_IR_SENSOR_LL, INPUT);
@@ -267,8 +270,25 @@ void tof_input_task(void *pvParameters) {
             
             float mean_distance_mm;
             
-            if (tof_claw.isDataReady() && tof_get_data(&tof_claw, TOF_CHANNEL_CLAW, &tof_data_claw)) {
+            if (tof_get_data(&tof_claw, TOF_CHANNEL_CLAW, &tof_data_claw)) {
                 
+                // float distMap[8][8];
+
+                // for (int row = 0; row < 8; row++) {
+                //     for (int col = 0; col < 8; col++) {
+                //         int i = row * 8 + col;
+                //         distMap[7 - row][col] = tof_data_claw.distance_mm[i]; // vertically flipped
+                //     }
+                // }
+
+                // for (int row = 0; row < 8; row ++) {
+                //     for (int col = 0; col < 8; col++) {
+                //         Serial.printf("%.0f ", distMap[row][col]);
+                //     }
+                //     Serial.println("");
+                // }
+                // Serial.println("");
+
                 mean_distance_mm = tof_get_left_center_dist(&tof_data_claw);
                 
                 if (
@@ -279,12 +299,13 @@ void tof_input_task(void *pvParameters) {
                     if (tof_get_center_reflectance(&tof_data_claw) <= TOF_REFLECTANCE_THRESHOLD) {
                         tof_reading = EVENT_PILLAR_DETECTED;
                     } else {
+                        Serial.println("Pet detected left!");
                         tof_reading = EVENT_PET_DETECTED_LEFT;
                     }
                 }
             }
         
-            if (tof_chassis.isDataReady() && tof_get_data(&tof_chassis, TOF_CHANNEL_CHASSIS, &tof_data_chassis)) {
+            if (tof_get_data(&tof_chassis, TOF_CHANNEL_CHASSIS, &tof_data_chassis)) {
                 mean_distance_mm = tof_get_right_center_dist(&tof_data_chassis);
                 
                 if (
@@ -369,25 +390,25 @@ state_event_e process_tof_inputs(struct state_machine *state_machine) {
         // state_machine->stable_pillar_count = 0;
     }
 
-    if (tof_chassis.isDataReady() && tof_get_data(&tof_chassis, TOF_CHANNEL_CHASSIS, &tof_data_chassis)) {
-        mean_distance_mm = tof_get_right_center_dist(&tof_data_chassis);
+    // if (tof_chassis.isDataReady() && tof_get_data(&tof_chassis, TOF_CHANNEL_CHASSIS, &tof_data_chassis)) {
+    //     mean_distance_mm = tof_get_right_center_dist(&tof_data_chassis);
 
-        if (
-            mean_distance_mm >= TOF_CENTER_DIST_LOWER_THRESHOLD_MM &&
-            mean_distance_mm <= TOF_CENTER_DIST_UPPER_THRESHOLD_MM &&
-            tof_right_cylinder_detected(&tof_data_chassis)
-        ) {
-            // state_machine->stable_pet_count_right++;
-            // if (state_machine->stable_pet_count_right >= 2) {
-            //     state_machine->stable_pet_count_right = 0;
-                return EVENT_PET_DETECTED_RIGHT;
-            // }
-        } else {
-            // state_machine->stable_pet_count_right = 0;
-        }
-    } else {
-        // state_machine->stable_pet_count_right = 0;
-    }
+    //     if (
+    //         mean_distance_mm >= TOF_CENTER_DIST_LOWER_THRESHOLD_MM &&
+    //         mean_distance_mm <= TOF_CENTER_DIST_UPPER_THRESHOLD_MM &&
+    //         tof_right_cylinder_detected(&tof_data_chassis)
+    //     ) {
+    //         // state_machine->stable_pet_count_right++;
+    //         // if (state_machine->stable_pet_count_right >= 2) {
+    //         //     state_machine->stable_pet_count_right = 0;
+    //             return EVENT_PET_DETECTED_RIGHT;
+    //         // }
+    //     } else {
+    //         // state_machine->stable_pet_count_right = 0;
+    //     }
+    // } else {
+    //     // state_machine->stable_pet_count_right = 0;
+    // }
 
     return EVENT_NONE;
     
@@ -438,9 +459,24 @@ state_event_e process_input(struct state_machine *state_machine) {
         }
 
         state_event_e event = tof_reading;
+        if (tof_reading == EVENT_PET_DETECTED_LEFT) Serial.println("Polled that the pet detected left");
         tof_reading = EVENT_NONE; // safe to modify shared data after suspending both tasks
         return event;
     }
+    // switch (tof_reading) {
+    //     case EVENT_NONE:
+    //     Serial.println("NONE");
+    //     break;
+    //     case EVENT_PET_DETECTED_LEFT:
+    //     Serial.println("PET DETECTED LEFT");
+    //     break;
+    //     case EVENT_PET_DETECTED_RIGHT:
+    //     Serial.println("PET DETECTED RIGHT");
+    //     break;
+    //     case EVENT_PILLAR_DETECTED:
+    //     Serial.println("PILLAR DETECTED");
+    //     break;
+    // }
 
     return EVENT_NONE;
 }

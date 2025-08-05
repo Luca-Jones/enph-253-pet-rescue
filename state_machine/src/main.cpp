@@ -5,8 +5,8 @@ struct state_machine state_machine;
 
 void setup() {
     #ifdef DEBUG
-    Serial.begin(115200);
     #endif
+    Serial.begin(115200);
     state_machine_init(&state_machine);
 }
 

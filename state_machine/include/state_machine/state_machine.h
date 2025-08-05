@@ -19,7 +19,7 @@
 */
 
 
-#define DEBUG // comment out this line to remove logging through Serial and the OLED display
+// #define DEBUG // comment out this line to remove logging through Serial and the OLED display
 
 
 /* Actuators */

@@ -11,14 +11,26 @@ void select_mux(uint8_t channel) {
 void tof_setup(ToF *tof, uint8_t channel) {
     select_mux(channel);
     tof->begin();
+    // tof->setAddress(TOF_I2C_ADDRESS);
     tof->setResolution(TOF_RESOLUTION);
-    tof->setRangingFrequency(15);
+    tof->setRangingFrequency(TOF_RANGING_FREQUENCY_HZ);
     tof->startRanging();
 }
 
 bool tof_get_data(ToF *tof, uint8_t channel, ToF_data *data) {
+
     select_mux(channel);
+
+    bool data_ready = tof->isDataReady();
+    
+    if (!data_ready) return false;
+
+    unsigned long before_get_data = millis();
     bool ret = tof->getRangingData(data);
+    unsigned long after_get_data = millis();
+    
+    Serial.printf("Timing breakdown: get_data=%lu \n", after_get_data - before_get_data);
+
     return ret;
 }
 

@@ -118,15 +118,16 @@ void setup() {
   }
 
   tof.setAddress(CLAW_TOF_I2C_ADDR);
-  tof.setResolution(SIZE*SIZE);
+  tof.setResolution(SIZE*SIZE); 
   tof.setRangingFrequency(RANGING_FREQUENCY);
   tof.startRanging();
 }
 
 void loop() {
   if (tof.isDataReady()) {
+    unsigned long before = millis();
     if (tof.getRangingData(&result)) {
-
+      Serial.printf("time elapsed = %lu\n", millis() - before);
       CreateDistanceMap(distMap, result);
       float meanDistance = getMeanCenterDistance(distMap);
 
@@ -171,5 +172,5 @@ void loop() {
       }
     }
   }
-  delay(0.5);
+  delay(1);
 }

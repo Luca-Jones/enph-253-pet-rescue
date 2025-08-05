@@ -54,7 +54,7 @@ void state_tape_following_run(struct state_machine *state_machine) {
         control_motors(pid_output);
 
         #ifdef DEBUG
-        Serial.printf("IR: %d %d %d %d %d | output = %f | dt = %f\n", ir_ll, ir_l, ir_c, ir_r, ir_rr, pid_output, delta_time_s);
+        // Serial.printf("IR: %d %d %d %d %d | output = %f | dt = %f\n", ir_ll, ir_l, ir_c, ir_r, ir_rr, pid_output, delta_time_s);
         #endif
 
         state_machine->last_ir_ll = ir_ll;
@@ -91,6 +91,7 @@ void state_tape_following_enter(struct state_machine *state_machine, state_event
 }
 
 void state_tape_following_exit(struct state_machine *state_machine) {
+    Serial.println("backing up...");
     // turn off motors
     state_machine->last_pid_time = 0;
     left_motor.write(50, LEFT_MOTOR_BACKWARD);
