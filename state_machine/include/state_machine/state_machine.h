@@ -19,7 +19,7 @@
 */
 
 
-// #define DEBUG // comment out this line to remove logging through Serial and the OLED display
+#define DEBUG // comment out this line to remove logging through Serial
 
 
 /* Actuators */
@@ -56,6 +56,7 @@ extern ToF_data tof_data_chassis;
 extern volatile bool ramp_detected;
 #define RAMP_TIME_S 10
 
+extern unsigned long detection_time; // TODO: remove
 
 /* STATE MACHINE */
 
@@ -91,15 +92,6 @@ bool IRAM_ATTR  timer_isr_callback  (void *args);
 
 
 #ifdef DEBUG
-
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
-
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-#define OLED_RESET -1 // shared with the esp32 reset pin
-extern Adafruit_SSD1306 display_handler;    
 
 void print_state(state_e state);
 void print_event(state_event_e event);

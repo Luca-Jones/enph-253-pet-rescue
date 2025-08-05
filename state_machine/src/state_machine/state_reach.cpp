@@ -2,15 +2,12 @@
 #include <actuators/Arm.h>
 
 
-#define REACH_STEP 30
+#define REACH_STEP 20
 
 static void state_reach_run(struct state_machine *state_machine) {
     int x,y;
     arm.get_pos(&x, &y);
-    
-    if (arm.move_to_pos(x + REACH_STEP, y) == ARM_ILLEGAL_POS) {
-        // state_machine->internal_event = EVENT_PET_MISSED;
-    }
+    arm.move_to_pos(x + REACH_STEP, y);
 }
 
 void state_reach_enter(struct state_machine *state_machine, state_event_e event) {
@@ -23,21 +20,23 @@ void state_reach_enter(struct state_machine *state_machine, state_event_e event)
         arm.lerp_to_pos(ARM_HOME_X, ARM_HOME_Y, 1000);
     }
 
-    if (tof_task_handle != NULL && eTaskGetState(tof_task_handle) != eSuspended) {
-        if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, portMAX_DELAY)) {
-            vTaskSuspend(tof_task_handle);
-            #ifdef DEBUG
-            Serial.println("tof task suspended");
-            #endif
-            xSemaphoreGive(i2c_mutex);
-        }
-    }
+    // if (tof_task_handle != NULL && eTaskGetState(tof_task_handle) != eSuspended) {
+    //     if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, portMAX_DELAY)) {
+    //         vTaskSuspend(tof_task_handle);
+    //         #ifdef DEBUG
+    //         Serial.println("tof task suspended");
+    //         #endif
+    //         xSemaphoreGive(i2c_mutex);
+    //     }
+    // }
     
     if (dist_task_handle != NULL && eTaskGetState(dist_task_handle) == eSuspended) {    
         vTaskResume(dist_task_handle);
         #ifdef DEBUG
         Serial.println("dist task resumed");
         #endif
+        // Small delay to allow I2C bus to stabilize after task resumption
+        delay(100);
     }
 
     switch (event) {

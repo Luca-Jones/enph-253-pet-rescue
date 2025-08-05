@@ -54,6 +54,8 @@ ToF_data tof_data_chassis;
 volatile bool switch_triggered = false;
 volatile bool ramp_detected = false;
 
+unsigned long detection_time = 0;
+
 /* STATE TRANSITIONS */
 struct state_transition {
     state_e previous_state;
@@ -138,18 +140,6 @@ void state_machine_init(struct state_machine *state_machine) {
     Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);
     Wire.setClock(I2C_FRQ_HZ);
 
-    #ifdef DEBUG
-    // set up display for debugging
-    display_handler.begin(SSD1306_SWITCHCAPVCC, 0x3C); // 3.3V at the default i2c addr
-    display_handler.setTextSize(1);
-    display_handler.setTextColor(SSD1306_WHITE);
-    display_handler.clearDisplay();
-    display_handler.setCursor(0, 0);
-    display_handler.println("Initializing State Machine...");
-    display_handler.display();
-    Serial.println("Initializing State Machine...");
-    #endif
-
     i2c_mutex = xSemaphoreCreateMutex();
     if (i2c_mutex == NULL) {
         #ifdef DEBUG
@@ -165,20 +155,20 @@ void state_machine_init(struct state_machine *state_machine) {
     tof_reading = EVENT_NONE;
     
     // set up ToF FIRST (before creating tasks that use them)
-    // #ifdef DEBUG
+    #ifdef DEBUG
     Serial.println("Setting up ToF claw sensor...");
-    // #endif
+    #endif
     tof_setup(&tof_claw, TOF_CHANNEL_CLAW);
     
-    // #ifdef DEBUG
-    // Serial.println("Setting up ToF chassis sensor...");
-    // #endif
+    #ifdef DEBUG
+    Serial.println("Setting up ToF chassis sensor...");
+    #endif
     tof_setup(&tof_chassis, TOF_CHANNEL_CHASSIS);
 
     BaseType_t dist_task_result = xTaskCreatePinnedToCore(
         dist_input_task,
         "dist Task",
-        4096,
+        12288,                 // Increased stack size from 8192 to 12288 (12KB)
         NULL,
         1,
         &dist_task_handle,
@@ -198,22 +188,22 @@ void state_machine_init(struct state_machine *state_machine) {
 
     BaseType_t tof_task_result = xTaskCreatePinnedToCore(
         tof_input_task,        // Function
-        "ToF Task",     // Name
-        4096,              // Stack size
-        NULL,              // Parameters
-        1,                 // Priority
-        &tof_task_handle, // Task handle
-        0                  // Core 0
+        "ToF Task",            // Name
+        12288,                 // Increased stack size from 8192 to 12288 (12KB)
+        NULL,                  // Parameters
+        1,                     // Priority
+        &tof_task_handle,      // Task handle
+        0                      // Core 0
     );
 
     if (tof_task_result == pdPASS && tof_task_handle != NULL) {
         #ifdef DEBUG
-        #endif
         Serial.println("ToF task created successfully");
+        #endif
     } else {
         #ifdef DEBUG
-        #endif
         Serial.println("Failed to create ToF task!");
+        #endif
     }
 
     // set up sonar
@@ -264,11 +254,19 @@ void tof_input_task(void *pvParameters) {
     // Wait a bit to ensure everything is initialized
     vTaskDelay(pdMS_TO_TICKS(1000));
 
+    float mean_distance_mm;
+
     for (;;) {
 
-        if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, portMAX_DELAY) == pdTRUE) {
-            
-            float mean_distance_mm;
+        // Monitor stack usage to detect potential overflow (ALWAYS enabled for crash debugging)
+        UBaseType_t stackHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
+        if (stackHighWaterMark < 1024) {  // Less than 1024 bytes free
+            #ifdef DEBUG
+            Serial.printf("CRITICAL: ToF task low stack: %d bytes free\n", stackHighWaterMark);
+            #endif
+        }
+
+        if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, pdMS_TO_TICKS(500)) == pdTRUE) {
             
             if (tof_get_data(&tof_claw, TOF_CHANNEL_CLAW, &tof_data_claw)) {
                 
@@ -298,13 +296,37 @@ void tof_input_task(void *pvParameters) {
                 ) {
                     if (tof_get_center_reflectance(&tof_data_claw) <= TOF_REFLECTANCE_THRESHOLD) {
                         tof_reading = EVENT_PILLAR_DETECTED;
+                        // Don't break - suspend this task instead
+                        #ifdef DEBUG
+                        Serial.println("pillar detected! ToF task suspended!");
+                        #endif
+
+                        xSemaphoreGive(i2c_mutex);
+                        vTaskSuspend(NULL);
                     } else {
-                        Serial.println("Pet detected left!");
                         tof_reading = EVENT_PET_DETECTED_LEFT;
+                        // Don't break - suspend this task instead
+                        #ifdef DEBUG
+                        Serial.println("pet detected left! ToF task suspended!");
+                        #endif  
+
+                        detection_time = millis();
+                        
+                        xSemaphoreGive(i2c_mutex);
+                        vTaskSuspend(NULL);
                     }
                 }
             }
-        
+
+            xSemaphoreGive(i2c_mutex);
+        } else {
+            // Mutex timeout - continue to avoid deadlock
+            #ifdef DEBUG
+            Serial.println("ToF task: I2C mutex timeout, continuing...");
+            #endif
+        }
+
+        if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, pdMS_TO_TICKS(500)) == pdTRUE) {
             if (tof_get_data(&tof_chassis, TOF_CHANNEL_CHASSIS, &tof_data_chassis)) {
                 mean_distance_mm = tof_get_right_center_dist(&tof_data_chassis);
                 
@@ -314,14 +336,24 @@ void tof_input_task(void *pvParameters) {
                     tof_right_cylinder_detected(&tof_data_chassis)
                 ) {
                     tof_reading = EVENT_PET_DETECTED_RIGHT;
+                    // Don't break - suspend this task instead
+                    #ifdef DEBUG
+                    Serial.println("pet detected right! ToF task suspended!");
+                    #endif
+                    
+                    xSemaphoreGive(i2c_mutex);
+                    vTaskSuspend(NULL);
                 }
             }
 
             xSemaphoreGive(i2c_mutex);
 
-        }
-        
-        vTaskDelay(pdMS_TO_TICKS(50)); // Give other tasks a chance to run
+        } else {
+            // Mutex timeout - continue to avoid deadlock  
+            #ifdef DEBUG
+            Serial.println("ToF task: I2C mutex timeout on chassis read, continuing...");
+            #endif
+        }        
     }
 
 }
@@ -329,10 +361,18 @@ void tof_input_task(void *pvParameters) {
 void dist_input_task(void *pvParamters) {
 
     // Wait a bit to ensure everything is initialized
-    vTaskDelay(pdMS_TO_TICKS(1500)); // gives me time to suspend the task before it aquires the i2c_mutex
+    vTaskDelay(pdMS_TO_TICKS(1000)); // gives me time to suspend the task before it aquires the i2c_mutex
     
     for (;;) {
-        if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, portMAX_DELAY) == pdTRUE) {
+        // Monitor stack usage (ALWAYS enabled for crash debugging)
+        UBaseType_t stackHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
+        if (stackHighWaterMark < 1024) {  // Less than 1024 bytes free
+            #ifdef DEBUG
+            Serial.printf("CRITICAL: Dist task low stack: %d bytes free\n", stackHighWaterMark);
+            #endif
+        }
+
+        if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, pdMS_TO_TICKS(500)) == pdTRUE) {
 
             if (
                 tof_claw.isDataReady() && 
@@ -340,13 +380,23 @@ void dist_input_task(void *pvParamters) {
                 tof_get_dist_to_object(&tof_data_claw) <= 10
             ) {
                 tof_reading = EVENT_PET_NEAR;
+                #ifdef DEBUG
+                Serial.println("pet near the claw! dist task suspended!");
+                #endif
+                
+                xSemaphoreGive(i2c_mutex);
+                vTaskSuspend(NULL);
             } 
 
             xSemaphoreGive(i2c_mutex);
 
+        } else {
+            // Mutex timeout - continue to avoid deadlock
+            #ifdef DEBUG
+            Serial.println("Dist task: I2C mutex timeout, continuing..."); 
+            #endif
         }
         
-        vTaskDelay(pdMS_TO_TICKS(20)); // Give other tasks a chance to run
     }
     
 }
@@ -437,46 +487,44 @@ state_event_e process_input(struct state_machine *state_machine) {
     // poll the tof background task
     if (tof_reading != EVENT_NONE) {
 
-        if (dist_task_handle != NULL && eTaskGetState(dist_task_handle) != eSuspended) {
-            if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, portMAX_DELAY)) {
-                // Task is not using I2C right now (mutex is available)
-                vTaskSuspend(dist_task_handle);  // Now safe to suspend
-                #ifdef DEBUG
-                Serial.println("dist task suspended");
-                #endif
-                xSemaphoreGive(i2c_mutex);
-            }
-        } 
+        // if (dist_task_handle != NULL && eTaskGetState(dist_task_handle) != eSuspended) {
+        //     if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        //         // Task is not using I2C right now (mutex is available)
+        //         vTaskSuspend(dist_task_handle);  // Now safe to suspend
+        //         #ifdef DEBUG
+        //         Serial.println("dist task suspended");
+        //         #endif
+        //         xSemaphoreGive(i2c_mutex);
+        //     } else {
+        //         // Force suspend on timeout to prevent deadlock
+        //         vTaskSuspend(dist_task_handle);
+        //         #ifdef DEBUG
+        //         Serial.println("Force suspended dist task - mutex timeout in process_input");
+        //         #endif
+        //     }
+        // } 
 
-        if (tof_task_handle != NULL && eTaskGetState(tof_task_handle) != eSuspended) {
-            if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, portMAX_DELAY)) {
-                vTaskSuspend(tof_task_handle);
-                #ifdef DEBUG
-                Serial.println("tof task suspended");
-                #endif
-                xSemaphoreGive(i2c_mutex);
-            }
-        }
+        // if (tof_task_handle != NULL && eTaskGetState(tof_task_handle) != eSuspended) {
+        //     if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        //         vTaskSuspend(tof_task_handle);
+        //         #ifdef DEBUG
+        //         Serial.println("tof task suspended");
+        //         #endif
+        //         xSemaphoreGive(i2c_mutex);
+        //     } else {
+        //         // Force suspend on timeout to prevent deadlock
+        //         vTaskSuspend(tof_task_handle);
+        //         #ifdef DEBUG
+        //         Serial.println("Force suspended tof task - mutex timeout in process_input");
+        //         #endif
+        //     }
+        // }
 
         state_event_e event = tof_reading;
         if (tof_reading == EVENT_PET_DETECTED_LEFT) Serial.println("Polled that the pet detected left");
         tof_reading = EVENT_NONE; // safe to modify shared data after suspending both tasks
         return event;
     }
-    // switch (tof_reading) {
-    //     case EVENT_NONE:
-    //     Serial.println("NONE");
-    //     break;
-    //     case EVENT_PET_DETECTED_LEFT:
-    //     Serial.println("PET DETECTED LEFT");
-    //     break;
-    //     case EVENT_PET_DETECTED_RIGHT:
-    //     Serial.println("PET DETECTED RIGHT");
-    //     break;
-    //     case EVENT_PILLAR_DETECTED:
-    //     Serial.println("PILLAR DETECTED");
-    //     break;
-    // }
 
     return EVENT_NONE;
 }
@@ -561,122 +609,88 @@ static void state_exit(struct state_machine *state_machine, state_e previous_sta
 
 #ifdef DEBUG
 
-Adafruit_SSD1306 display_handler(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
-
 void print_state(state_e state) {
-    if (xSemaphoreTake(i2c_mutex, portMAX_DELAY)) {
-        display_handler.print("STATE: ");
-        Serial.print("STATE: ");
-        switch(state) {
-            case STATE_WAIT: 
-                display_handler.println("WAIT");
-                Serial.println("WAIT");
-                break;
-            case STATE_TAPE_FOLLOWING:
-                display_handler.println("TAPE FOLLOWING");
-                Serial.println("TAPE FOLLOWING");
-                break;
-            case STATE_REACH:
-                display_handler.println("REACH");
-                Serial.println("REACH");
-                break;
-            case STATE_CLOSE_CLAW:
-                display_handler.println("CLOSE CLAW");
-                Serial.println("CLOSE CLAW");
-                break;
-            case STATE_STORE:
-                display_handler.println("STORE");
-                Serial.println("STORE");
-                break;
-            case STATE_DROP_OFF:
-                display_handler.println("DROP OFF");
-                Serial.println("DROP OFF");
-                break;
-            case STATE_RETREAT:
-                display_handler.println("RETREAT");
-                Serial.println("RETREAT");
-                break;
-            case STATE_RETURN_PETS:
-                display_handler.println("RETURN PETS");
-                Serial.println("RETURN PETS");
-                break;
-            default:
-                break;
-        }
-        display_handler.display();
-        xSemaphoreGive(i2c_mutex);
+    Serial.print("STATE: ");
+    switch(state) {
+        case STATE_WAIT: 
+            Serial.println("WAIT");
+            break;
+        case STATE_TAPE_FOLLOWING:
+            Serial.println("TAPE FOLLOWING");
+            break;
+        case STATE_REACH:
+            Serial.println("REACH");
+            break;
+        case STATE_CLOSE_CLAW:
+            Serial.println("CLOSE CLAW");
+            break;
+        case STATE_STORE:
+            Serial.println("STORE");
+            break;
+        case STATE_DROP_OFF:
+            Serial.println("DROP OFF");
+            break;
+        case STATE_RETREAT:
+            Serial.println("RETREAT");
+            break;
+        case STATE_RETURN_PETS:
+            Serial.println("RETURN PETS");
+            break;
+        default:
+            break;
     }
 }
 
 void print_event(state_event_e event) { 
-    if (xSemaphoreTake(i2c_mutex, portMAX_DELAY)) {
-        display_handler.clearDisplay();
-        display_handler.setCursor(0, 0);
-        display_handler.print("EVENT: ");
-        Serial.print("EVENT: ");
-        switch (event) {
-            case EVENT_NONE:
-                display_handler.println("NONE");
-                Serial.println("NONE");
-                break;
-            case EVENT_PET_DETECTED_LEFT:
-                display_handler.println("PET DETECTED LEFT");
-                Serial.println("PET DETECTED LEFT");
-                break;
-            case EVENT_PET_DETECTED_RIGHT:
-                display_handler.println("PET DETECTED RIGHT");
-                Serial.println("PET DETECTED RIGHT");
-                break;
-            case EVENT_PILLAR_DETECTED:
-                display_handler.println("PILLAR DETECTED");
-                Serial.println("PILLAR DETECTED");
-                break;
-            case EVENT_PET_NEAR:
-                display_handler.println("NEAR PET");
-                Serial.println("NEAR PET");
-                break;
-            case EVENT_PET_MISSED:
-                display_handler.println("PET MISSED");
-                Serial.println("PET MISSED");
-                break;
-            case EVENT_ARM_READY:
-                display_handler.println("ARM READY");
-                Serial.println("ARM READY");
-                break;
-            case EVENT_PET_FAILED:
-                display_handler.println("PET FAILED");
-                Serial.println("PET FAILED");
-                break;
-            case EVENT_PET_GRASPED:
-                display_handler.println("PET GRASPED");
-                Serial.println("PET GRASPED");
-                break;
-            case EVENT_PET_STORED:
-                display_handler.println("PET STORED");
-                Serial.println("PET STORED");
-                break;
-            case EVENT_EDGE_DETECTED:
-                display_handler.println("EDGE DETECTED");
-                Serial.println("EDGE DETECTED");
-                break;
-            case EVENT_PETS_RETURNED:
-                display_handler.println("PETS RETURNED");
-                Serial.println("PETS RETURNED");
-                break;
-            case EVENT_RAMP:
-                display_handler.println("RAMP DETECTED");
-                Serial.println("RAMP DETECTED");
-                break;
-            case EVENT_FIRST_PET_GRASPED:
-                display_handler.println("1st PET GRASPED");
-                Serial.println("1st PET GRASPED");
-                break;
-            default:
-                break;
-        }
-        display_handler.display();
-        xSemaphoreGive(i2c_mutex);
+    
+    Serial.print("EVENT: ");
+    switch (event) {
+        case EVENT_NONE:
+            Serial.println("NONE");
+            break;
+        case EVENT_PET_DETECTED_LEFT:
+            Serial.println("PET DETECTED LEFT");
+            break;
+        case EVENT_PET_DETECTED_RIGHT:
+            Serial.println("PET DETECTED RIGHT");
+            break;
+        case EVENT_PILLAR_DETECTED:
+            Serial.println("PILLAR DETECTED");
+            break;
+        case EVENT_PET_NEAR:
+            Serial.println("NEAR PET");
+            break;
+        case EVENT_PET_MISSED:
+            Serial.println("PET MISSED");
+            break;
+        case EVENT_ARM_READY:
+            Serial.println("ARM READY");
+            break;
+        case EVENT_PET_FAILED:
+            Serial.println("PET FAILED");
+            break;
+        case EVENT_PET_GRASPED:
+            Serial.println("PET GRASPED");
+            break;
+        case EVENT_PET_STORED:
+            Serial.println("PET STORED");
+            break;
+        case EVENT_EDGE_DETECTED:
+            Serial.println("EDGE DETECTED");
+            break;
+        case EVENT_PETS_RETURNED:
+            Serial.println("PETS RETURNED");
+            break;
+        case EVENT_RAMP:
+            Serial.println("RAMP DETECTED");
+            break;
+        case EVENT_FIRST_PET_GRASPED:
+            Serial.println("1st PET GRASPED");
+            break;
+        default:
+            break;
     }
+    
 }
 
 #endif

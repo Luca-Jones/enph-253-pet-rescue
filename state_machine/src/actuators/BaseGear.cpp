@@ -15,8 +15,7 @@
 #define BASE_GEAR_MAX_OUTPUT PWM_MAX_DUTY_BASE_GEAR
 #define BASE_GEAR_MIN_OUTPUT -PWM_MAX_DUTY_BASE_GEAR
 
-#include <Arduino.h>
-// #define constrain(val,low,high) (val < low ? low : ( val > high ? high : val ))
+#define constrain(val,low,high) (val < low ? low : ( val > high ? high : val ))
 
 BaseGear::BaseGear(Motor *motor) {
     this->motor = motor;
@@ -53,9 +52,6 @@ void BaseGear::write(int target_angle) {
         output = BASE_GEAR_KP * proportional + BASE_GEAR_KI * integral + BASE_GEAR_KD * derivative;
         output = constrain(output, BASE_GEAR_MIN_OUTPUT, BASE_GEAR_MAX_OUTPUT);
         if (fabs(output) < PWM_MIN_DUTY_BASE_GEAR) output = 0;
-        #ifdef DEBUG
-        Serial.printf("output = %f\n", output);
-        #endif
         this->motor->write(fabs(output), output > 0 ? BASE_GEAR_CCW : BASE_GEAR_CW);
         delay(50);
 

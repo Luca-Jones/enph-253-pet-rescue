@@ -40,7 +40,8 @@ void state_tape_following_run(struct state_machine *state_machine) {
             control_motors(+TAPE_FOLLOWING_RECOVERY_SPEED);
         } else {
             // go straight to run over debris
-            control_motors(0);
+            left_motor.write(200, LEFT_MOTOR_FORWARD);
+            right_motor.write(200, RIGHT_MOTOR_FORWARD);
         }
     } else {
         error = calculate_error(state_machine->last_error, ir_ll, ir_l, ir_c, ir_r, ir_rr);
@@ -69,34 +70,45 @@ void state_tape_following_run(struct state_machine *state_machine) {
 
 void state_tape_following_enter(struct state_machine *state_machine, state_event_e event) {
     
-    if (dist_task_handle != NULL && eTaskGetState(dist_task_handle) != eSuspended) {
-        if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, portMAX_DELAY)) {
-            // Task is not using I2C right now (mutex is available)
-            vTaskSuspend(dist_task_handle);  // Now safe to suspend
-            #ifdef DEBUG
-            Serial.println("dist task suspended");
-            #endif
-            xSemaphoreGive(i2c_mutex);
-        }
-    }
+    // if (dist_task_handle != NULL && eTaskGetState(dist_task_handle) != eSuspended) {
+    //     if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+    //         // Task is not using I2C right now (mutex is available)
+    //         vTaskSuspend(dist_task_handle);  // Now safe to suspend
+    //         #ifdef DEBUG
+    //         Serial.println("dist task suspended");
+    //         #endif
+    //         xSemaphoreGive(i2c_mutex);
+    //     } else {
+    //         // Mutex timeout - force suspend anyway (risky but prevents deadlock)
+    //         #ifdef DEBUG
+    //         Serial.println("Force suspending dist task - mutex timeout");
+    //         #endif
+    //         vTaskSuspend(dist_task_handle);
+    //     }
+    // }
 
     if (tof_task_handle != NULL && eTaskGetState(tof_task_handle) == eSuspended) {
         vTaskResume(tof_task_handle);
         #ifdef DEBUG
         Serial.println("tof task resumed");
         #endif
+        delay(100);
     }
 
     state_tape_following_run(state_machine);
 }
 
 void state_tape_following_exit(struct state_machine *state_machine) {
+    #ifdef DEBUG
     Serial.println("backing up...");
+    Serial.printf("time between detection and fully stopping: %lu ms\n", millis() - detection_time);
+    #endif
+
     // turn off motors
-    state_machine->last_pid_time = 0;
-    left_motor.write(50, LEFT_MOTOR_BACKWARD);
-    right_motor.write(50, RIGHT_MOTOR_BACKWARD);
-    delay(500);
+    // state_machine->last_pid_time = 0;
+    // left_motor.write(50, LEFT_MOTOR_BACKWARD);
+    // right_motor.write(50, RIGHT_MOTOR_BACKWARD);
+    // delay(500);
     left_motor.stop();
     right_motor.stop();
 }

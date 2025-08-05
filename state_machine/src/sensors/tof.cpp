@@ -5,7 +5,7 @@ void select_mux(uint8_t channel) {
     Wire.beginTransmission(MUX_I2C_ADDRESS);
     Wire.write(channel);
     Wire.endTransmission();
-    delayMicroseconds(10);
+    delayMicroseconds(100);
 }
 
 void tof_setup(ToF *tof, uint8_t channel) {
@@ -29,7 +29,9 @@ bool tof_get_data(ToF *tof, uint8_t channel, ToF_data *data) {
     bool ret = tof->getRangingData(data);
     unsigned long after_get_data = millis();
     
-    Serial.printf("Timing breakdown: get_data=%lu \n", after_get_data - before_get_data);
+    #ifdef DEBUG
+    // Serial.printf("Timing breakdown: get_data=%lu \n", after_get_data - before_get_data);
+    #endif
 
     return ret;
 }
