@@ -104,11 +104,9 @@ void state_tape_following_exit(struct state_machine *state_machine) {
     Serial.printf("time between detection and fully stopping: %lu ms\n", millis() - detection_time);
     #endif
 
-    // turn off motors
-    // state_machine->last_pid_time = 0;
-    // left_motor.write(50, LEFT_MOTOR_BACKWARD);
-    // right_motor.write(50, RIGHT_MOTOR_BACKWARD);
-    // delay(500);
+    left_motor.write(100, LEFT_MOTOR_BACKWARD);
+    right_motor.write(100, RIGHT_MOTOR_BACKWARD);
+    delay(100);
     left_motor.stop();
     right_motor.stop();
 }
