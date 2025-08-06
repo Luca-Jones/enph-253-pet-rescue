@@ -18,6 +18,7 @@ void state_reach_enter(struct state_machine *state_machine, state_event_e event)
         delay(1000);
         base_gear.write(BASE_GEAR_HOME);
         arm.lerp_to_pos(ARM_HOME_X, ARM_HOME_Y, 1000);
+        claw.write(CLAW_OPEN);
     }
     
     if (dist_task_handle != NULL && eTaskGetState(dist_task_handle) == eSuspended) {    

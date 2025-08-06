@@ -4,8 +4,6 @@
 #include <actuators/Claw.h>
 
 static void state_drop_off_run(state_machine *state_machine) {
-    int x,y;
-    arm.get_pos(&x, &y);
     arm.lerp_to_pos(ARM_DROP_OFF_X, ARM_DROP_OFF_Y, 500);
     claw.write(CLAW_OPEN);
     delay(1000);

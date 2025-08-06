@@ -54,8 +54,6 @@ ToF_data tof_data_chassis;
 volatile bool switch_triggered = false;
 volatile bool ramp_detected = false;
 
-unsigned long detection_time = 0;
-
 /* STATE TRANSITIONS */
 struct state_transition {
     state_e previous_state;
@@ -65,28 +63,14 @@ struct state_transition {
 
 // consult the diagram to understand these transitions
 static const struct state_transition state_transitions[] = {
-    // {STATE_TAPE_FOLLOWING, EVENT_PET_DETECTED_LEFT, STATE_WAIT},
-    // {STATE_TAPE_FOLLOWING, EVENT_PET_DETECTED_RIGHT, STATE_WAIT},
-    // {STATE_TAPE_FOLLOWING, EVENT_PILLAR_DETECTED, STATE_WAIT},
-    // {STATE_WAIT, EVENT_PET_GRASPED, STATE_TAPE_FOLLOWING},
-    // {STATE_TAPE_FOLLOWING, EVENT_EDGE_DETECTED, STATE_WAIT},
-    // {   STATE_WAIT,   EVENT_PET_DETECTED_LEFT,    STATE_REACH             },
-    // {   STATE_WAIT,   EVENT_PET_DETECTED_RIGHT,   STATE_REACH             },
-    // {   STATE_WAIT,   EVENT_PILLAR_DETECTED,      STATE_REACH             },
-    // {   STATE_WAIT,   EVENT_PET_DETECTED_LEFT,    STATE_REACH             },
+    
     {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_RIGHT,   STATE_REACH             },
-    // {   STATE_WAIT,   EVENT_PILLAR_DETECTED,      STATE_REACH             },
     {   STATE_REACH,            EVENT_PET_NEAR,             STATE_CLOSE_CLAW        },
-    // {   STATE_CLOSE_CLAW,       EVENT_PET_MISSED,           STATE_RETREAT           },
-    // {   STATE_RETREAT,          EVENT_ARM_READY,            STATE_REACH             },
-    // {   STATE_RETREAT,          EVENT_PET_FAILED,           STATE_TAPE_FOLLOWING    },
-    // {   STATE_CLOSE_CLAW,       EVENT_FIRST_PET_GRASPED,    STATE_TAPE_FOLLOWING    },
-    // {   STATE_TAPE_FOLLOWING,   EVENT_RAMP,                 STATE_DROP_OFF          },
     {   STATE_CLOSE_CLAW,       EVENT_PET_GRASPED,          STATE_STORE             },
-    // {   STATE_STORE,            EVENT_PET_STORED,           STATE_WAIT              },
-    {   STATE_STORE,            EVENT_PET_STORED,           STATE_TAPE_FOLLOWING   },
-    // {   STATE_TAPE_FOLLOWING,   EVENT_EDGE_DETECTED,        STATE_RETURN_PETS       },
-    // {   STATE_RETURN_PETS,      EVENT_PETS_RETURNED,        STATE_WAIT              },
+    {   STATE_CLOSE_CLAW,       EVENT_FIRST_PET_GRASPED,    STATE_TAPE_FOLLOWING    },
+    {   STATE_TAPE_FOLLOWING,   EVENT_RAMP,                 STATE_DROP_OFF          },
+    {   STATE_DROP_OFF,         EVENT_PET_STORED,           STATE_TAPE_FOLLOWING    },
+    {   STATE_STORE,            EVENT_PET_STORED,           STATE_TAPE_FOLLOWING    },
 };
 
 
@@ -110,7 +94,7 @@ void state_machine_init(struct state_machine *state_machine) {
     state_machine->stable_pillar_count      = 0;
 
     state_machine->pets_stored              = 0;
-    state_machine->arm_in_start_pos         = false;
+    state_machine->arm_in_start_pos         = true;
     state_machine->claw_closed              = false;
     state_machine->claw_open_angle          = CLAW_OPEN;
     state_machine->attempts                 = 0;
@@ -249,11 +233,6 @@ void state_machine_init(struct state_machine *state_machine) {
     print_state(state_machine->state);
     #endif
 
-    arm.move_to_pos(ARM_HOME_X, ARM_HOME_Y);
-    delay(100);
-    claw.write(180);
-    delay(100);
-
 }
 
 void tof_input_task(void *pvParameters) {
@@ -316,8 +295,6 @@ void tof_input_task(void *pvParameters) {
                 //         #ifdef DEBUG
                 //         Serial.println("pet detected left! ToF task suspended!");
                 //         #endif  
-
-                //         detection_time = millis();
                         
                 //         xSemaphoreGive(i2c_mutex);
                 //         vTaskSuspend(NULL);
@@ -354,7 +331,7 @@ void tof_input_task(void *pvParameters) {
                 Serial.println("");
                 
                 if (
-                    mean_distance_mm >= 120 &&
+                    mean_distance_mm >= 90 &&
                     mean_distance_mm <= 240 &&
                     tof_right_cylinder_detected(&tof_data_chassis)
                 ) {
@@ -444,42 +421,7 @@ state_event_e process_input(struct state_machine *state_machine) {
 
     // poll the tof background task
     if (tof_reading != EVENT_NONE) {
-
-        // if (dist_task_handle != NULL && eTaskGetState(dist_task_handle) != eSuspended) {
-        //     if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-        //         // Task is not using I2C right now (mutex is available)
-        //         vTaskSuspend(dist_task_handle);  // Now safe to suspend
-        //         #ifdef DEBUG
-        //         Serial.println("dist task suspended");
-        //         #endif
-        //         xSemaphoreGive(i2c_mutex);
-        //     } else {
-        //         // Force suspend on timeout to prevent deadlock
-        //         vTaskSuspend(dist_task_handle);
-        //         #ifdef DEBUG
-        //         Serial.println("Force suspended dist task - mutex timeout in process_input");
-        //         #endif
-        //     }
-        // } 
-
-        // if (tof_task_handle != NULL && eTaskGetState(tof_task_handle) != eSuspended) {
-        //     if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-        //         vTaskSuspend(tof_task_handle);
-        //         #ifdef DEBUG
-        //         Serial.println("tof task suspended");
-        //         #endif
-        //         xSemaphoreGive(i2c_mutex);
-        //     } else {
-        //         // Force suspend on timeout to prevent deadlock
-        //         vTaskSuspend(tof_task_handle);
-        //         #ifdef DEBUG
-        //         Serial.println("Force suspended tof task - mutex timeout in process_input");
-        //         #endif
-        //     }
-        // }
-
         state_event_e event = tof_reading;
-        if (tof_reading == EVENT_PET_DETECTED_LEFT) Serial.println("Polled that the pet detected left");
         tof_reading = EVENT_NONE; // safe to modify shared data after suspending both tasks
         return event;
     }

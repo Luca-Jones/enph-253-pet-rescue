@@ -54,9 +54,7 @@ extern ToF tof_chassis;
 extern ToF_data tof_data_claw;
 extern ToF_data tof_data_chassis;
 extern volatile bool ramp_detected;
-#define RAMP_TIME_S 10
-
-extern unsigned long detection_time; // TODO: remove
+#define RAMP_TIME_S 12
 
 /* STATE MACHINE */
 

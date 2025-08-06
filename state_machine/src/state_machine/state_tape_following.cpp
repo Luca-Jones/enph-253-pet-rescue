@@ -101,7 +101,6 @@ void state_tape_following_enter(struct state_machine *state_machine, state_event
 void state_tape_following_exit(struct state_machine *state_machine) {
     #ifdef DEBUG
     Serial.println("backing up...");
-    Serial.printf("time between detection and fully stopping: %lu ms\n", millis() - detection_time);
     #endif
 
     left_motor.write(150, LEFT_MOTOR_BACKWARD);
