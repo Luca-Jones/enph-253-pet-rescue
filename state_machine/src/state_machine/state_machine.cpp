@@ -64,13 +64,15 @@ struct state_transition {
 // consult the diagram to understand these transitions
 static const struct state_transition state_transitions[] = {
     
-    {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_RIGHT,   STATE_REACH             },
-    {   STATE_REACH,            EVENT_PET_NEAR,             STATE_CLOSE_CLAW        },
-    {   STATE_CLOSE_CLAW,       EVENT_PET_GRASPED,          STATE_STORE             },
-    {   STATE_CLOSE_CLAW,       EVENT_FIRST_PET_GRASPED,    STATE_TAPE_FOLLOWING    },
-    {   STATE_TAPE_FOLLOWING,   EVENT_RAMP,                 STATE_DROP_OFF          },
-    {   STATE_DROP_OFF,         EVENT_PET_STORED,           STATE_TAPE_FOLLOWING    },
-    {   STATE_STORE,            EVENT_PET_STORED,           STATE_TAPE_FOLLOWING    },
+    // {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_RIGHT,   STATE_REACH             },
+    // {   STATE_REACH,            EVENT_PET_NEAR,             STATE_CLOSE_CLAW        },
+    // {   STATE_CLOSE_CLAW,       EVENT_PET_GRASPED,          STATE_STORE             },
+    // {   STATE_CLOSE_CLAW,       EVENT_FIRST_PET_GRASPED,    STATE_TAPE_FOLLOWING    },
+    // {   STATE_TAPE_FOLLOWING,   EVENT_RAMP,                 STATE_DROP_OFF          },
+    // {   STATE_DROP_OFF,         EVENT_PET_STORED,           STATE_TAPE_FOLLOWING    },
+    // {   STATE_STORE,            EVENT_PET_STORED,           STATE_TAPE_FOLLOWING    },
+    {STATE_TAPE_FOLLOWING, EVENT_EDGE_DETECTED, STATE_RETURN_PETS},
+    {STATE_RETURN_PETS, EVENT_PETS_RETURNED, STATE_WAIT},
 };
 
 
@@ -415,7 +417,8 @@ state_event_e process_input(struct state_machine *state_machine) {
     }
     
     // platform edge detection
-    if (sonar_get_distance_cm() > SONAR_EDGE_DISTANCE_CM) {
+    int sonar_dist = sonar_get_distance_cm();
+    if (sonar_dist > SONAR_EDGE_DISTANCE_CM) {
         return EVENT_EDGE_DETECTED;
     }
 

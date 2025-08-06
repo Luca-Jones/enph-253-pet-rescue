@@ -108,6 +108,23 @@ void state_tape_following_exit(struct state_machine *state_machine) {
     delay(100);
     left_motor.stop();
     right_motor.stop();
+
+    if (tof_task_handle != NULL && eTaskGetState(tof_task_handle) != eSuspended) {
+        if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, pdMS_TO_TICKS(500)) == pdTRUE) {
+            // Task is not using I2C right now (mutex is available)
+            vTaskSuspend(tof_task_handle);  // Now safe to suspend
+            #ifdef DEBUG
+            Serial.println("tof task suspended");
+            #endif
+            xSemaphoreGive(i2c_mutex);
+        } else {
+            // Mutex timeout - force suspend anyway (risky but prevents deadlock)
+            #ifdef DEBUG
+            Serial.println("Force suspending tof task - mutex timeout");
+            #endif
+            vTaskSuspend(dist_task_handle);
+        }
+    }
 }
 
 // positive output -> turning left (since the right motor gets more power)

@@ -6,27 +6,34 @@
 
 void state_return_pets_run(struct state_machine *state_machine) {
 
+    // drive backwards for some time, then stop
+    left_motor.write(200, LEFT_MOTOR_BACKWARD);
+    right_motor.write(200, RIGHT_MOTOR_BACKWARD);
+    delay(50);
+    left_motor.stop();
+    right_motor.stop();
+
     // raise the cascade
     cascade_motor.write(PWM_MAX_DUTY_CASCADE, CASCADE_MOTOR_UP);
     delay(CASCADE_LIFT_TIME_MS);
     cascade_motor.stop();
 
     // drive backwards for some time, then stop
-    left_motor.write(PWM_MAX_DUTY_MOTOR_LEFT, LEFT_MOTOR_BACKWARD);
-    right_motor.write(PWM_MAX_DUTY_MOTOR_RIGHT, RIGHT_MOTOR_BACKWARD);
-    delay(REVERSE_DRIVING_TIME_MS);
+    left_motor.write(150, LEFT_MOTOR_BACKWARD);
+    right_motor.write(150, RIGHT_MOTOR_BACKWARD);
+    delay(250);
     left_motor.stop();
     right_motor.stop();
 
     // lower the cascade
     cascade_motor.write(PWM_MAX_DUTY_CASCADE, CASCADE_MOTOR_DOWN);
-    delay(CASCADE_LIFT_TIME_MS);
+    delay(CASCADE_LOWER_TIME_MS);
     cascade_motor.stop();
     
     // move a little bit forwards
-    left_motor.write(PWM_MAX_DUTY_MOTOR_LEFT, LEFT_MOTOR_FORWARD);
-    right_motor.write(PWM_MAX_DUTY_MOTOR_RIGHT, RIGHT_MOTOR_FORWARD);
-    delay(REVERSE_DRIVING_TIME_MS / 2);
+    left_motor.write(120, LEFT_MOTOR_FORWARD);
+    right_motor.write(120, RIGHT_MOTOR_FORWARD);
+    delay(300);
     left_motor.stop();
     right_motor.stop();
     

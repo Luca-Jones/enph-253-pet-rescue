@@ -55,7 +55,7 @@ const int PWM_CHANNEL_RIGHT = 1;
 
 
 int baseSpeed = 100;
-int maxSpeed = 200;
+int maxSpeed = 255;
 int minSpeed = 0;
 
 

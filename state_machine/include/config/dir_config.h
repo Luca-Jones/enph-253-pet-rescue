@@ -7,8 +7,8 @@
 #define RIGHT_MOTOR_FORWARD     LOW
 #define RIGHT_MOTOR_BACKWARD    HIGH
 
-#define CASCADE_MOTOR_UP        HIGH
-#define CASCADE_MOTOR_DOWN      LOW
+#define CASCADE_MOTOR_UP        LOW
+#define CASCADE_MOTOR_DOWN      HIGH
 
 #define BASE_GEAR_CW            HIGH
 #define BASE_GEAR_CCW           LOW

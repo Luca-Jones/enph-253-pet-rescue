@@ -173,11 +173,11 @@ bool tof_right_cylinder_detected(const ToF_data *data) {
           0  1  2  3  4  5  6  7 
       0 .[ ][ ][ ][x][x][ ][ ][ ]
       1 .[ ][ ][ ][ ][ ][ ][ ][ ]
-      2 .[/][ ][|][*][*][|][ ][\]
-      3 .[/][ ][|][*][*][|][ ][\]
-      4 .[/][ ][|][*][*][|][ ][\]
-      5 .[/][ ][|][*][*][|][ ][\]
-      6 .[/][ ][|][*][*][|][ ][\]
+      2 .[/][ ][+][*][*][+][ ][\]
+      3 .[/][ ][+][*][*][+][ ][\]
+      4 .[/][ ][+][*][*][+][ ][\]
+      5 .[/][ ][+][*][*][+][ ][\]
+      6 .[/][ ][+][*][*][+][ ][\]
       7 .[ ][ ][ ][ ][ ][ ][ ][ ]
     **/
 
@@ -194,10 +194,6 @@ bool tof_right_cylinder_detected(const ToF_data *data) {
                             data->distance_mm[8 * (7 - 5) + (7 - 4)] +
                             data->distance_mm[8 * (7 - 6) + (7 - 4)]
                         ) / 10.0f;
-
-    if (center_mean < 110.0f) {
-        return true;
-    }
 
     float far_left_mean = (    
                                 data->distance_mm[8 * (7 - 2) + (7 - 0)] + 
@@ -230,6 +226,12 @@ bool tof_right_cylinder_detected(const ToF_data *data) {
                             data->distance_mm[8 * (7 - 5) + (7 - 5)] +
                             data->distance_mm[8 * (7 - 6) + (7 - 5)]
                         ) / 5.0f;
+
+    if (center_mean < 110.0f) {
+        if (fabs(left_mean - right_mean) < 35.0f) {
+            return true;
+        }
+    }
     
     float top_mean = (data->distance_mm[8 * (7 - 0) + 3] + data->distance_mm[8 * (7 - 0) + 4]) / 2.0f;
     
