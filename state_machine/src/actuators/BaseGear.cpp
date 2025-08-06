@@ -12,8 +12,6 @@
 #define BASE_GEAR_KD 2.0f   
 
 #define BASE_GEAR_MAX_PID_ITERATIONS 100
-#define BASE_GEAR_MAX_OUTPUT PWM_MAX_DUTY_BASE_GEAR
-#define BASE_GEAR_MIN_OUTPUT -PWM_MAX_DUTY_BASE_GEAR
 
 #define constrain(val,low,high) (val < low ? low : ( val > high ? high : val ))
 
@@ -46,12 +44,13 @@ void BaseGear::write(int target_angle) {
 
         proportional = error;
         integral = integral + error;     // idc about the time step
-        integral = constrain(integral, BASE_GEAR_MIN_OUTPUT, BASE_GEAR_MAX_OUTPUT);
+        integral = constrain(integral, -PWM_MAX_DUTY_BASE_GEAR, PWM_MAX_DUTY_BASE_GEAR);
         derivative = error - last_error; // idc about the time step
         last_error = error;
         output = BASE_GEAR_KP * proportional + BASE_GEAR_KI * integral + BASE_GEAR_KD * derivative;
-        output = constrain(output, BASE_GEAR_MIN_OUTPUT, BASE_GEAR_MAX_OUTPUT);
-        if (fabs(output) < PWM_MIN_DUTY_BASE_GEAR) output = 0;
+        output = constrain(output, -PWM_MAX_DUTY_BASE_GEAR, PWM_MAX_DUTY_BASE_GEAR);
+        if (fabs(output) < 30) output = 0;
+        else if (fabs(output) <= PWM_MIN_DUTY_BASE_GEAR && output >= 30) output = PWM_MIN_DUTY_BASE_GEAR;
         this->motor->write(fabs(output), output > 0 ? BASE_GEAR_CCW : BASE_GEAR_CW);
         delay(50);
 

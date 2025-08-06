@@ -34,7 +34,7 @@
 Servo servo_1(ARM_SERVO_1_ANGLE_MAX);
 Servo servo_2(ARM_SERVO_2_ANGLE_MAX);
 Arm arm(&servo_1, &servo_2);
-Servo claw(CLAW_OPEN);
+Servo claw(180);
 Motor base_gear_motor(PIN_BASE_GEAR_PWM, PWM_CHANNEL_BASE_GEAR, PWM_FRQ_HZ_BASE_GEAR, PWM_RESOLUTION_BASE_GEAR, PIN_BASE_GEAR_DIR);
 BaseGear base_gear = BaseGear(&base_gear_motor);
 Motor left_motor(PIN_MOTOR_LEFT_PWM, PWM_CHANNEL_MOTOR_LEFT, PWM_FRQ_HZ_MOTOR_LEFT, PWM_RESOLUTION_MOTOR_LEFT, PIN_MOTOR_LEFT_DIR);
@@ -73,9 +73,9 @@ static const struct state_transition state_transitions[] = {
     // {   STATE_WAIT,   EVENT_PET_DETECTED_LEFT,    STATE_REACH             },
     // {   STATE_WAIT,   EVENT_PET_DETECTED_RIGHT,   STATE_REACH             },
     // {   STATE_WAIT,   EVENT_PILLAR_DETECTED,      STATE_REACH             },
-    {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_LEFT,    STATE_WAIT             },
-    {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_RIGHT,   STATE_WAIT             },
-    {   STATE_TAPE_FOLLOWING,   EVENT_PILLAR_DETECTED,      STATE_WAIT             },
+    // {   STATE_WAIT,   EVENT_PET_DETECTED_LEFT,    STATE_REACH             },
+    {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_RIGHT,   STATE_REACH             },
+    // {   STATE_WAIT,   EVENT_PILLAR_DETECTED,      STATE_REACH             },
     {   STATE_REACH,            EVENT_PET_NEAR,             STATE_CLOSE_CLAW        },
     // {   STATE_CLOSE_CLAW,       EVENT_PET_MISSED,           STATE_RETREAT           },
     // {   STATE_RETREAT,          EVENT_ARM_READY,            STATE_REACH             },
@@ -84,7 +84,7 @@ static const struct state_transition state_transitions[] = {
     // {   STATE_TAPE_FOLLOWING,   EVENT_RAMP,                 STATE_DROP_OFF          },
     {   STATE_CLOSE_CLAW,       EVENT_PET_GRASPED,          STATE_STORE             },
     // {   STATE_STORE,            EVENT_PET_STORED,           STATE_WAIT              },
-    {   STATE_STORE,            EVENT_PET_STORED,           STATE_TAPE_FOLLOWING    },
+    {   STATE_STORE,            EVENT_PET_STORED,           STATE_TAPE_FOLLOWING   },
     // {   STATE_TAPE_FOLLOWING,   EVENT_EDGE_DETECTED,        STATE_RETURN_PETS       },
     // {   STATE_RETURN_PETS,      EVENT_PETS_RETURNED,        STATE_WAIT              },
 };
@@ -178,8 +178,13 @@ void state_machine_init(struct state_machine *state_machine) {
     if (dist_task_result == pdPASS && dist_task_handle != NULL) {
         vTaskSuspend(dist_task_handle);
         #ifdef DEBUG
-        Serial.println("Distance task created and suspended successfully");
+        Serial.println("Distance task created successfully");
         #endif
+        if (eTaskGetState(dist_task_handle) == eSuspended) {
+            Serial.println("dist task suspended!");
+        } else {
+            Serial.println("dist task failed to suspend...");
+        }
     } else {
         #ifdef DEBUG
         Serial.println("Failed to create distance task!");
@@ -223,9 +228,6 @@ void state_machine_init(struct state_machine *state_machine) {
     #endif
     claw.attach(PIN_SERVO_3, PWM_CHANNEL_SERVO_3, 500, 2500);
 
-    arm.move_to_pos(ARM_HOME_X, ARM_HOME_Y);
-    claw.write(CLAW_OPEN);
-
     // set up IR
     pinMode(PIN_IR_SENSOR_LL, INPUT);
     pinMode(PIN_IR_SENSOR_L, INPUT);
@@ -246,6 +248,11 @@ void state_machine_init(struct state_machine *state_machine) {
     print_event(state_machine->internal_event);
     print_state(state_machine->state);
     #endif
+
+    arm.move_to_pos(ARM_HOME_X, ARM_HOME_Y);
+    delay(100);
+    claw.write(180);
+    delay(100);
 
 }
 
@@ -334,7 +341,7 @@ void tof_input_task(void *pvParameters) {
                 for (int row = 0; row < 8; row++) {
                     for (int col = 0; col < 8; col++) {
                         int i = row * 8 + col;
-                        distMap[7 - row][col] = tof_data_chassis.distance_mm[i]; // vertically flipped
+                        distMap[7 - row][7 - col] = tof_data_chassis.distance_mm[i]; // vertically flipped
                     }
                 }
 
@@ -347,18 +354,18 @@ void tof_input_task(void *pvParameters) {
                 Serial.println("");
                 
                 if (
-                    mean_distance_mm >= 150 &&
+                    mean_distance_mm >= 120 &&
                     mean_distance_mm <= 240 &&
                     tof_right_cylinder_detected(&tof_data_chassis)
                 ) {
-                    // tof_reading = EVENT_PET_DETECTED_RIGHT;
+                    tof_reading = EVENT_PET_DETECTED_RIGHT;
                     // Don't break - suspend this task instead
                     #ifdef DEBUG
                     Serial.println("pet detected right! ToF task suspended!");
                     #endif
                     
                     xSemaphoreGive(i2c_mutex);
-                    // vTaskSuspend(NULL);
+                    vTaskSuspend(NULL);
                 }
             }
 
@@ -389,12 +396,10 @@ void dist_input_task(void *pvParamters) {
         }
 
         if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, pdMS_TO_TICKS(500)) == pdTRUE) {
-
             if (
-                tof_claw.isDataReady() && 
-                tof_get_data(&tof_claw, TOF_CHANNEL_CLAW, &tof_data_claw) && 
-                tof_get_dist_to_object(&tof_data_claw) <= 10
+               tof_get_data(&tof_claw, TOF_CHANNEL_CLAW, &tof_data_claw) && tof_get_dist_to_object(&tof_data_claw) <= 35  
             ) {
+
                 tof_reading = EVENT_PET_NEAR;
                 #ifdef DEBUG
                 Serial.println("pet near the claw! dist task suspended!");
@@ -402,7 +407,7 @@ void dist_input_task(void *pvParamters) {
                 
                 xSemaphoreGive(i2c_mutex);
                 vTaskSuspend(NULL);
-            } 
+            }
 
             xSemaphoreGive(i2c_mutex);
 
@@ -414,69 +419,6 @@ void dist_input_task(void *pvParamters) {
         }
         
     }
-    
-}
-
-state_event_e process_tof_inputs(struct state_machine *state_machine) {
-
-    float mean_distance_mm;
-    
-    if (tof_claw.isDataReady() && tof_get_data(&tof_claw, TOF_CHANNEL_CLAW, &tof_data_claw)) {
-
-        mean_distance_mm = tof_get_left_center_dist(&tof_data_claw);
-
-        if (
-            mean_distance_mm >= TOF_CENTER_DIST_LOWER_THRESHOLD_MM && 
-            mean_distance_mm <= TOF_CENTER_DIST_UPPER_THRESHOLD_MM &&
-            tof_left_cylinder_detected(&tof_data_claw)
-        ) {
-            if (tof_get_center_reflectance(&tof_data_claw) <= TOF_REFLECTANCE_THRESHOLD) {
-                // state_machine->stable_pillar_count++;
-                // state_machine->stable_pet_count_left = 0;
-                // if (state_machine->stable_pillar_count >= 2) {
-                //     state_machine->stable_pillar_count = 0;
-                    return EVENT_PILLAR_DETECTED;
-                // }
-            } else {
-                // state_machine->stable_pet_count_left++;
-                // state_machine->stable_pillar_count = 0;
-                // if (state_machine->stable_pet_count_left >= 2) {
-                //     state_machine->stable_pet_count_left = 0;
-                    return EVENT_PET_DETECTED_LEFT;
-                // }
-            }
-        } else if (tof_get_dist_to_object(&tof_data_claw) <= TOF_CENTER_DIST_LOWER_THRESHOLD_MM) {
-            return EVENT_PET_NEAR;
-        } else {
-            // state_machine->stable_pet_count_left = 0;
-            // state_machine->stable_pillar_count = 0;
-        }
-    } else {
-        // state_machine->stable_pet_count_left = 0;
-        // state_machine->stable_pillar_count = 0;
-    }
-
-    // if (tof_chassis.isDataReady() && tof_get_data(&tof_chassis, TOF_CHANNEL_CHASSIS, &tof_data_chassis)) {
-    //     mean_distance_mm = tof_get_right_center_dist(&tof_data_chassis);
-
-    //     if (
-    //         mean_distance_mm >= TOF_CENTER_DIST_LOWER_THRESHOLD_MM &&
-    //         mean_distance_mm <= TOF_CENTER_DIST_UPPER_THRESHOLD_MM &&
-    //         tof_right_cylinder_detected(&tof_data_chassis)
-    //     ) {
-    //         // state_machine->stable_pet_count_right++;
-    //         // if (state_machine->stable_pet_count_right >= 2) {
-    //         //     state_machine->stable_pet_count_right = 0;
-    //             return EVENT_PET_DETECTED_RIGHT;
-    //         // }
-    //     } else {
-    //         // state_machine->stable_pet_count_right = 0;
-    //     }
-    // } else {
-    //     // state_machine->stable_pet_count_right = 0;
-    // }
-
-    return EVENT_NONE;
     
 }
 

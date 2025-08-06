@@ -4,12 +4,12 @@
 
 #define TAPE_FOLLOWING_BASE_SPEED       50
 #define TAPE_FOLLOWING_MAX_SPEED        255
-#define TAPE_FOLLOWING_RECOVERY_SPEED   255
+#define TAPE_FOLLOWING_RECOVERY_SPEED   40
 
-#define KP 35
-#define KD 5
+#define KP 18
+#define KD 0
 
-#define TAPE_FOLLOWING_PERIOD 10
+#define TAPE_FOLLOWING_PERIOD 30
 
 /* Helper functions */
 void control_motors(float pid_output);
@@ -40,8 +40,8 @@ void state_tape_following_run(struct state_machine *state_machine) {
             control_motors(+TAPE_FOLLOWING_RECOVERY_SPEED);
         } else {
             // go straight to run over debris
-            left_motor.write(200, LEFT_MOTOR_FORWARD);
-            right_motor.write(200, RIGHT_MOTOR_FORWARD);
+            left_motor.write(TAPE_FOLLOWING_BASE_SPEED, LEFT_MOTOR_FORWARD);
+            right_motor.write(TAPE_FOLLOWING_BASE_SPEED, RIGHT_MOTOR_FORWARD);
         }
     } else {
         error = calculate_error(state_machine->last_error, ir_ll, ir_l, ir_c, ir_r, ir_rr);
@@ -104,8 +104,8 @@ void state_tape_following_exit(struct state_machine *state_machine) {
     Serial.printf("time between detection and fully stopping: %lu ms\n", millis() - detection_time);
     #endif
 
-    left_motor.write(100, LEFT_MOTOR_BACKWARD);
-    right_motor.write(100, RIGHT_MOTOR_BACKWARD);
+    left_motor.write(150, LEFT_MOTOR_BACKWARD);
+    right_motor.write(150, RIGHT_MOTOR_BACKWARD);
     delay(100);
     left_motor.stop();
     right_motor.stop();
@@ -128,11 +128,11 @@ float calculate_error(float last_error, bool ll, bool l, bool c, bool r, bool rr
     float total_weight = 0;
     float weighted_sum = 0;
 
-    if (ll) { total_weight += 0.5; weighted_sum += -4; }
-    if (l)  { total_weight += 1.0; weighted_sum += -2; }
-    if (c)  { total_weight += 1.5; weighted_sum += 0;  }
-    if (r)  { total_weight += 1.0; weighted_sum += 2;  }
-    if (rr) { total_weight += 0.5; weighted_sum += 4;  }
+    if (ll) { total_weight += 1.0; weighted_sum += -2; }
+    if (l)  { total_weight += 1.0; weighted_sum += -1; }
+    if (c)  { total_weight += 1.0; weighted_sum += 0;  }
+    if (r)  { total_weight += 1.0; weighted_sum += 1;  }
+    if (rr) { total_weight += 1.0; weighted_sum += 2;  }
 
     if (total_weight == 0) return last_error; // No line detected, maintain last position
     return weighted_sum / total_weight;

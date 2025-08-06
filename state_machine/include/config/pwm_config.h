@@ -4,7 +4,7 @@
 #define PWM_CHANNEL_SERVO_1         0
 #define PWM_CHANNEL_SERVO_2         1
 #define PWM_CHANNEL_SERVO_3         2
-#define PWM_CHANNEL_MOTOR_LEFT      3
+#define PWM_CHANNEL_MOTOR_LEFT      7 // was 3 (RK changed)
 #define PWM_CHANNEL_MOTOR_RIGHT     4
 #define PWM_CHANNEL_CASCADE         5
 #define PWM_CHANNEL_BASE_GEAR       6
@@ -22,6 +22,6 @@
 #define PWM_MAX_DUTY_MOTOR_LEFT     1 << PWM_RESOLUTION_MOTOR_LEFT
 #define PWM_MAX_DUTY_MOTOR_RIGHT    1 << PWM_RESOLUTION_MOTOR_RIGHT
 #define PWM_MAX_DUTY_CASCADE        1 << PWM_RESOLUTION_CASCADE
-#define PWM_MIN_DUTY_BASE_GEAR      60.00
-#define PWM_MAX_DUTY_BASE_GEAR      100.00
+#define PWM_MIN_DUTY_BASE_GEAR      60
+#define PWM_MAX_DUTY_BASE_GEAR      100
 #endif

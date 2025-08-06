@@ -32,7 +32,7 @@ bool targetChanged = false;
 
 unsigned long lastPIDTime = 0;
 bool lastPID[5];
-unsigned long sampleTime = 10;
+unsigned long sampleTime = 30;
 
 
 const int SENSOR_LEFT_LEFT = 37;
@@ -266,11 +266,11 @@ float calculateError(bool ll, bool l, bool c, bool r, bool rr) {
  float weightedSum = 0;
 
 
- if (ll) { totalWeight += 0.5; weightedSum += -4; }
- if (l)  { totalWeight += 1.0; weightedSum += -2; }
- if (c)  { totalWeight += 1.5; weightedSum += 0; }
- if (r)  { totalWeight += 1.0; weightedSum += 2; }
- if (rr) { totalWeight += 0.5; weightedSum += 4; }
+ if (ll) { totalWeight += 1.0; weightedSum += -2; }
+ if (l)  { totalWeight += 1.0; weightedSum += -1; }
+ if (c)  { totalWeight += 1.0; weightedSum += 0; }
+ if (r)  { totalWeight += 1.0; weightedSum += 1; }
+ if (rr) { totalWeight += 1.0; weightedSum += 2; }
 
 
  if (totalWeight == 0) return currentPosition; // No line detected, maintain last position

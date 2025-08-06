@@ -15,4 +15,5 @@ void loop() {
 
     state_event_e event = process_input(&state_machine);
     process_event(&state_machine, event);
+
 }

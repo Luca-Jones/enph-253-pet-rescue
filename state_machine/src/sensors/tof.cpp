@@ -50,12 +50,16 @@ float tof_get_dist_to_object(const ToF_data *data) {
       7 .[ ][ ][ ][ ][ ][ ][ ][ ]
     **/
 
-    return (
-        data->distance_mm[8 * (7 - 3) + 3] + 
-        data->distance_mm[8 * (7 - 3) + 4] + 
-        data->distance_mm[8 * (7 - 4) + 3] + 
-        data->distance_mm[8 * (7 - 4) + 4]
+    float center_mean = (
+        data->distance_mm[8 * (7 - 3) + (7 - 3)] + 
+        data->distance_mm[8 * (7 - 4) + (7 - 3)] + 
+        data->distance_mm[8 * (7 - 3) + (7 - 4)] + 
+        data->distance_mm[8 * (7 - 4) + (7 - 4)]
     ) * 0.25f;
+
+    Serial.printf("dist = %.1f\n", center_mean);
+
+    return center_mean;
 }
 
 float tof_get_left_center_dist(const ToF_data *data) {
@@ -167,47 +171,72 @@ bool tof_right_cylinder_detected(const ToF_data *data) {
 
     /**
           0  1  2  3  4  5  6  7 
-      0 .[ ][ ][ ][ ][ ][ ][ ][ ]
+      0 .[ ][ ][ ][x][x][ ][ ][ ]
       1 .[ ][ ][ ][ ][ ][ ][ ][ ]
-      2 .[/][ ][ ][*][*][ ][ ][\]
-      3 .[/][ ][ ][*][*][ ][ ][\]
-      4 .[/][ ][ ][*][*][ ][ ][\]
-      5 .[/][ ][ ][*][*][ ][ ][\]
-      6 .[/][ ][ ][*][*][ ][ ][\]
+      2 .[/][ ][|][*][*][|][ ][\]
+      3 .[/][ ][|][*][*][|][ ][\]
+      4 .[/][ ][|][*][*][|][ ][\]
+      5 .[/][ ][|][*][*][|][ ][\]
+      6 .[/][ ][|][*][*][|][ ][\]
       7 .[ ][ ][ ][ ][ ][ ][ ][ ]
     **/
 
     // key: [8 * row + col]
-    float center_mean = (   data->distance_mm[8 * (7 - 2) + 3] + 
-                            data->distance_mm[8 * (7 - 3) + 3] +
-                            data->distance_mm[8 * (7 - 4) + 3] +
-                            data->distance_mm[8 * (7 - 5) + 3] +
-                            data->distance_mm[8 * (7 - 6) + 3] +
-                            data->distance_mm[8 * (7 - 2) + 4] + 
-                            data->distance_mm[8 * (7 - 3) + 4] +
-                            data->distance_mm[8 * (7 - 4) + 4] +
-                            data->distance_mm[8 * (7 - 5) + 4] +
-                            data->distance_mm[8 * (7 - 6) + 4]
-                        ) * 0.1f;
+    float center_mean = (   
+                            data->distance_mm[8 * (7 - 2) + (7 - 3)] + 
+                            data->distance_mm[8 * (7 - 3) + (7 - 3)] +
+                            data->distance_mm[8 * (7 - 4) + (7 - 3)] +
+                            data->distance_mm[8 * (7 - 5) + (7 - 3)] +
+                            data->distance_mm[8 * (7 - 6) + (7 - 3)] +
+                            data->distance_mm[8 * (7 - 2) + (7 - 4)] + 
+                            data->distance_mm[8 * (7 - 3) + (7 - 4)] +
+                            data->distance_mm[8 * (7 - 4) + (7 - 4)] +
+                            data->distance_mm[8 * (7 - 5) + (7 - 4)] +
+                            data->distance_mm[8 * (7 - 6) + (7 - 4)]
+                        ) / 10.0f;
 
-    float side_left_mean = (    data->distance_mm[8 * (7 - 2) + 0] + 
-                                data->distance_mm[8 * (7 - 3) + 0] +
-                                data->distance_mm[8 * (7 - 4) + 0] +
-                                data->distance_mm[8 * (7 - 5) + 0] +
-                                data->distance_mm[8 * (7 - 6) + 0]
-                            ) * 0.2f;
+    float far_left_mean = (    
+                                data->distance_mm[8 * (7 - 2) + (7 - 0)] + 
+                                data->distance_mm[8 * (7 - 3) + (7 - 0)] +
+                                data->distance_mm[8 * (7 - 4) + (7 - 0)] +
+                                data->distance_mm[8 * (7 - 5) + (7 - 0)] +
+                                data->distance_mm[8 * (7 - 6) + (7 - 0)]
+                            ) / 5.0f;
 
-    float side_right_mean = (   data->distance_mm[8 * (7 - 2) + 7] + 
-                                data->distance_mm[8 * (7 - 3) + 7] +
-                                data->distance_mm[8 * (7 - 4) + 7] +
-                                data->distance_mm[8 * (7 - 5) + 7] +
-                                data->distance_mm[8 * (7 - 6) + 7]
-                            ) * 0.2f;
+    float far_right_mean = (   
+                                data->distance_mm[8 * (7 - 2) + (7 - 7)] + 
+                                data->distance_mm[8 * (7 - 3) + (7 - 7)] +
+                                data->distance_mm[8 * (7 - 4) + (7 - 7)] +
+                                data->distance_mm[8 * (7 - 5) + (7 - 7)] +
+                                data->distance_mm[8 * (7 - 6) + (7 - 7)]
+                            ) / 5.0f;
+
+    float left_mean = (    
+                            data->distance_mm[8 * (7 - 2) + (7 - 2)] + 
+                            data->distance_mm[8 * (7 - 3) + (7 - 2)] +
+                            data->distance_mm[8 * (7 - 4) + (7 - 2)] +
+                            data->distance_mm[8 * (7 - 5) + (7 - 2)] +
+                            data->distance_mm[8 * (7 - 6) + (7 - 2)]
+                        ) / 5.0f;
+
+    float right_mean = (        
+                            data->distance_mm[8 * (7 - 2) + (7 - 5)] + 
+                            data->distance_mm[8 * (7 - 3) + (7 - 5)] +
+                            data->distance_mm[8 * (7 - 4) + (7 - 5)] +
+                            data->distance_mm[8 * (7 - 5) + (7 - 5)] +
+                            data->distance_mm[8 * (7 - 6) + (7 - 5)]
+                        ) / 5.0f;
     
-    // float side_mean_diff = fabs(side_left_mean - side_right_mean);
+    float top_mean = (data->distance_mm[8 * (7 - 0) + 3] + data->distance_mm[8 * (7 - 0) + 4]) / 2.0f;
     
-    Serial.printf("center mean = %f, left side mean = %f, right side mean = %f\n", center_mean, side_left_mean, side_right_mean);
+    Serial.printf("LL = %.1f, L = %.1f, C = %.1f, R = %.1f, RR = %.1f               top = %.1f,\n", 
+                   far_left_mean, left_mean, center_mean, right_mean, far_right_mean,         top_mean);
 
-    return (fabs(center_mean - side_right_mean) > 100.0f && fabs(center_mean - side_left_mean) > 100.0f);
+    return (    
+                fabs(far_right_mean - center_mean) > 100.0f && 
+                fabs(far_left_mean - center_mean) > 100.0f && 
+                top_mean > center_mean + 100.0f && 
+                fabs(left_mean - right_mean) < 30.0f
+            );
 
 }

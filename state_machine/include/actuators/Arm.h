@@ -15,7 +15,7 @@
 #define ARM_SERVO_2_ANGLE_MAX 270
 #define ARM_SERVO_2_ANGLE_OFFSET 10
 
-#define ARM_HOME_X 170
+#define ARM_HOME_X 200
 #define ARM_HOME_Y 40
 
 #define ARM_REACH_X 220
