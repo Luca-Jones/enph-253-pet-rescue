@@ -17,27 +17,27 @@ void setup() {
 
 void loop() {
     
-    Serial.println("target angle = 0");
-    Serial.printf("current angle = %d\n", mag_get_angle());
-    base_gear.write(0);
-    Serial.printf("real angle = %d\n\n", mag_get_angle());
-    delay(2000);
+    // Serial.println("target angle = 0");
+    // Serial.printf("current angle = %d\n", mag_get_angle());
+    // base_gear.write(0);
+    // Serial.printf("real angle = %d\n\n", mag_get_angle());
+    // delay(2000);
 
     Serial.println("target angle = 90");
     Serial.printf("current angle = %d\n", mag_get_angle());
     base_gear.write(90);
     Serial.printf("real angle = %d\n\n", mag_get_angle());
-    delay(2000);
+    delay(1500);
     
-    Serial.println("target angle = 170");
-    Serial.printf("current angle = %d\n", mag_get_angle());
-    base_gear.write(170);
-    Serial.printf("real angle = %d\n\n", mag_get_angle());
-    delay(2000);
+    // Serial.println("target angle = 170");
+    // Serial.printf("current angle = %d\n", mag_get_angle());
+    // base_gear.write(170);
+    // Serial.printf("real angle = %d\n\n", mag_get_angle());
+    // delay(2000);
     
     Serial.println("target angle = 270");
     Serial.printf("current angle = %d\n", mag_get_angle());
     base_gear.write(270);
     Serial.printf("real angle = %d\n\n", mag_get_angle());
-    delay(2000);
+    delay(1500);
 } 

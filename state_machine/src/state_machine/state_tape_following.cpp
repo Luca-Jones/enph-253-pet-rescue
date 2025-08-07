@@ -2,9 +2,8 @@
 #include <esp32-hal.h>
 #include <config/dir_config.h>
 
-#define TAPE_FOLLOWING_BASE_SPEED       50
-#define TAPE_FOLLOWING_MAX_SPEED        255
-#define TAPE_FOLLOWING_RECOVERY_SPEED   40
+#define TAPE_FOLLOWING_MAX_SPEED            255
+#define TAPE_FOLLOWING_RECOVERY_RATIO       0.8f
 
 #define KP 18
 #define KD 0
@@ -31,17 +30,26 @@ void state_tape_following_run(struct state_machine *state_machine) {
     bool ir_r  = digitalRead(PIN_IR_SENSOR_R);
     bool ir_rr = digitalRead(PIN_IR_SENSOR_RR);
 
+    if (last_tape_following_base_speed != tape_following_base_speed) {
+        last_tape_following_base_speed = tape_following_base_speed;
+        left_motor.write(tape_following_base_speed, LEFT_MOTOR_BACKWARD);
+        right_motor.write(tape_following_base_speed, RIGHT_MOTOR_BACKWARD);
+        delay(1200);
+        left_motor.stop();
+        right_motor.stop();
+    }
+
     float pid_output, error, proportional, derivative;
 
     if (!ir_ll && !ir_l && !ir_c && !ir_r && !ir_rr) {
         if (state_machine->last_ir_ll) {
-            control_motors(-TAPE_FOLLOWING_RECOVERY_SPEED);
+            control_motors(-TAPE_FOLLOWING_RECOVERY_RATIO * tape_following_base_speed);
         } else if (state_machine->last_ir_rr) {
-            control_motors(+TAPE_FOLLOWING_RECOVERY_SPEED);
+            control_motors(+TAPE_FOLLOWING_RECOVERY_RATIO * tape_following_base_speed);
         } else {
             // go straight to run over debris
-            left_motor.write(TAPE_FOLLOWING_BASE_SPEED, LEFT_MOTOR_FORWARD);
-            right_motor.write(TAPE_FOLLOWING_BASE_SPEED, RIGHT_MOTOR_FORWARD);
+            left_motor.write(tape_following_base_speed, LEFT_MOTOR_FORWARD);
+            right_motor.write(tape_following_base_speed, RIGHT_MOTOR_FORWARD);
         }
     } else {
         error = calculate_error(state_machine->last_error, ir_ll, ir_l, ir_c, ir_r, ir_rr);
@@ -69,25 +77,10 @@ void state_tape_following_run(struct state_machine *state_machine) {
 }
 
 void state_tape_following_enter(struct state_machine *state_machine, state_event_e event) {
-    
-    // if (dist_task_handle != NULL && eTaskGetState(dist_task_handle) != eSuspended) {
-    //     if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-    //         // Task is not using I2C right now (mutex is available)
-    //         vTaskSuspend(dist_task_handle);  // Now safe to suspend
-    //         #ifdef DEBUG
-    //         Serial.println("dist task suspended");
-    //         #endif
-    //         xSemaphoreGive(i2c_mutex);
-    //     } else {
-    //         // Mutex timeout - force suspend anyway (risky but prevents deadlock)
-    //         #ifdef DEBUG
-    //         Serial.println("Force suspending dist task - mutex timeout");
-    //         #endif
-    //         vTaskSuspend(dist_task_handle);
-    //     }
-    // }
 
-    if (tof_task_handle != NULL && eTaskGetState(tof_task_handle) == eSuspended) {
+    if (tof_task_handle != NULL && eTaskGetState(tof_task_handle) == eSuspended &&
+        event != EVENT_NONE && event != EVENT_FIRST_PET_GRASPED) {
+        
         vTaskResume(tof_task_handle);
         #ifdef DEBUG
         Serial.println("tof task resumed");
@@ -103,8 +96,8 @@ void state_tape_following_exit(struct state_machine *state_machine) {
     Serial.println("backing up...");
     #endif
 
-    left_motor.write(150, LEFT_MOTOR_BACKWARD);
-    right_motor.write(150, RIGHT_MOTOR_BACKWARD);
+    left_motor.write(tape_following_base_speed, LEFT_MOTOR_BACKWARD);
+    right_motor.write(tape_following_base_speed, RIGHT_MOTOR_BACKWARD);
     delay(100);
     left_motor.stop();
     right_motor.stop();
@@ -122,15 +115,15 @@ void state_tape_following_exit(struct state_machine *state_machine) {
             #ifdef DEBUG
             Serial.println("Force suspending tof task - mutex timeout");
             #endif
-            vTaskSuspend(dist_task_handle);
+            vTaskSuspend(tof_task_handle);
         }
     }
 }
 
 // positive output -> turning left (since the right motor gets more power)
 void control_motors(float pid_output) {
-    int left_speed = TAPE_FOLLOWING_BASE_SPEED - pid_output;
-    int right_speed = TAPE_FOLLOWING_BASE_SPEED + pid_output;
+    int left_speed = tape_following_base_speed - pid_output;
+    int right_speed = tape_following_base_speed + pid_output;
 
     left_speed = constrain(left_speed, -TAPE_FOLLOWING_MAX_SPEED, TAPE_FOLLOWING_MAX_SPEED);
     right_speed = constrain(right_speed, -TAPE_FOLLOWING_MAX_SPEED, TAPE_FOLLOWING_MAX_SPEED);

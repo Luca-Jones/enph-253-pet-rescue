@@ -55,6 +55,8 @@ extern ToF_data tof_data_claw;
 extern ToF_data tof_data_chassis;
 extern volatile bool ramp_detected;
 #define RAMP_TIME_S 12
+extern volatile int tape_following_base_speed;
+extern volatile int last_tape_following_base_speed;
 
 /* STATE MACHINE */
 

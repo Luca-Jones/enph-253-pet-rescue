@@ -53,6 +53,8 @@ ToF_data tof_data_claw;
 ToF_data tof_data_chassis;
 volatile bool switch_triggered = false;
 volatile bool ramp_detected = false;
+volatile int tape_following_base_speed;
+volatile int last_tape_following_base_speed;
 
 /* STATE TRANSITIONS */
 struct state_transition {
@@ -64,15 +66,15 @@ struct state_transition {
 // consult the diagram to understand these transitions
 static const struct state_transition state_transitions[] = {
     
-    // {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_RIGHT,   STATE_REACH             },
-    // {   STATE_REACH,            EVENT_PET_NEAR,             STATE_CLOSE_CLAW        },
-    // {   STATE_CLOSE_CLAW,       EVENT_PET_GRASPED,          STATE_STORE             },
-    // {   STATE_CLOSE_CLAW,       EVENT_FIRST_PET_GRASPED,    STATE_TAPE_FOLLOWING    },
-    // {   STATE_TAPE_FOLLOWING,   EVENT_RAMP,                 STATE_DROP_OFF          },
-    // {   STATE_DROP_OFF,         EVENT_PET_STORED,           STATE_TAPE_FOLLOWING    },
-    // {   STATE_STORE,            EVENT_PET_STORED,           STATE_TAPE_FOLLOWING    },
-    {STATE_TAPE_FOLLOWING, EVENT_EDGE_DETECTED, STATE_RETURN_PETS},
-    {STATE_RETURN_PETS, EVENT_PETS_RETURNED, STATE_WAIT},
+    {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_RIGHT,   STATE_REACH             },
+    {   STATE_REACH,            EVENT_PET_NEAR,             STATE_CLOSE_CLAW        },
+    {   STATE_CLOSE_CLAW,       EVENT_PET_GRASPED,          STATE_STORE             },
+    {   STATE_CLOSE_CLAW,       EVENT_FIRST_PET_GRASPED,    STATE_TAPE_FOLLOWING    },
+    {   STATE_TAPE_FOLLOWING,   EVENT_RAMP,                 STATE_DROP_OFF          },
+    {   STATE_DROP_OFF,         EVENT_PET_STORED,           STATE_TAPE_FOLLOWING    },
+    {   STATE_STORE,            EVENT_PET_STORED,           STATE_TAPE_FOLLOWING    },
+    {   STATE_TAPE_FOLLOWING,   EVENT_EDGE_DETECTED,        STATE_RETURN_PETS},
+    {   STATE_RETURN_PETS,      EVENT_PETS_RETURNED,        STATE_WAIT},
 };
 
 
@@ -162,14 +164,26 @@ void state_machine_init(struct state_machine *state_machine) {
     );
 
     if (dist_task_result == pdPASS && dist_task_handle != NULL) {
+        // Wait for task to actually start before suspending
+        vTaskDelay(pdMS_TO_TICKS(50)); 
         vTaskSuspend(dist_task_handle);
+        vTaskDelay(pdMS_TO_TICKS(10)); // Give time for suspension to take effect
         #ifdef DEBUG
         Serial.println("Distance task created successfully");
         #endif
+        
+        // Check suspension multiple times if needed
+        int attempts = 0;
+        while (eTaskGetState(dist_task_handle) != eSuspended && attempts < 5) {
+            vTaskSuspend(dist_task_handle);
+            vTaskDelay(pdMS_TO_TICKS(10));
+            attempts++;
+        }
+        
         if (eTaskGetState(dist_task_handle) == eSuspended) {
-            Serial.println("dist task suspended!");
+            Serial.printf("dist task suspended after %d attempts.", attempts);
         } else {
-            Serial.println("dist task failed to suspend...");
+            Serial.printf("dist task failed to suspend after %d attempts... state: %d\n", attempts, eTaskGetState(dist_task_handle));
         }
     } else {
         #ifdef DEBUG
@@ -220,6 +234,9 @@ void state_machine_init(struct state_machine *state_machine) {
     pinMode(PIN_IR_SENSOR_C, INPUT);
     pinMode(PIN_IR_SENSOR_R, INPUT);
     pinMode(PIN_IR_SENSOR_RR, INPUT);
+
+    tape_following_base_speed = 50;
+    last_tape_following_base_speed = 50;
 
     // set up motors
     left_motor.setup();
@@ -320,7 +337,7 @@ void tof_input_task(void *pvParameters) {
                 for (int row = 0; row < 8; row++) {
                     for (int col = 0; col < 8; col++) {
                         int i = row * 8 + col;
-                        distMap[7 - row][7 - col] = tof_data_chassis.distance_mm[i]; // vertically flipped
+                        distMap[7 - row][7 - col] = tof_data_chassis.distance_mm[i];
                     }
                 }
 
@@ -331,20 +348,31 @@ void tof_input_task(void *pvParameters) {
                     Serial.println("");
                 }
                 Serial.println("");
+
+                if (tof_right_something_ahead(&tof_data_chassis)) {
+                    #ifdef DEBUG
+                    Serial.println("Something ahead!");
+                    #endif
+                    tape_following_base_speed = 20;
+                } else {
+                    // tape_following_base_speed = 50;
+                }
                 
                 if (
-                    mean_distance_mm >= 90 &&
-                    mean_distance_mm <= 240 &&
-                    tof_right_cylinder_detected(&tof_data_chassis)
+                    mean_distance_mm >= 50 &&
+                    mean_distance_mm <= 240
                 ) {
-                    tof_reading = EVENT_PET_DETECTED_RIGHT;
-                    // Don't break - suspend this task instead
-                    #ifdef DEBUG
-                    Serial.println("pet detected right! ToF task suspended!");
-                    #endif
-                    
-                    xSemaphoreGive(i2c_mutex);
-                    vTaskSuspend(NULL);
+                    // tape_following_base_speed = 20;
+                    if (tof_right_cylinder_detected(&tof_data_chassis)) {
+                        tof_reading = EVENT_PET_DETECTED_RIGHT;
+                        // Don't break - suspend this task instead
+                        #ifdef DEBUG
+                        Serial.println("pet detected right! ToF task suspended!");
+                        #endif
+                        
+                        xSemaphoreGive(i2c_mutex);
+                        vTaskSuspend(NULL);
+                    }
                 }
             }
 
@@ -373,6 +401,10 @@ void dist_input_task(void *pvParamters) {
             Serial.printf("CRITICAL: Dist task low stack: %d bytes free\n", stackHighWaterMark);
             #endif
         }
+
+        #ifdef DEBUG
+        Serial.println("dist task running...");
+        #endif
 
         if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, pdMS_TO_TICKS(500)) == pdTRUE) {
             if (
@@ -418,14 +450,16 @@ state_event_e process_input(struct state_machine *state_machine) {
     
     // platform edge detection
     int sonar_dist = sonar_get_distance_cm();
-    if (sonar_dist > SONAR_EDGE_DISTANCE_CM) {
+    if (sonar_dist > 30) {
         return EVENT_EDGE_DETECTED;
     }
 
     // poll the tof background task
     if (tof_reading != EVENT_NONE) {
         state_event_e event = tof_reading;
-        tof_reading = EVENT_NONE; // safe to modify shared data after suspending both tasks
+        tof_reading = EVENT_NONE;
+        tape_following_base_speed = 50;
+        last_tape_following_base_speed = 50;
         return event;
     }
 
@@ -588,7 +622,7 @@ void print_event(state_event_e event) {
             Serial.println("RAMP DETECTED");
             break;
         case EVENT_FIRST_PET_GRASPED:
-            Serial.println("1st PET GRASPED");
+            Serial.println("FIRST PET GRASPED");
             break;
         default:
             break;
