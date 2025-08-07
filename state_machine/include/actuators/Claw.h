@@ -5,6 +5,6 @@
 
 #define CLAW_OPEN       180
 #define CLAW_SEMI_OPEN  160
-#define CLAW_CLOSED     110
+#define CLAW_CLOSED     105
 
 #endif

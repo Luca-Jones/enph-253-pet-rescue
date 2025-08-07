@@ -27,7 +27,7 @@ public:
      * @warning Settings the PWM duty cycle limits incorrectly and then 
      * driving the servo may cause damage to the servo. Read the datasheet carefully.
      * @param pin the GPIO pin to attach.
-     * @param channel the channel to attach the pin to (0-7).
+     * @param channel the channel to attach the pin to (0-15).
      * @param min_us the PWM duty cycle for the min angle in microseconds.
      * @param max_us the PWM duty cycle for the max angle in microseconds.
      */

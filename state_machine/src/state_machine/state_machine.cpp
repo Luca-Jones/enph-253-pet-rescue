@@ -278,21 +278,21 @@ void tof_input_task(void *pvParameters) {
             
             if (tof_get_data(&tof_claw, TOF_CHANNEL_CLAW, &tof_data_claw)) {
                 
-                Serial.println("Claw grid:");
-                for (int row = 0; row < 8; row++) {
-                    for (int col = 0; col < 8; col++) {
-                        int i = row * 8 + col;
-                        distMap[7 - row][col] = tof_data_claw.distance_mm[i]; // vertically flipped
-                    }
-                }
+                // Serial.println("Claw grid:");
+                // for (int row = 0; row < 8; row++) {
+                //     for (int col = 0; col < 8; col++) {
+                //         int i = row * 8 + col;
+                //         distMap[7 - row][col] = tof_data_claw.distance_mm[i]; // vertically flipped
+                //     }
+                // }
 
-                for (int row = 0; row < 8; row ++) {
-                    for (int col = 0; col < 8; col++) {
-                        Serial.printf("%.0f ", distMap[row][col]);
-                    }
-                    Serial.println("");
-                }
-                Serial.println("");
+                // for (int row = 0; row < 8; row ++) {
+                //     for (int col = 0; col < 8; col++) {
+                //         Serial.printf("%.0f ", distMap[row][col]);
+                //     }
+                //     Serial.println("");
+                // }
+                // Serial.println("");
 
                 mean_distance_mm = tof_get_left_center_dist(&tof_data_claw);
                 
