@@ -6,13 +6,13 @@
 #define PWM_CHANNEL_SERVO_3         2
 #define PWM_CHANNEL_MOTOR_LEFT      7 // was 3 (RK changed)
 #define PWM_CHANNEL_MOTOR_RIGHT     4
-#define PWM_CHANNEL_CASCADE         5
-#define PWM_CHANNEL_BASE_GEAR       6
+#define PWM_CHANNEL_CASCADE         6
+#define PWM_CHANNEL_BASE_GEAR       5
 
 #define PWM_FRQ_HZ_MOTOR_LEFT       1000
 #define PWM_FRQ_HZ_MOTOR_RIGHT      1000
 #define PWM_FRQ_HZ_CASCADE          1000
-#define PWM_FRQ_HZ_BASE_GEAR        1000
+#define PWM_FRQ_HZ_BASE_GEAR        50
 
 #define PWM_RESOLUTION_MOTOR_LEFT   8
 #define PWM_RESOLUTION_MOTOR_RIGHT  8

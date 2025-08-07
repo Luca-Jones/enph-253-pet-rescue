@@ -18,8 +18,11 @@ Motor::~Motor() {
 
 void Motor::setup() {
     pinMode(this->dir_pin, OUTPUT);
+    delayMicroseconds(10);
     ledcSetup(pwm_channel, pwm_frequency, pwm_resolution);
+    delayMicroseconds(10);
     ledcAttachPin(pwm_pin, pwm_channel);
+    delayMicroseconds(10);
 }
 
 void Motor::write(int speed, int direction) {

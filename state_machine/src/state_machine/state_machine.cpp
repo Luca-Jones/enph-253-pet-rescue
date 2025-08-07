@@ -67,6 +67,8 @@ struct state_transition {
 // consult the diagram to understand these transitions
 static const struct state_transition state_transitions[] = {
     
+    {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_LEFT,    STATE_REACH             },
+    {   STATE_TAPE_FOLLOWING,   EVENT_PILLAR_DETECTED,      STATE_REACH             },
     {   STATE_TAPE_FOLLOWING,   EVENT_PET_DETECTED_RIGHT,   STATE_REACH             },
     {   STATE_REACH,            EVENT_PET_NEAR,             STATE_CLOSE_CLAW        },
     {   STATE_CLOSE_CLAW,       EVENT_PET_GRASPED,          STATE_STORE             },
@@ -74,8 +76,8 @@ static const struct state_transition state_transitions[] = {
     {   STATE_TAPE_FOLLOWING,   EVENT_RAMP,                 STATE_DROP_OFF          },
     {   STATE_DROP_OFF,         EVENT_PET_STORED,           STATE_TAPE_FOLLOWING    },
     {   STATE_STORE,            EVENT_PET_STORED,           STATE_TAPE_FOLLOWING    },
-    {   STATE_TAPE_FOLLOWING,   EVENT_EDGE_DETECTED,        STATE_RETURN_PETS},
-    {   STATE_RETURN_PETS,      EVENT_PETS_RETURNED,        STATE_WAIT},
+    {   STATE_TAPE_FOLLOWING,   EVENT_EDGE_DETECTED,        STATE_RETURN_PETS       },
+    {   STATE_RETURN_PETS,      EVENT_PETS_RETURNED,        STATE_WAIT              },
 };
 
 
@@ -243,11 +245,8 @@ void state_machine_init(struct state_machine *state_machine) {
     // set up motors
     left_motor.setup();
     right_motor.setup();
-    cascade_motor.setup();
     base_gear.setup();      // sets up the motor and magnetic encoder internally
-
-    // set up claw switch
-    pinMode(PIN_LIMIT_SWITCH, INPUT_PULLUP);
+    cascade_motor.setup();
 
     #ifdef DEBUG
     print_event(state_machine->internal_event);
@@ -295,52 +294,50 @@ void tof_input_task(void *pvParameters) {
                 }
                 Serial.println("");
 
-        //         mean_distance_mm = tof_get_left_center_dist(&tof_data_claw);
+                mean_distance_mm = tof_get_left_center_dist(&tof_data_claw);
                 
-        //         if (tof_left_something_ahead(&tof_data_claw)) {
-        //             #ifdef DEBUG
-        //             Serial.println("Something ahead!");
-        //             #endif
-        //             tape_following_base_speed = 20;
-        //         }
+                if (tof_left_something_ahead(&tof_data_claw)) {
+                    #ifdef DEBUG
+                    Serial.println("Something ahead!");
+                    #endif
+                    tape_following_base_speed = 20;
+                }
 
-        //         if (tape_following_base_speed == 20) {
-        //             close_iterations++;
-        //             if (close_iterations >= 50) {
-        //                 tape_following_base_speed = TAPE_FOLLOWING_DEFAULT_SPEED;
-        //                 close_iterations = 0;
-        //             }
-        //         }
+                if (tape_following_base_speed == 20) {
+                    close_iterations++;
+                    if (close_iterations >= 50) {
+                        tape_following_base_speed = TAPE_FOLLOWING_DEFAULT_SPEED;
+                        close_iterations = 0;
+                    }
+                }
 
-        //         if (
-        //             mean_distance_mm >= TOF_CENTER_DIST_LOWER_THRESHOLD_MM && 
-        //             mean_distance_mm <= TOF_CENTER_DIST_UPPER_THRESHOLD_MM
-        //         ) {
+                if (
+                    mean_distance_mm >= TOF_CENTER_DIST_LOWER_THRESHOLD_MM && 
+                    mean_distance_mm <= TOF_CENTER_DIST_UPPER_THRESHOLD_MM
+                ) {
 
-        //             if (tof_left_cylinder_detected(&tof_data_claw)) {
+                    if (tof_get_center_reflectance(&tof_data_claw) <= 10.0f) {
 
-        //             }
+                        tof_reading = EVENT_PILLAR_DETECTED;
+                        // Don't break - suspend this task instead
+                        #ifdef DEBUG
+                        Serial.println("pillar detected! ToF task suspended!");
+                        #endif
 
-        //             if (tof_get_center_reflectance(&tof_data_claw) <= 10.0f) {
-        //                 tof_reading = EVENT_PILLAR_DETECTED;
-        //                 // Don't break - suspend this task instead
-        //                 #ifdef DEBUG
-        //                 Serial.println("pillar detected! ToF task suspended!");
-        //                 #endif
+                        xSemaphoreGive(i2c_mutex);
+                        vTaskSuspend(NULL);
+                    } else if (tof_left_cylinder_detected(&tof_data_claw)) {
 
-        //                 xSemaphoreGive(i2c_mutex);
-        //                 vTaskSuspend(NULL);
-        //             } else {
-        //                 tof_reading = EVENT_PET_DETECTED_LEFT;
-        //                 // Don't break - suspend this task instead
-        //                 #ifdef DEBUG
-        //                 Serial.println("pet detected left! ToF task suspended!");
-        //                 #endif  
+                        tof_reading = EVENT_PET_DETECTED_LEFT;
+                        // Don't break - suspend this task instead
+                        #ifdef DEBUG
+                        Serial.println("pet detected left! ToF task suspended!");
+                        #endif  
                         
-        //                 xSemaphoreGive(i2c_mutex);
-        //                 vTaskSuspend(NULL);
-        //             }
-        //         }
+                        xSemaphoreGive(i2c_mutex);
+                        vTaskSuspend(NULL);
+                    }
+                }
             }
 
             xSemaphoreGive(i2c_mutex);
@@ -429,10 +426,6 @@ void dist_input_task(void *pvParamters) {
             Serial.printf("CRITICAL: Dist task low stack: %d bytes free\n", stackHighWaterMark);
             #endif
         }
-
-        #ifdef DEBUG
-        Serial.println("dist task running...");
-        #endif
 
         if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, pdMS_TO_TICKS(500)) == pdTRUE) {
             if (
