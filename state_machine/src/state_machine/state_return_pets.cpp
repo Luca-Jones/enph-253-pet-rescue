@@ -9,7 +9,7 @@ void state_return_pets_run(struct state_machine *state_machine) {
     // drive backwards for some time, then stop
     left_motor.write(200, LEFT_MOTOR_BACKWARD);
     right_motor.write(200, RIGHT_MOTOR_BACKWARD);
-    delay(50);
+    delay(100);
     left_motor.stop();
     right_motor.stop();
 
@@ -18,10 +18,12 @@ void state_return_pets_run(struct state_machine *state_machine) {
     delay(CASCADE_LIFT_TIME_MS);
     cascade_motor.stop();
 
+    delay(100);
+
     // drive backwards for some time, then stop
     left_motor.write(150, LEFT_MOTOR_BACKWARD);
     right_motor.write(150, RIGHT_MOTOR_BACKWARD);
-    delay(250);
+    delay(500);
     left_motor.stop();
     right_motor.stop();
 
@@ -31,9 +33,9 @@ void state_return_pets_run(struct state_machine *state_machine) {
     cascade_motor.stop();
     
     // move a little bit forwards
-    left_motor.write(120, LEFT_MOTOR_FORWARD);
-    right_motor.write(120, RIGHT_MOTOR_FORWARD);
-    delay(300);
+    left_motor.write(150, LEFT_MOTOR_FORWARD);
+    right_motor.write(150, RIGHT_MOTOR_FORWARD);
+    delay(600);
     left_motor.stop();
     right_motor.stop();
     

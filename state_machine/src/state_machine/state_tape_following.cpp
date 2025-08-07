@@ -3,9 +3,9 @@
 #include <config/dir_config.h>
 
 #define TAPE_FOLLOWING_MAX_SPEED            255
-#define TAPE_FOLLOWING_RECOVERY_RATIO       0.8f
+#define TAPE_FOLLOWING_RECOVERY_RATIO       1.0f
 
-#define KP 30
+#define KP 20
 #define KD 0
 
 #define TAPE_FOLLOWING_PERIOD 30
@@ -30,7 +30,7 @@ void state_tape_following_run(struct state_machine *state_machine) {
     bool ir_r  = digitalRead(PIN_IR_SENSOR_R);
     bool ir_rr = digitalRead(PIN_IR_SENSOR_RR);
 
-    if (last_tape_following_base_speed != tape_following_base_speed) {
+    if (tape_following_base_speed < last_tape_following_base_speed) {
         last_tape_following_base_speed = tape_following_base_speed;
         left_motor.write(20, LEFT_MOTOR_BACKWARD);
         right_motor.write(20, RIGHT_MOTOR_BACKWARD);
@@ -48,14 +48,16 @@ void state_tape_following_run(struct state_machine *state_machine) {
             control_motors(+TAPE_FOLLOWING_RECOVERY_RATIO * tape_following_base_speed);
         } else {
             state_machine->no_ir_counter++;
-            if(state_machine->no_ir_counter >= 35) {
-                // go straight to run over debris
-                left_motor.write(150, LEFT_MOTOR_FORWARD);
-                right_motor.write(150, RIGHT_MOTOR_FORWARD);
-            } else {
-                left_motor.write(tape_following_base_speed, LEFT_MOTOR_FORWARD);
-                right_motor.write(tape_following_base_speed, RIGHT_MOTOR_FORWARD);
-            }
+            // if(state_machine->no_ir_counter >= 45) {
+            //     // go straight to run over debris
+            //     left_motor.write(80, LEFT_MOTOR_FORWARD);
+            //     right_motor.write(80, RIGHT_MOTOR_FORWARD);
+            // } else {
+            //     left_motor.write(tape_following_base_speed, LEFT_MOTOR_FORWARD);
+            //     right_motor.write(tape_following_base_speed, RIGHT_MOTOR_FORWARD);
+            // }
+            left_motor.write(tape_following_base_speed, LEFT_MOTOR_FORWARD);
+            right_motor.write(tape_following_base_speed, RIGHT_MOTOR_FORWARD);
         }
     } else {
 
@@ -105,14 +107,14 @@ void state_tape_following_exit(struct state_machine *state_machine) {
     Serial.println("backing up...");
     #endif
 
-    // left_motor.write(tape_following_base_speed, LEFT_MOTOR_BACKWARD);
-    // right_motor.write(tape_following_base_speed, RIGHT_MOTOR_BACKWARD);
-    // delay(70);
+    left_motor.write(tape_following_base_speed, LEFT_MOTOR_BACKWARD);
+    right_motor.write(tape_following_base_speed, RIGHT_MOTOR_BACKWARD);
+    delay(100);
     left_motor.stop();
     right_motor.stop();
 
     if (tof_task_handle != NULL && eTaskGetState(tof_task_handle) != eSuspended) {
-        if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, pdMS_TO_TICKS(500)) == pdTRUE) {
+        if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, pdMS_TO_TICKS(5000)) == pdTRUE) {
             // Task is not using I2C right now (mutex is available)
             vTaskSuspend(tof_task_handle);  // Now safe to suspend
             #ifdef DEBUG

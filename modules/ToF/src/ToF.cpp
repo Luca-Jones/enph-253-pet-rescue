@@ -127,7 +127,7 @@ void loop() {
   if (tof.isDataReady()) {
     unsigned long before = millis();
     if (tof.getRangingData(&result)) {
-      Serial.printf("time elapsed = %lu\n", millis() - before);
+      // Serial.printf("time elapsed = %lu\n", millis() - before);
       CreateDistanceMap(distMap, result);
       float meanDistance = getMeanCenterDistance(distMap);
 

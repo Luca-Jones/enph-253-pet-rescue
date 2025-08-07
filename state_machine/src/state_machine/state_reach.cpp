@@ -8,6 +8,7 @@ static void state_reach_run(struct state_machine *state_machine) {
     int x,y;
     arm.get_pos(&x, &y);
     arm.move_to_pos(x + REACH_STEP, y);
+    delay(50);
 }
 
 void state_reach_enter(struct state_machine *state_machine, state_event_e event) {
@@ -15,9 +16,10 @@ void state_reach_enter(struct state_machine *state_machine, state_event_e event)
     if (state_machine->arm_in_start_pos) {
         arm.lerp_to_pos(ARM_RAISED_X, ARM_RAISED_Y, 500);
         state_machine->arm_in_start_pos = false;
-        delay(1000);
+        delay(300);
         base_gear.write(BASE_GEAR_HOME);
-        arm.lerp_to_pos(ARM_HOME_X, ARM_HOME_Y, 1000);
+        arm.move_to_pos(ARM_HOME_X, ARM_HOME_Y);
+        delay(500);
         claw.write(CLAW_OPEN);
     }
     
