@@ -352,21 +352,21 @@ void tof_input_task(void *pvParameters) {
             if (tof_get_data(&tof_chassis, TOF_CHANNEL_CHASSIS, &tof_data_chassis)) {
                 mean_distance_mm = tof_get_right_center_dist(&tof_data_chassis);
 
-                // Serial.println("Chassis grid:");
-                // for (int row = 0; row < 8; row++) {
-                //     for (int col = 0; col < 8; col++) {
-                //         int i = row * 8 + col;
-                //         distMap[7 - row][7 - col] = tof_data_chassis.distance_mm[i];
-                //     }
-                // }
+                Serial.println("Chassis grid:");
+                for (int row = 0; row < 8; row++) {
+                    for (int col = 0; col < 8; col++) {
+                        int i = row * 8 + col;
+                        distMap[7 - row][7 - col] = tof_data_chassis.distance_mm[i];
+                    }
+                }
 
-                // for (int row = 0; row < 8; row ++) {
-                //     for (int col = 0; col < 8; col++) {
-                //         Serial.printf("%.0f ", distMap[row][col]);
-                //     }
-                //     Serial.println("");
-                // }
-                // Serial.println("");
+                for (int row = 0; row < 8; row ++) {
+                    for (int col = 0; col < 8; col++) {
+                        Serial.printf("%.0f ", distMap[row][col]);
+                    }
+                    Serial.println("");
+                }
+                Serial.println("");
 
                 if (tof_right_something_ahead(&tof_data_chassis)) {
                     #ifdef DEBUG
