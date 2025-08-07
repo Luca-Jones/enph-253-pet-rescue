@@ -40,6 +40,7 @@ BaseGear base_gear = BaseGear(&base_gear_motor);
 Motor left_motor(PIN_MOTOR_LEFT_PWM, PWM_CHANNEL_MOTOR_LEFT, PWM_FRQ_HZ_MOTOR_LEFT, PWM_RESOLUTION_MOTOR_LEFT, PIN_MOTOR_LEFT_DIR);
 Motor right_motor(PIN_MOTOR_RIGHT_PWM, PWM_CHANNEL_MOTOR_RIGHT, PWM_FRQ_HZ_MOTOR_RIGHT, PWM_RESOLUTION_MOTOR_RIGHT, PIN_MOTOR_RIGHT_DIR);
 Motor cascade_motor(PIN_CASCADE_PWM, PWM_CHANNEL_CASCADE, PWM_FRQ_HZ_CASCADE, PWM_RESOLUTION_CASCADE, PIN_CASCADE_DIR);
+#define TAPE_FOLLOWING_DEFAULT_SPEED 70
 
 /* Sensors */
 SemaphoreHandle_t i2c_mutex;
@@ -235,8 +236,8 @@ void state_machine_init(struct state_machine *state_machine) {
     pinMode(PIN_IR_SENSOR_R, INPUT);
     pinMode(PIN_IR_SENSOR_RR, INPUT);
 
-    tape_following_base_speed = 50;
-    last_tape_following_base_speed = 50;
+    tape_following_base_speed = TAPE_FOLLOWING_DEFAULT_SPEED;
+    last_tape_following_base_speed = TAPE_FOLLOWING_DEFAULT_SPEED;
 
     // set up motors
     left_motor.setup();
@@ -261,6 +262,7 @@ void tof_input_task(void *pvParameters) {
 
     float mean_distance_mm;
     float distMap[8][8];
+    int close_iterations = 0;
 
     for (;;) {
 
@@ -354,8 +356,14 @@ void tof_input_task(void *pvParameters) {
                     Serial.println("Something ahead!");
                     #endif
                     tape_following_base_speed = 20;
-                } else {
-                    // tape_following_base_speed = 50;
+                }
+
+                if (tape_following_base_speed == 20) {
+                    close_iterations++;
+                    if (close_iterations >= 50) {
+                        tape_following_base_speed = TAPE_FOLLOWING_DEFAULT_SPEED;
+                        close_iterations = 0;
+                    }
                 }
                 
                 if (
@@ -458,8 +466,8 @@ state_event_e process_input(struct state_machine *state_machine) {
     if (tof_reading != EVENT_NONE) {
         state_event_e event = tof_reading;
         tof_reading = EVENT_NONE;
-        tape_following_base_speed = 50;
-        last_tape_following_base_speed = 50;
+        tape_following_base_speed = TAPE_FOLLOWING_DEFAULT_SPEED;
+        last_tape_following_base_speed = TAPE_FOLLOWING_DEFAULT_SPEED;
         return event;
     }
 

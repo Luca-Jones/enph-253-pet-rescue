@@ -66,8 +66,8 @@ void loop() {
     // claw.write(CLAW_OPEN);                                  // let go of the pet
     // delay(5000);
 
-    claw.write(110);
-    delay(3000);
+    // claw.write(110);
+    // delay(3000);
     claw.write(180);
     delay(3000);
 

@@ -5,7 +5,7 @@
 #define TAPE_FOLLOWING_MAX_SPEED            255
 #define TAPE_FOLLOWING_RECOVERY_RATIO       0.8f
 
-#define KP 18
+#define KP 30
 #define KD 0
 
 #define TAPE_FOLLOWING_PERIOD 30
@@ -32,9 +32,9 @@ void state_tape_following_run(struct state_machine *state_machine) {
 
     if (last_tape_following_base_speed != tape_following_base_speed) {
         last_tape_following_base_speed = tape_following_base_speed;
-        left_motor.write(tape_following_base_speed, LEFT_MOTOR_BACKWARD);
-        right_motor.write(tape_following_base_speed, RIGHT_MOTOR_BACKWARD);
-        delay(1200);
+        left_motor.write(20, LEFT_MOTOR_BACKWARD);
+        right_motor.write(20, RIGHT_MOTOR_BACKWARD);
+        delay(800);
         left_motor.stop();
         right_motor.stop();
     }
@@ -96,9 +96,9 @@ void state_tape_following_exit(struct state_machine *state_machine) {
     Serial.println("backing up...");
     #endif
 
-    left_motor.write(tape_following_base_speed, LEFT_MOTOR_BACKWARD);
-    right_motor.write(tape_following_base_speed, RIGHT_MOTOR_BACKWARD);
-    delay(100);
+    // left_motor.write(tape_following_base_speed, LEFT_MOTOR_BACKWARD);
+    // right_motor.write(tape_following_base_speed, RIGHT_MOTOR_BACKWARD);
+    // delay(70);
     left_motor.stop();
     right_motor.stop();
 
