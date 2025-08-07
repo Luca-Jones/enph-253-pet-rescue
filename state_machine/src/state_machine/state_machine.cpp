@@ -258,7 +258,7 @@ void state_machine_init(struct state_machine *state_machine) {
 void tof_input_task(void *pvParameters) {
 
     // Wait a bit to ensure everything is initialized
-    vTaskDelay(pdMS_TO_TICKS(6000));
+    vTaskDelay(pdMS_TO_TICKS(6500));
 
     float mean_distance_mm;
     float distMap[8][8];

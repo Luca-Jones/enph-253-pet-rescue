@@ -175,7 +175,7 @@ bool tof_right_something_ahead(const ToF_data *data) {
                             data->distance_mm[8 * (7 - 4) + (7 - 7)]
                         ) / 6.0f;
 
-    return ahead_mean > 50 && ahead_mean < 240 && behind_mean > ahead_mean + 100;
+    return ahead_mean > 50 && ahead_mean < 240 && behind_mean > ahead_mean + 100 && ahead_mean < left_left_mean;
 
 }
 
@@ -230,15 +230,15 @@ bool tof_right_cylinder_detected(const ToF_data *data) {
     float center_mean = (   
                             data->distance_mm[8 * (7 - 2) + (7 - 3)] + 
                             data->distance_mm[8 * (7 - 3) + (7 - 3)] +
-                            // data->distance_mm[8 * (7 - 4) + (7 - 3)] +
+                            data->distance_mm[8 * (7 - 4) + (7 - 3)] +
                             // data->distance_mm[8 * (7 - 5) + (7 - 3)] +
                             // data->distance_mm[8 * (7 - 6) + (7 - 3)] +
                             data->distance_mm[8 * (7 - 2) + (7 - 4)] + 
-                            data->distance_mm[8 * (7 - 3) + (7 - 4)]
-                            // data->distance_mm[8 * (7 - 4) + (7 - 4)] 
+                            data->distance_mm[8 * (7 - 3) + (7 - 4)] +
+                            data->distance_mm[8 * (7 - 4) + (7 - 4)] 
                             // data->distance_mm[8 * (7 - 5) + (7 - 4)] +
                             // data->distance_mm[8 * (7 - 6) + (7 - 4)]
-                        ) / 4.0f;
+                        ) / 6.0f;
 
     float far_left_mean = (    
                                 data->distance_mm[8 * (7 - 2) + (7 - 0)] + 

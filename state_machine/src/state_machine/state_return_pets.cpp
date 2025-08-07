@@ -6,7 +6,7 @@
 
 void state_return_pets_run(struct state_machine *state_machine) {
 
-    // drive backwards for some time, then stop
+    // jolt back
     left_motor.write(200, LEFT_MOTOR_BACKWARD);
     right_motor.write(200, RIGHT_MOTOR_BACKWARD);
     delay(100);
@@ -23,7 +23,7 @@ void state_return_pets_run(struct state_machine *state_machine) {
     // drive backwards for some time, then stop
     left_motor.write(150, LEFT_MOTOR_BACKWARD);
     right_motor.write(150, RIGHT_MOTOR_BACKWARD);
-    delay(500);
+    delay(750);
     left_motor.stop();
     right_motor.stop();
 
@@ -35,7 +35,7 @@ void state_return_pets_run(struct state_machine *state_machine) {
     // move a little bit forwards
     left_motor.write(150, LEFT_MOTOR_FORWARD);
     right_motor.write(150, RIGHT_MOTOR_FORWARD);
-    delay(600);
+    delay(750);
     left_motor.stop();
     right_motor.stop();
     
