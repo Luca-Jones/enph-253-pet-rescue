@@ -4,7 +4,7 @@
 /* The claw is a servo object with the following angle positions */
 
 #define CLAW_OPEN       180
-#define CLAW_SEMI_OPEN  160
+#define CLAW_SEMI_OPEN  135
 #define CLAW_CLOSED     105
 
 #endif

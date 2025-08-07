@@ -34,7 +34,7 @@ void state_tape_following_run(struct state_machine *state_machine) {
         last_tape_following_base_speed = tape_following_base_speed;
         left_motor.write(20, LEFT_MOTOR_BACKWARD);
         right_motor.write(20, RIGHT_MOTOR_BACKWARD);
-        delay(800);
+        delay(1200);
         left_motor.stop();
         right_motor.stop();
     }
@@ -43,21 +43,23 @@ void state_tape_following_run(struct state_machine *state_machine) {
 
     if (!ir_ll && !ir_l && !ir_c && !ir_r && !ir_rr) {
         if (state_machine->last_ir_ll) {
+            state_machine->no_ir_counter = 0;
             control_motors(-TAPE_FOLLOWING_RECOVERY_RATIO * tape_following_base_speed);
         } else if (state_machine->last_ir_rr) {
+            state_machine->no_ir_counter = 0;
             control_motors(+TAPE_FOLLOWING_RECOVERY_RATIO * tape_following_base_speed);
         } else {
             state_machine->no_ir_counter++;
-            // if(state_machine->no_ir_counter >= 45) {
-            //     // go straight to run over debris
-            //     left_motor.write(80, LEFT_MOTOR_FORWARD);
-            //     right_motor.write(80, RIGHT_MOTOR_FORWARD);
-            // } else {
-            //     left_motor.write(tape_following_base_speed, LEFT_MOTOR_FORWARD);
-            //     right_motor.write(tape_following_base_speed, RIGHT_MOTOR_FORWARD);
-            // }
-            left_motor.write(tape_following_base_speed, LEFT_MOTOR_FORWARD);
-            right_motor.write(tape_following_base_speed, RIGHT_MOTOR_FORWARD);
+            if(state_machine->no_ir_counter >= 35) {
+                // go straight to run over debris
+                left_motor.write(50, LEFT_MOTOR_FORWARD);
+                right_motor.write(70, RIGHT_MOTOR_FORWARD);
+            } else {
+                left_motor.write(tape_following_base_speed, LEFT_MOTOR_FORWARD);
+                right_motor.write(tape_following_base_speed, RIGHT_MOTOR_FORWARD);
+            }
+            // left_motor.write(tape_following_base_speed, LEFT_MOTOR_FORWARD);
+            // right_motor.write(tape_following_base_speed, RIGHT_MOTOR_FORWARD);
         }
     } else {
 
@@ -114,7 +116,7 @@ void state_tape_following_exit(struct state_machine *state_machine) {
     right_motor.stop();
 
     if (tof_task_handle != NULL && eTaskGetState(tof_task_handle) != eSuspended) {
-        if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, pdMS_TO_TICKS(5000)) == pdTRUE) {
+        if (i2c_mutex != NULL && xSemaphoreTake(i2c_mutex, pdMS_TO_TICKS(500)) == pdTRUE) {
             // Task is not using I2C right now (mutex is available)
             vTaskSuspend(tof_task_handle);  // Now safe to suspend
             #ifdef DEBUG

@@ -9,6 +9,9 @@ static void state_reach_run(struct state_machine *state_machine) {
     arm.get_pos(&x, &y);
     arm.move_to_pos(x + REACH_STEP, y);
     delay(50);
+    if (x >= 320) {
+        state_machine->internal_event = EVENT_PET_NEAR;
+    }
 }
 
 void state_reach_enter(struct state_machine *state_machine, state_event_e event) {

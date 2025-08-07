@@ -7,7 +7,7 @@
 
 #define BASE_GEAR_STORE     170
 #define BASE_GEAR_HOME      273
-#define BASE_GEAR_RIGHT     86
+#define BASE_GEAR_RIGHT     90
 
 class BaseGear 
 {
