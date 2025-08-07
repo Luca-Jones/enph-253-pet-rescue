@@ -47,11 +47,20 @@ void state_tape_following_run(struct state_machine *state_machine) {
         } else if (state_machine->last_ir_rr) {
             control_motors(+TAPE_FOLLOWING_RECOVERY_RATIO * tape_following_base_speed);
         } else {
-            // go straight to run over debris
-            left_motor.write(tape_following_base_speed, LEFT_MOTOR_FORWARD);
-            right_motor.write(tape_following_base_speed, RIGHT_MOTOR_FORWARD);
+            state_machine->no_ir_counter++;
+            if(state_machine->no_ir_counter >= 10) {
+                // go straight to run over debris
+                left_motor.write(150, LEFT_MOTOR_FORWARD);
+                right_motor.write(150, RIGHT_MOTOR_FORWARD);
+            } else {
+                left_motor.write(tape_following_base_speed, LEFT_MOTOR_FORWARD);
+                right_motor.write(tape_following_base_speed, RIGHT_MOTOR_FORWARD);
+            }
         }
     } else {
+
+        state_machine->no_ir_counter = 0;
+
         error = calculate_error(state_machine->last_error, ir_ll, ir_l, ir_c, ir_r, ir_rr);
         state_machine->last_error = error;
         float delta_time_s = (now - state_machine->last_pid_time) / 1000.0f;

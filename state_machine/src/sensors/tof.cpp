@@ -77,10 +77,11 @@ float tof_get_left_center_dist(const ToF_data *data) {
 
     return (
         data->distance_mm[8 * (7 - 5) + 3] + 
-        data->distance_mm[8 * (7 - 5) + 4] + 
         data->distance_mm[8 * (7 - 6) + 3] + 
-        data->distance_mm[8 * (7 - 6) + 4] +
         data->distance_mm[8 * (7 - 7) + 3] + 
+
+        data->distance_mm[8 * (7 - 5) + 4] +
+        data->distance_mm[8 * (7 - 6) + 4] + 
         data->distance_mm[8 * (7 - 7) + 4]
     ) / 6.0f;
 }
@@ -122,19 +123,20 @@ float tof_get_center_reflectance(const ToF_data *data) {
       2 .[ ][ ][ ][ ][ ][ ][ ][ ]
       3 .[ ][ ][ ][ ][ ][ ][ ][ ]
       4 .[ ][ ][ ][ ][ ][ ][ ][ ]
-      5 .[ ][ ][ ][ ][ ][ ][ ][ ]
+      5 .[ ][ ][ ][*][*][ ][ ][ ]
       6 .[ ][ ][ ][*][*][ ][ ][ ]
       7 .[ ][ ][ ][*][*][ ][ ][ ]
     **/
 
     return (
-        // data->reflectance[8 * (7 - 5) + 3] + 
-        // data->reflectance[8 * (7 - 5) + 4] + 
+        data->reflectance[8 * (7 - 5) + 3] + 
         data->reflectance[8 * (7 - 6) + 3] + 
-        data->reflectance[8 * (7 - 6) + 4] +
         data->reflectance[8 * (7 - 7) + 3] + 
-        data->reflectance[8 * (7 - 7) + 4] 
-    ) / 4.0f;
+
+        data->reflectance[8 * (7 - 5) + 4] +
+        data->reflectance[8 * (7 - 6) + 4] + 
+        data->reflectance[8 * (7 - 7) + 4]
+    ) / 6.0f;
 
 }
 
@@ -142,29 +144,109 @@ bool tof_left_cylinder_detected(const ToF_data *data) {
 
     /**
           0  1  2  3  4  5  6  7 
-      0 .[ ][ ][ ][*][*][ ][ ][ ]
+      0 .[ ][ ][ ][ ][ ][ ][ ][ ]
       1 .[ ][ ][ ][ ][ ][ ][ ][ ]
       2 .[ ][ ][ ][ ][ ][ ][ ][ ]
-      3 .[ ][ ][ ][ ][ ][ ][ ][ ]
+      3 .[ ][ ][ ][x][x][ ][ ][ ]
       4 .[ ][ ][ ][ ][ ][ ][ ][ ]
-      5 .[ ][ ][/][*][*][\][ ][ ]
-      6 .[ ][ ][/][*][*][\][ ][ ]
-      7 .[ ][ ][/][*][*][\][ ][ ]
+      5 .[/][-][+][*][*][+][-][\]
+      6 .[/][-][+][*][*][+][-][\]
+      7 .[/][-][+][*][*][+][-][\]
     **/
 
     // key: [8 * row + col]
-    float center_left_mean = (data->distance_mm[8 * (7 - 5) + 3] + data->distance_mm[8 * (7 - 6) + 3] + data->distance_mm[8 * (7 - 7) + 3]) / 3.0f;
-    float center_right_mean = (data->distance_mm[8 * (7 - 5) + 4] + data->distance_mm[8 * (7 - 6) + 4] + data->distance_mm[8 * (7 - 7) + 4]) / 3.0f;
-    float center_mean = 0.5f * (center_left_mean + center_right_mean);
+    float center_mean = (   
+                            data->distance_mm[8 * (7 - 5) + (7 - 3)] + 
+                            data->distance_mm[8 * (7 - 6) + (7 - 3)] +
+                            data->distance_mm[8 * (7 - 7) + (7 - 3)] +
+                            // data->distance_mm[8 * (7 - 5) + (7 - 3)] +
+                            // data->distance_mm[8 * (7 - 6) + (7 - 3)] +
+                            data->distance_mm[8 * (7 - 5) + (7 - 4)] + 
+                            data->distance_mm[8 * (7 - 6) + (7 - 4)] +
+                            data->distance_mm[8 * (7 - 7) + (7 - 4)] 
+                            // data->distance_mm[8 * (7 - 5) + (7 - 4)] +
+                            // data->distance_mm[8 * (7 - 6) + (7 - 4)]
+                        ) / 6.0f;
 
-    float side_left_mean = (data->distance_mm[8 * (7 - 5) + 2] + data->distance_mm[8 * (7 - 6) + 2] + data->distance_mm[8 * (7 - 7) + 2]) / 3.0f;
-    float side_right_mean = (data->distance_mm[8 * (7 - 5) + 5] + data->distance_mm[8 * (7 - 6) + 5] + data->distance_mm[8 * (7 - 7) + 5]) / 3.0f;
-    float side_mean = 0.5f * (side_left_mean + side_right_mean);
-    float side_mean_diff = fabs(side_left_mean - side_right_mean);
+    float far_left_mean = (    
+                                data->distance_mm[8 * (7 - 5) + (7 - 0)] + 
+                                data->distance_mm[8 * (7 - 6) + (7 - 0)] +
+                                data->distance_mm[8 * (7 - 7) + (7 - 0)]
+                                // data->distance_mm[8 * (7 - 5) + (7 - 0)] +
+                                // data->distance_mm[8 * (7 - 6) + (7 - 0)]
+                            ) / 3.0f;
 
-    float top_center_mean = 0.5f * (data->distance_mm[8 * (7 - 0) + 3] + data->distance_mm[8 * (7 - 0) + 4]);
+    float far_right_mean = (   
+                                data->distance_mm[8 * (7 - 5) + (7 - 7)] + 
+                                data->distance_mm[8 * (7 - 6) + (7 - 7)] +
+                                data->distance_mm[8 * (7 - 7) + (7 - 7)]
+                                // data->distance_mm[8 * (7 - 5) + (7 - 7)] +
+                                // data->distance_mm[8 * (7 - 6) + (7 - 7)]
+                            ) / 3.0f;
 
-    return (side_mean_diff <= TOF_MAX_SIDE_DIFF_MM && center_mean < side_mean);// && top_center_mean >= TOF_MAX_TOP_MM);
+    float left_mean = (    
+                            data->distance_mm[8 * (7 - 5) + (7 - 2)] + 
+                            data->distance_mm[8 * (7 - 6) + (7 - 2)] +
+                            data->distance_mm[8 * (7 - 7) + (7 - 2)]
+                            // data->distance_mm[8 * (7 - 5) + (7 - 2)] +
+                            // data->distance_mm[8 * (7 - 6) + (7 - 2)]
+                        ) / 3.0f;
+
+    float right_mean = (        
+                            data->distance_mm[8 * (7 - 5) + (7 - 5)] + 
+                            data->distance_mm[8 * (7 - 6) + (7 - 5)] +
+                            data->distance_mm[8 * (7 - 7) + (7 - 5)]
+                            // data->distance_mm[8 * (7 - 5) + (7 - 5)] +
+                            // data->distance_mm[8 * (7 - 6) + (7 - 5)]
+                        ) / 3.0f;
+
+    float left_left_mean = (    
+                            data->distance_mm[8 * (7 - 5) + (7 - 1)] + 
+                            data->distance_mm[8 * (7 - 6) + (7 - 1)] +
+                            data->distance_mm[8 * (7 - 7) + (7 - 1)]
+                            // data->distance_mm[8 * (7 - 5) + (7 - 1)] +
+                            // data->distance_mm[8 * (7 - 6) + (7 - 1)]
+                        ) / 3.0f;
+
+    float right_right_mean = (        
+                            data->distance_mm[8 * (7 - 5) + (7 - 6)] + 
+                            data->distance_mm[8 * (7 - 6) + (7 - 6)] +
+                            data->distance_mm[8 * (7 - 7) + (7 - 6)] 
+                            // data->distance_mm[8 * (7 - 5) + (7 - 6)] +
+                            // data->distance_mm[8 * (7 - 6) + (7 - 6)]
+                        ) / 3.0f;
+    
+    float top_mean = (data->distance_mm[8 * (7 - 3) + 3] + data->distance_mm[8 * (7 - 3) + 4]) / 2.0f;
+
+
+    Serial.printf("LLL = %0.1f, LL = %.1f, L = %.1f, C = %.1f, R = %.1f, RR = %.1f RRR = %0.1f             top = %.1f,\n", 
+                far_left_mean, left_left_mean, left_mean, center_mean, right_mean, right_right_mean, far_right_mean,         top_mean);
+
+
+    if (center_mean < 125.0f) {
+        return (     
+            right_right_mean                < 125 &&
+            left_left_mean                  < 125 &&
+            far_left_mean - center_mean     > 10  && 
+            far_right_mean - center_mean    > 10
+        );
+    }
+
+    if (center_mean < 170.0f) {
+        return (
+            fabs(far_right_mean - center_mean) > 90.0f && 
+            fabs(far_left_mean - center_mean) > 90.0f 
+            // && fabs(left_mean - right_mean) < 35.0f
+        );
+    }
+
+    return (    
+        fabs(far_right_mean - center_mean) > 90.0f && 
+        fabs(far_left_mean - center_mean) > 90.0f && 
+        (top_mean > center_mean + 50.0f)  // (top_mean < 200 || top_mean > center_mean + 100.0f) && 
+        // && fabs(left_mean - right_mean) < 35.0f
+    );
+
 }
 
 bool tof_right_something_ahead(const ToF_data *data) {
@@ -196,8 +278,39 @@ bool tof_right_something_ahead(const ToF_data *data) {
                             data->distance_mm[8 * (7 - 4) + (7 - 7)]
                         ) / 6.0f;
 
-    // Serial.printf("ahead (L) = %0.1f, behind(R) = %0.1f\n", ahead_mean, behind_mean);
+    return ahead_mean > 50 && ahead_mean < 240 && behind_mean > ahead_mean + 100;
 
+}
+
+bool tof_left_something_ahead(const ToF_data *data) {
+    
+    /**
+          0  1  2  3  4  5  6  7 
+      0 .[ ][ ][ ][ ][ ][ ][ ][ ]
+      1 .[ ][ ][ ][ ][ ][ ][ ][ ]
+      2 .[ ][ ][ ][ ][ ][ ][ ][ ]
+      3 .[ ][ ][ ][ ][ ][ ][ ][ ]
+      4 .[ ][ ][ ][ ][ ][ ][ ][ ]
+      5 .[x][x][ ][ ][ ][ ][ ][*]
+      6 .[x][x][ ][ ][ ][ ][ ][*]
+      7 .[x][x][ ][ ][ ][ ][ ][*]
+    **/
+
+    float ahead_mean = (
+                            data->distance_mm[8 * (7 - 5) + (7 - 7)] + 
+                            data->distance_mm[8 * (7 - 6) + (7 - 7)] +
+                            data->distance_mm[8 * (7 - 7) + (7 - 7)]
+                        ) / 3.0f;
+    
+    float behind_mean = (
+                            data->distance_mm[8 * (7 - 5) + (7 - 0)] + 
+                            data->distance_mm[8 * (7 - 6) + (7 - 0)] +
+                            data->distance_mm[8 * (7 - 7) + (7 - 0)] +
+                            data->distance_mm[8 * (7 - 5) + (7 - 1)] + 
+                            data->distance_mm[8 * (7 - 6) + (7 - 1)] +
+                            data->distance_mm[8 * (7 - 7) + (7 - 1)]
+                        ) / 6.0f;
+                            
     return ahead_mean > 50 && ahead_mean < 240 && behind_mean > ahead_mean + 100;
 
 }

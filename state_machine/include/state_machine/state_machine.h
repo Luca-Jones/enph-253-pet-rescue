@@ -78,6 +78,7 @@ struct state_machine {
     float last_error;
     unsigned long last_pid_time; // set to zero when leaving the state
     bool last_ir_ll, last_ir_l, last_ir_c, last_ir_r, last_ir_rr;
+    int no_ir_counter;
 
 };
 
