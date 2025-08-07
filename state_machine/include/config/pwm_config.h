@@ -1,13 +1,13 @@
 #ifndef PWM_CONFIG_H
 #define PWM_CONFIG_H
 
-#define PWM_CHANNEL_SERVO_1         0
+#define PWM_CHANNEL_SERVO_1         5
 #define PWM_CHANNEL_SERVO_2         1
 #define PWM_CHANNEL_SERVO_3         2
 #define PWM_CHANNEL_MOTOR_LEFT      7 // was 3 (RK changed)
 #define PWM_CHANNEL_MOTOR_RIGHT     4
 #define PWM_CHANNEL_CASCADE         6
-#define PWM_CHANNEL_BASE_GEAR       5
+#define PWM_CHANNEL_BASE_GEAR       0
 
 #define PWM_FRQ_HZ_MOTOR_LEFT       1000
 #define PWM_FRQ_HZ_MOTOR_RIGHT      1000

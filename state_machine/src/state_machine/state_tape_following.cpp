@@ -48,7 +48,7 @@ void state_tape_following_run(struct state_machine *state_machine) {
             control_motors(+TAPE_FOLLOWING_RECOVERY_RATIO * tape_following_base_speed);
         } else {
             state_machine->no_ir_counter++;
-            if(state_machine->no_ir_counter >= 10) {
+            if(state_machine->no_ir_counter >= 25) {
                 // go straight to run over debris
                 left_motor.write(150, LEFT_MOTOR_FORWARD);
                 right_motor.write(150, RIGHT_MOTOR_FORWARD);

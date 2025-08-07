@@ -245,8 +245,8 @@ void state_machine_init(struct state_machine *state_machine) {
     // set up motors
     left_motor.setup();
     right_motor.setup();
-    base_gear.setup();      // sets up the motor and magnetic encoder internally
     cascade_motor.setup();
+    base_gear.setup();      // sets up the motor and magnetic encoder internally
 
     #ifdef DEBUG
     print_event(state_machine->internal_event);
