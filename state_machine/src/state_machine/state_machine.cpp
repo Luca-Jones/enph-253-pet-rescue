@@ -40,7 +40,7 @@ BaseGear base_gear = BaseGear(&base_gear_motor);
 Motor left_motor(PIN_MOTOR_LEFT_PWM, PWM_CHANNEL_MOTOR_LEFT, PWM_FRQ_HZ_MOTOR_LEFT, PWM_RESOLUTION_MOTOR_LEFT, PIN_MOTOR_LEFT_DIR);
 Motor right_motor(PIN_MOTOR_RIGHT_PWM, PWM_CHANNEL_MOTOR_RIGHT, PWM_FRQ_HZ_MOTOR_RIGHT, PWM_RESOLUTION_MOTOR_RIGHT, PIN_MOTOR_RIGHT_DIR);
 Motor cascade_motor(PIN_CASCADE_PWM, PWM_CHANNEL_CASCADE, PWM_FRQ_HZ_CASCADE, PWM_RESOLUTION_CASCADE, PIN_CASCADE_DIR);
-#define TAPE_FOLLOWING_DEFAULT_SPEED 70
+#define TAPE_FOLLOWING_DEFAULT_SPEED 60
 
 /* Sensors */
 SemaphoreHandle_t i2c_mutex;
@@ -258,7 +258,7 @@ void state_machine_init(struct state_machine *state_machine) {
 void tof_input_task(void *pvParameters) {
 
     // Wait a bit to ensure everything is initialized
-    vTaskDelay(pdMS_TO_TICKS(5500));
+    vTaskDelay(pdMS_TO_TICKS(6500));
 
     float mean_distance_mm;
     float distMap[8][8];

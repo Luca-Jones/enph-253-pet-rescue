@@ -36,7 +36,13 @@ void BaseGear::write(int target_angle) {
     float output = 0;
     int iterations = 0;
 
-    while (iterations < BASE_GEAR_MAX_PID_ITERATIONS) { 
+    int max_iterations = BASE_GEAR_MAX_PID_ITERATIONS;
+
+    if (target_angle == BASE_GEAR_STORE){
+        max_iterations = 60;
+    }
+    
+    while (iterations < max_iterations) { 
         
         current_angle = mag_get_angle();
 

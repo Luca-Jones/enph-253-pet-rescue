@@ -19,7 +19,7 @@
 #define ARM_HOME_Y 40
 
 #define ARM_REACH_X 220
-#define ARM_REACH_Y 40
+#define ARM_REACH_Y 60
 
 #define ARM_PILLAR_X 200
 #define ARM_PILLAR_Y 200
